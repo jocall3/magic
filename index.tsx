@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { datadogLogs } from '@datadog/browser-logs';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 /* ---------- Datadog ---------- */
 datadogLogs.init({
@@ -37,6 +38,7 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
+      <SpeedInsights />
     </QueryClientProvider>
   </React.StrictMode>
 );
