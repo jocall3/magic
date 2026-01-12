@@ -487,6 +487,46 @@ const SAppLayout = () => {
   );
 };
 
+const ExternalIframeCollection = () => {
+  return (
+    <div className="min-h-screen bg-[#050505] p-8 overflow-y-auto custom-scrollbar">
+      <div className="max-w-[1800px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 place-items-center">
+        <iframe src="https://admin08077-openapi.hf.space" frameBorder="0" width="850" height="450" title="view-1" />
+        <iframe src="https://admin08077-ai-banking-sovereign.static.hf.space" frameBorder="0" width="850" height="450" title="view-2" />
+        <iframe src="https://admin08077-aibanke.static.hf.space" frameBorder="0" width="850" height="450" title="view-3" />
+        <iframe src="https://admin08077-citibank-demo-business-inc-ai-ban-king-demo.static.hf.space" frameBorder="0" width="850" height="450" title="view-4" />
+        <iframe src="https://admin08077-1233.static.hf.space" frameBorder="0" width="850" height="450" title="view-5" />
+        <iframe src="https://admin08077-inventions.static.hf.space" frameBorder="0" width="850" height="450" title="view-6" />
+        <iframe src="https://admin08077-gemini-app-citibank-demo-business-inc-google.static.hf.space" frameBorder="0" width="850" height="450" title="view-7" />
+        <iframe src="https://admin08077-aibankdemo2.static.hf.space" frameBorder="0" width="850" height="450" title="view-8" />
+        <iframe src="https://admin08077-airenderer.static.hf.space" frameBorder="0" width="850" height="450" title="view-9" />
+        <iframe src="https://admin08077-book.static.hf.space" frameBorder="0" width="850" height="450" title="view-10" />
+        <iframe src="https://admin08077-merrychristmas.static.hf.space" frameBorder="0" width="850" height="450" title="view-11" />
+        <iframe src="https://admin08077-apiai.static.hf.space" frameBorder="0" width="850" height="450" title="view-12" />
+        <iframe src="https://admin08077-projectatlas.static.hf.space" frameBorder="0" width="850" height="450" title="view-13" />
+        <iframe src="https://admin08077-jocall3.static.hf.space" frameBorder="0" width="850" height="450" title="view-14" />
+        <iframe src="https://admin08077-demob.static.hf.space" frameBorder="0" width="850" height="450" title="view-15" />
+        <iframe src="https://admin08077-aibanke.static.hf.space" frameBorder="0" width="850" height="450" title="view-16" />
+        <iframe src="https://admin08077-ai-banking-sovereign.static.hf.space" frameBorder="0" width="850" height="450" title="view-17" />
+        <iframe src="https://admin08077-static.static.hf.space" frameBorder="0" width="850" height="450" title="view-18" />
+        <iframe src="https://admin08077-demoo.static.hf.space" frameBorder="0" width="850" height="450" title="view-19" />
+        <iframe src="https://admin08077-webgenai.static.hf.space" frameBorder="0" width="850" height="450" title="view-20" />
+        <iframe src="https://admin08077-aiab.static.hf.space" frameBorder="0" width="850" height="450" title="view-21" />
+        <iframe src="https://admin08077-citibank-demo-business-inc-app.static.hf.space" frameBorder="0" width="850" height="450" title="view-22" />
+        <iframe src="https://admin08077-aib8nking.static.hf.space" frameBorder="0" width="850" height="450" title="view-23" />
+        <iframe src="https://admin08077-bb.static.hf.space" frameBorder="0" width="850" height="450" title="view-24" />
+        <iframe src="https://admin08077-citibank-demo-business-inc-apps.static.hf.space" frameBorder="0" width="850" height="450" title="view-25" />
+        <iframe src="https://admin08077-newwa.static.hf.space" frameBorder="0" width="850" height="450" title="view-26" />
+        <iframe src="https://admin08077-jamesocallaghanprivatebank.hf.space" frameBorder="0" width="850" height="450" title="view-27" />
+        <iframe src="https://admin08077-drip-faucet.static.hf.space" frameBorder="0" width="850" height="450" title="view-28" />
+        <iframe src="https://admin08077-transactpro.hf.space" frameBorder="0" width="850" height="450" title="view-29" />
+        <iframe src="https://admin08077-quantumbank.hf.space" frameBorder="0" width="850" height="450" title="view-30" />
+        <iframe src="https://admin08077-test.hf.space" frameBorder="0" width="850" height="450" title="view-31" />
+      </div>
+    </div>
+  );
+};
+
 const theme = createTheme({ palette: { mode: 'dark' } });
 
 function App() {
@@ -506,6 +546,7 @@ function App() {
                   <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/login" element={<LoginView />} />
+                    <Route path="/modules" element={<ExternalIframeCollection />} />
                     <Route path="*" element={<SAppLayout />} />
                   </Routes>
                 </Router>
