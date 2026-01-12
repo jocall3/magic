@@ -134,7 +134,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       stripe: 'https://api.stripe.com/v1',
       modernTreasury: 'https://app.moderntreasury.com/api',
       gemini: 'https://generativelanguage.googleapis.com',
-      gein: 'https://nexus.gein.io/v1'
+      gein: 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io'
   });
 
   const [sovereignCredits, setSovereignCredits] = useState(150000);
