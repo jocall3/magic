@@ -16,6 +16,7 @@ import { MoneyMovementProvider } from './components/MoneyMovementContext';
 // Layout & Components
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import SApp from './components/SApp';
 import { View } from './types';
 
 // Views & Components
@@ -328,6 +329,7 @@ const SAppLayout = () => {
       case View.StripeNexus: return <StripeNexusView />;
       case View.CounterpartyDashboard: return <CounterpartyDashboardView />;
       case View.VirtualAccounts: return <VirtualAccountsDashboard />;
+      case View.SApp: return <SAPP />;
       case View.CorporateActions: return <CorporateActionsNexusView />;
       case View.CreditNoteLedger: return <CreditNoteLedger />;
       case View.ReconciliationHub: return <ReconciliationHubView />;
