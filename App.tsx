@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Cpu, ShieldAlert, Sparkles, Terminal } from 'lucide-react';
 import { Auth0Provider } from '@auth0/auth0-react';
 import { datadogLogs } from '@datadog/browser-logs';
+import { Analytics } from '@vercel/analytics/react';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -513,6 +514,7 @@ function App() {
           </MoneyMovementProvider>
         </DataProvider>
       </AuthProvider>
+      <Analytics />
     </Auth0Provider>
   );
 }
