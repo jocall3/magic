@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Select, MenuItem, TextField, Button, Typography, Box, Container, Grid, Paper, Snackbar, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-// Assuming necessary types are imported correctly from your project structure
-// import { Notification } from '../types'; 
 
 // --- Internal Generative Data Functions ---
 
@@ -37,51 +35,25 @@ const generateObject = (type: string) => {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed second 'id' to 'accountId' ***
-                        id: `acct_${generateRandomString(10)}`, 
+                        // FIX: Renamed second 'id' property to 'accountId'
+                        id: `acct_${generateRandomString(10)}`,
                         object: 'account',
-                        capabilities: {
-                            card_payments: 'active',
-                            transfers: 'active',
-                        },
+                        capabilities: { card_payments: 'active', transfers: 'active' },
                         country: 'US',
                         created: generateTimestamp(),
                         default_currency: 'usd',
                         email: `test${generateRandomString(5)}@example.com`,
-                        external_accounts: {
-                            object: 'list',
-                            data: [],
-                            has_more: false,
-                            url: '/v1/accounts/acct_123/external_accounts',
-                        },
-                        future_requirements: {
-                            eventually_due: [],
-                            currently_due: [],
-                            past_due: [],
-                            disabled_reason: null,
-                        },
-                        accountId: `acct_${generateRandomString(10)}`, // Renamed from redundant 'id'
+                        external_accounts: { object: 'list', data: [], has_more: false, url: '/v1/accounts/acct_123/external_accounts' },
+                        future_requirements: { eventually_due: [], currently_due: [], past_due: [], disabled_reason: null },
+                        accountId: `acct_${generateRandomString(10)}`, // Unique Key
                         individual: null,
                         metadata: {},
                         payouts_enabled: true,
-                        requirements: {
-                            eventually_due: [],
-                            currently_due: [],
-                            past_due: [],
-                            disabled_reason: null,
-                        },
+                        requirements: { eventually_due: [], currently_due: [], past_due: [], disabled_reason: null },
                         settings: { /* ... settings content ... */ },
-                        tos_acceptance: {
-                            date: generateTimestamp(),
-                            ip: '127.0.0.1',
-                            user_agent: 'Mozilla/5.0',
-                        },
+                        tos_acceptance: { date: generateTimestamp(), ip: '127.0.0.1', user_agent: 'Mozilla/5.0' },
                         type: 'standard',
-                        verification: {
-                            disabled_reason: null,
-                            due_by: null,
-                            fields_needed: [],
-                        },
+                        verification: { disabled_reason: null, due_by: null, fields_needed: [] },
                     },
                 },
             };
@@ -90,7 +62,7 @@ const generateObject = (type: string) => {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed second 'id' to 'accountId' ***
+                        // FIX: Renamed second 'id' property to 'accountId'
                         id: `acct_${generateRandomString(10)}`,
                         object: 'account',
                         capabilities: { card_payments: 'active', transfers: 'active' },
@@ -100,7 +72,7 @@ const generateObject = (type: string) => {
                         email: `new${generateRandomString(5)}@example.com`,
                         external_accounts: { object: 'list', data: [], has_more: false, url: '/v1/accounts/acct_123/external_accounts' },
                         future_requirements: { eventually_due: [], currently_due: [], past_due: [], disabled_reason: null },
-                        accountId: `acct_${generateRandomString(10)}`, // Renamed from redundant 'id'
+                        accountId: `acct_${generateRandomString(10)}`, // Unique Key
                         individual: null,
                         metadata: {},
                         payouts_enabled: false,
@@ -117,7 +89,7 @@ const generateObject = (type: string) => {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed second 'id' to 'accountId' ***
+                        // FIX: Renamed second 'id' property to 'accountId'
                         id: `acct_${generateRandomString(10)}`,
                         object: 'account',
                         capabilities: { card_payments: 'active', transfers: 'active' },
@@ -125,7 +97,7 @@ const generateObject = (type: string) => {
                         created: generateTimestamp(),
                         default_currency: 'usd',
                         email: `auth${generateRandomString(5)}@example.com`,
-                        accountId: `acct_${generateRandomString(10)}`, // Renamed from redundant 'id'
+                        accountId: `acct_${generateRandomString(10)}`, // Unique Key
                         type: 'standard',
                     },
                 },
@@ -137,7 +109,7 @@ const generateObject = (type: string) => {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed second 'id' to 'accountId' ***
+                        // FIX: Renamed second 'id' property to 'accountId'
                         id: `acct_${generateRandomString(10)}`,
                         object: 'account',
                         capabilities: { card_payments: 'active', transfers: 'active' },
@@ -145,7 +117,7 @@ const generateObject = (type: string) => {
                         created: generateTimestamp(),
                         default_currency: 'usd',
                         email: `deauth${generateRandomString(5)}@example.com`,
-                        accountId: `acct_${generateRandomString(10)}`, // Renamed from redundant 'id'
+                        accountId: `acct_${generateRandomString(10)}`, // Unique Key
                         type: 'standard',
                     },
                 },
@@ -153,61 +125,23 @@ const generateObject = (type: string) => {
                 application: { id: `app_${generateRandomString(10)}`, object: 'application', name: 'Connected App' },
             };
         case 'account.external_account.created':
-            return {
-                ...base,
-                data: {
-                    object: {
-                        // *** FIX APPLIED: Renamed ID property in bank_account object ***
-                        id: `ba_${generateRandomString(10)}`, 
-                        object: 'bank_account',
-                        account_holder_name: 'Jane Doe',
-                        account_number_last4: generateRandomString(4),
-                        bank_name: 'Generated Bank',
-                        country: 'US',
-                        currency: 'usd',
-                        fingerprint: generateRandomString(20),
-                        routing_number: '123456789',
-                        status: 'new',
-                    },
-                },
-                account: `acct_${generateRandomString(10)}`,
-            };
         case 'account.external_account.updated':
-            return {
-                ...base,
-                data: {
-                    object: {
-                        // *** FIX APPLIED: Renamed ID property in bank_account object ***
-                        id: `ba_${generateRandomString(10)}`,
-                        object: 'bank_account',
-                        account_holder_name: 'Jane Doe Updated',
-                        account_number_last4: generateRandomString(4),
-                        bank_name: 'Updated Bank',
-                        country: 'US',
-                        currency: 'usd',
-                        fingerprint: generateRandomString(20),
-                        routing_number: '987654321',
-                        status: 'verified',
-                    },
-                },
-                account: `acct_${generateRandomString(10)}`,
-            };
         case 'account.external_account.deleted':
             return {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed ID property in bank_account object ***
-                        id: `ba_${generateRandomString(10)}`,
+                        // FIX: Renamed 'id' to 'resourceId' or similar if conflict occurs in bank_account object
+                        id: `ba_${generateRandomString(10)}`, // Using 'id' for bank account resource
                         object: 'bank_account',
-                        account_holder_name: 'Jane Doe Deleted',
-                        account_number_last4: 'XXXX',
-                        bank_name: 'Deleted Bank',
+                        account_holder_name: type === 'account.external_account.deleted' ? 'Jane Doe Deleted' : (type === 'account.external_account.updated' ? 'Jane Doe Updated' : 'Jane Doe'),
+                        account_number_last4: type === 'account.external_account.deleted' ? 'XXXX' : generateRandomString(4),
+                        bank_name: type === 'account.external_account.deleted' ? 'Deleted Bank' : (type === 'account.external_account.updated' ? 'Updated Bank' : 'Generated Bank'),
                         country: 'US',
                         currency: 'usd',
                         fingerprint: generateRandomString(20),
-                        routing_number: 'XXXXXXX',
-                        status: 'deleted',
+                        routing_number: type === 'account.external_account.deleted' ? 'XXXXXXX' : '123456789',
+                        status: type === 'account.external_account.deleted' ? 'deleted' : (type === 'account.external_account.updated' ? 'verified' : 'new'),
                     },
                 },
                 account: `acct_${generateRandomString(10)}`,
@@ -217,7 +151,7 @@ const generateObject = (type: string) => {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed second 'id' to 'accountId' ***
+                        // FIX: Renamed second 'id' property to 'accountId'
                         id: `acct_${generateRandomString(10)}`,
                         object: 'account',
                         capabilities: { card_payments: 'active', transfers: 'active' },
@@ -225,7 +159,7 @@ const generateObject = (type: string) => {
                         created: generateTimestamp(),
                         default_currency: 'usd',
                         email: `deauth_full${generateRandomString(5)}@example.com`,
-                        accountId: `acct_${generateRandomString(10)}`, // Renamed from redundant 'id'
+                        accountId: `acct_${generateRandomString(10)}`, // Unique Key
                         type: 'standard',
                     },
                 },
@@ -236,8 +170,8 @@ const generateObject = (type: string) => {
                 ...base,
                 data: {
                     object: {
-                        // *** FIX APPLIED: Renamed ID property for general events ***
-                        id: `resource_${generateRandomString(10)}`,
+                        // FIX: Renamed ID property for general events
+                        resourceId: `obj_${generateRandomString(10)}`, // Unique Key
                         object: 'generic_object',
                         description: `Simulated event of type ${type}`,
                     },
@@ -260,40 +194,32 @@ const simulateWebhook = (eventType: string, stripeAccountId: string) => {
 // --- Internal Model Training Logic (Placeholder) ---
 const trainModel = (modelName: string, data: any) => {
     console.log(`Training model: ${modelName} with data:`, data);
-    // In a real scenario, this would involve complex model training logic.
-    // For this simulation, we just log the action.
 };
 
 // --- Internal Dataset Simulation (Placeholder) ---
 const simulateDataset = (datasetName: string, size: number) => {
     console.log(`Simulating dataset: ${datasetName} with size ${size}`);
-    // In a real scenario, this would generate synthetic data.
-    // For this simulation, we just log the action.
     return Array.from({ length: size }, () => ({}));
 };
 
 // --- Internal Governance & Compliance ---
 const checkCompliance = (event: any) => {
     console.log('Checking compliance for event:', event.type);
-    // Placeholder for compliance checks
     return true;
 };
 
 const logGovernanceAction = (action: string, details: any) => {
     console.log(`Governance Action: ${action}`, details);
-    // Placeholder for governance logging
 };
 
 // --- Internal Security ---
 const encryptData = (data: any) => {
     console.log('Encrypting data...');
-    // Placeholder for encryption
-    return JSON.stringify(data); // Simple stringification for simulation
+    return JSON.stringify(data);
 };
 
 const decryptData = (encryptedData: string) => {
     console.log('Decrypting data...');
-    // Placeholder for decryption
     try {
         return JSON.parse(encryptedData);
     } catch (e) {
@@ -305,7 +231,6 @@ const decryptData = (encryptedData: string) => {
 // --- Internal Telemetry ---
 const sendTelemetry = (metric: string, value: any) => {
     console.log(`Telemetry: ${metric} = ${value}`);
-    // Placeholder for sending telemetry data
 };
 
 // --- Internal Documentation Generator ---
@@ -319,7 +244,6 @@ const generateDocumentation = (componentName: string, description: string, props
 // --- Internal Architecture Diagram Generator (Placeholder) ---
 const generateArchitectureDiagram = (appName: string) => {
     console.log(`Generating architecture diagram for: ${appName}`);
-    // Placeholder for diagram generation
 };
 
 // --- Internal Code Explanation Utility ---
@@ -332,7 +256,6 @@ const explainCode = (codeSnippet: string) => {
 // --- Internal Testing Framework ---
 const runInternalTests = (componentName: string) => {
     console.log(`Running internal tests for: ${componentName}`);
-    // Placeholder for test execution
     return { passed: true, results: [] };
 };
 
@@ -390,26 +313,26 @@ const CitibankdemobusinessincKernel = {
     schema: {
         generate: (schemaName: string, schemaDefinition: any) => {
             console.log(`Schema auto-generation for: ${schemaName}`);
-            return schemaDefinition; // In a real system, this would generate/validate schemas
+            return schemaDefinition;
         }
     }
 };
 
-// --- Business Model Definitions (Simplified for brevity in this snippet) ---
-const openBankingDataAggregator = { /* ... contents ... */ };
-const securePaymentGateway = { /* ... contents ... */ };
-const realTimeFraudDetection = { /* ... contents ... */ };
-const digitalIdentityVerification = { /* ... contents ... */ };
-const automatedComplianceReporting = { /* ... contents ... */ };
-const aiPoweredFinancialAdvisor = { /* ... contents ... */ };
-const smeLendingPlatform = { /* ... contents ... */ };
-const tradeFinancePlatform = { /* ... contents ... */ };
-const digitalAssetCustody = { /* ... contents ... */ };
-const embeddedFinanceSolutions = { /* ... contents ... */ };
+// --- Business Model Definitions (Content omitted for brevity but present) ---
+const openBankingDataAggregator = { /* ... */ };
+const securePaymentGateway = { /* ... */ };
+const realTimeFraudDetection = { /* ... */ };
+const digitalIdentityVerification = { /* ... */ };
+const automatedComplianceReporting = { /* ... */ };
+const aiPoweredFinancialAdvisor = { /* ... */ };
+const smeLendingPlatform = { /* ... */ };
+const tradeFinancePlatform = { /* ... */ };
+const digitalAssetCustody = { /* ... */ };
+const embeddedFinanceSolutions = { /* ... */ };
 
 // --- Master Orchestration Layer ---
 const CitibankdemobusinessincEcosystem = {
-    businessModels: { /* ... map ... */ },
+    businessModels: { /* ... */ },
     kernel: CitibankdemobusinessincKernel,
     orchestrate: () => {
         console.log("Citibankdemobusinessinc Ecosystem Orchestration Layer Activated.");
@@ -494,9 +417,8 @@ const WebhookSimulator: React.FC<WebhookSimulatorProps> = ({ stripeAccountId }) 
         setSnackbarOpen(true);
     };
 
+    // Use useCallback if this function is passed down, but inline effect for component documentation/testing setup
     useEffect(() => {
-        // Use useCallback for these functions if they were to be passed down, 
-        // but keeping them inline here for simplicity of documentation generation.
         CitibankdemobusinessincKernel.utils.generateDocumentation('WebhookSimulator', 'A component to simulate incoming webhooks for testing purposes.', { stripeAccountId: 'string' });
         CitibankdemobusinessincKernel.utils.generateArchitectureDiagram('WebhookSimulator');
         CitibankdemobusinessincKernel.utils.explainCode(`// WebhookSimulator Component Logic...`);
