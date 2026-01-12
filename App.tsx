@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Navigate, Link } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Cpu, ShieldAlert, Sparkles, Terminal } from 'lucide-react';
+import { Cpu, ShieldAlert, Sparkles, Terminal, ArrowLeft, ExternalLink, Grid } from 'lucide-react';
 import { Auth0Provider } from '@auth0/auth0-react';
 import { datadogLogs } from '@datadog/browser-logs';
 import { Analytics } from '@vercel/analytics/react';
@@ -484,6 +484,98 @@ const SAppLayout = () => {
           </div>
         </main>
         <MonetizationOverlay />
+        <Link 
+          to="/modules"
+          className="fixed bottom-6 left-6 z-50 w-12 h-12 bg-gray-900/80 backdrop-blur-xl border border-cyan-500/30 rounded-full flex items-center justify-center text-cyan-400 hover:bg-cyan-500/20 hover:scale-110 transition-all duration-300 shadow-[0_0_20px_rgba(6,182,212,0.2)] group"
+          title="Open AI Nexus"
+        >
+          <Grid size={20} className="group-hover:animate-spin-slow" />
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+const AI_MODULES = [
+  "https://admin08077-openapi.hf.space",
+  "https://admin08077-ai-banking-sovereign.static.hf.space",
+  "https://admin08077-aibanke.static.hf.space",
+  "https://admin08077-citibank-demo-business-inc-ai-ban-king-demo.static.hf.space",
+  "https://admin08077-1233.static.hf.space",
+  "https://admin08077-inventions.static.hf.space",
+  "https://admin08077-gemini-app-citibank-demo-business-inc-google.static.hf.space",
+  "https://admin08077-aibankdemo2.static.hf.space",
+  "https://admin08077-airenderer.static.hf.space",
+  "https://admin08077-book.static.hf.space",
+  "https://admin08077-merrychristmas.static.hf.space",
+  "https://admin08077-apiai.static.hf.space",
+  "https://admin08077-projectatlas.static.hf.space",
+  "https://admin08077-jocall3.static.hf.space",
+  "https://admin08077-demob.static.hf.space",
+  "https://admin08077-aibanke.static.hf.space",
+  "https://admin08077-ai-banking-sovereign.static.hf.space",
+  "https://admin08077-static.static.hf.space",
+  "https://admin08077-demoo.static.hf.space",
+  "https://admin08077-webgenai.static.hf.space",
+  "https://admin08077-aiab.static.hf.space",
+  "https://admin08077-citibank-demo-business-inc-app.static.hf.space",
+  "https://admin08077-aib8nking.static.hf.space",
+  "https://admin08077-bb.static.hf.space",
+  "https://admin08077-citibank-demo-business-inc-apps.static.hf.space",
+  "https://admin08077-newwa.static.hf.space",
+  "https://admin08077-jamesocallaghanprivatebank.hf.space",
+  "https://admin08077-drip-faucet.static.hf.space",
+  "https://admin08077-transactpro.hf.space",
+  "https://admin08077-quantumbank.hf.space",
+  "https://admin08077-test.hf.space"
+];
+
+const getModuleTitle = (url: string) => {
+  try {
+    const urlObj = new URL(url);
+    let hostname = urlObj.hostname;
+    // Remove .hf.space or .static.hf.space
+    hostname = hostname.replace('.static.hf.space', '').replace('.hf.space', '');
+    // Remove admin08077- prefix
+    hostname = hostname.replace(/^admin\d+-/, '');
+    // Replace hyphens with spaces
+    const title = hostname.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return title || 'AI Module';
+  } catch (e) {
+    return 'AI Module';
+  }
+};
+
+const AIModuleCard = ({ url }: { url: string }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const title = getModuleTitle(url);
+
+  return (
+    <div className="flex flex-col h-[500px] w-full bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden hover:border-cyan-500/30 transition-all duration-300 shadow-lg hover:shadow-cyan-500/10 group">
+      <div className="px-4 py-3 border-b border-gray-800 bg-gray-950 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+          <span className="text-sm font-mono font-bold text-gray-300 group-hover:text-cyan-400 transition-colors truncate max-w-[300px]">
+            {title}
+          </span>
+        </div>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-600 hover:text-white transition-colors">
+          <ExternalLink size={14} />
+        </a>
+      </div>
+      <div className="relative flex-1 bg-black">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-900/20 backdrop-blur-sm">
+            <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        <iframe
+          src={url}
+          className="w-full h-full border-0"
+          onLoad={() => setIsLoading(false)}
+          title={title}
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        />
       </div>
     </div>
   );
@@ -491,39 +583,27 @@ const SAppLayout = () => {
 
 const ExternalIframeCollection = () => {
   return (
-    <div className="min-h-screen bg-[#050505] p-8 overflow-y-auto custom-scrollbar">
-      <div className="max-w-[1800px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 place-items-center">
-        <iframe src="https://admin08077-openapi.hf.space" frameBorder="0" width="850" height="450" title="view-1" />
-        <iframe src="https://admin08077-ai-banking-sovereign.static.hf.space" frameBorder="0" width="850" height="450" title="view-2" />
-        <iframe src="https://admin08077-aibanke.static.hf.space" frameBorder="0" width="850" height="450" title="view-3" />
-        <iframe src="https://admin08077-citibank-demo-business-inc-ai-ban-king-demo.static.hf.space" frameBorder="0" width="850" height="450" title="view-4" />
-        <iframe src="https://admin08077-1233.static.hf.space" frameBorder="0" width="850" height="450" title="view-5" />
-        <iframe src="https://admin08077-inventions.static.hf.space" frameBorder="0" width="850" height="450" title="view-6" />
-        <iframe src="https://admin08077-gemini-app-citibank-demo-business-inc-google.static.hf.space" frameBorder="0" width="850" height="450" title="view-7" />
-        <iframe src="https://admin08077-aibankdemo2.static.hf.space" frameBorder="0" width="850" height="450" title="view-8" />
-        <iframe src="https://admin08077-airenderer.static.hf.space" frameBorder="0" width="850" height="450" title="view-9" />
-        <iframe src="https://admin08077-book.static.hf.space" frameBorder="0" width="850" height="450" title="view-10" />
-        <iframe src="https://admin08077-merrychristmas.static.hf.space" frameBorder="0" width="850" height="450" title="view-11" />
-        <iframe src="https://admin08077-apiai.static.hf.space" frameBorder="0" width="850" height="450" title="view-12" />
-        <iframe src="https://admin08077-projectatlas.static.hf.space" frameBorder="0" width="850" height="450" title="view-13" />
-        <iframe src="https://admin08077-jocall3.static.hf.space" frameBorder="0" width="850" height="450" title="view-14" />
-        <iframe src="https://admin08077-demob.static.hf.space" frameBorder="0" width="850" height="450" title="view-15" />
-        <iframe src="https://admin08077-aibanke.static.hf.space" frameBorder="0" width="850" height="450" title="view-16" />
-        <iframe src="https://admin08077-ai-banking-sovereign.static.hf.space" frameBorder="0" width="850" height="450" title="view-17" />
-        <iframe src="https://admin08077-static.static.hf.space" frameBorder="0" width="850" height="450" title="view-18" />
-        <iframe src="https://admin08077-demoo.static.hf.space" frameBorder="0" width="850" height="450" title="view-19" />
-        <iframe src="https://admin08077-webgenai.static.hf.space" frameBorder="0" width="850" height="450" title="view-20" />
-        <iframe src="https://admin08077-aiab.static.hf.space" frameBorder="0" width="850" height="450" title="view-21" />
-        <iframe src="https://admin08077-citibank-demo-business-inc-app.static.hf.space" frameBorder="0" width="850" height="450" title="view-22" />
-        <iframe src="https://admin08077-aib8nking.static.hf.space" frameBorder="0" width="850" height="450" title="view-23" />
-        <iframe src="https://admin08077-bb.static.hf.space" frameBorder="0" width="850" height="450" title="view-24" />
-        <iframe src="https://admin08077-citibank-demo-business-inc-apps.static.hf.space" frameBorder="0" width="850" height="450" title="view-25" />
-        <iframe src="https://admin08077-newwa.static.hf.space" frameBorder="0" width="850" height="450" title="view-26" />
-        <iframe src="https://admin08077-jamesocallaghanprivatebank.hf.space" frameBorder="0" width="850" height="450" title="view-27" />
-        <iframe src="https://admin08077-drip-faucet.static.hf.space" frameBorder="0" width="850" height="450" title="view-28" />
-        <iframe src="https://admin08077-transactpro.hf.space" frameBorder="0" width="850" height="450" title="view-29" />
-        <iframe src="https://admin08077-quantumbank.hf.space" frameBorder="0" width="850" height="450" title="view-30" />
-        <iframe src="https://admin08077-test.hf.space" frameBorder="0" width="850" height="450" title="view-31" />
+    <div className="min-h-screen bg-[#050505] flex flex-col">
+      <div className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-gray-800 px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link to="/" className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
+            <ArrowLeft size={20} />
+          </Link>
+          <h1 className="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 uppercase font-mono">
+            AI Nexus // Module Grid
+          </h1>
+        </div>
+        <div className="text-xs font-mono text-gray-500">
+          ACTIVE NODES: <span className="text-cyan-400">{AI_MODULES.length}</span>
+        </div>
+      </div>
+      
+      <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+        <div className="max-w-[1800px] mx-auto grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
+          {AI_MODULES.map((url, index) => (
+            <AIModuleCard key={`${url}-${index}`} url={url} />
+          ))}
+        </div>
       </div>
     </div>
   );
