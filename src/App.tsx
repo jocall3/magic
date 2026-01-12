@@ -123,7 +123,7 @@ const VIEW_FILENAME_MAPPING: Record<string, string> = {
   [View.ApiPlayground]: 'ApiPlaygroundView',
 };
 
-export const SAppLayout: React.FC = () => {
+export const FSAppLayout: React.FC = () => {
   const [activeView, setActiveView] = useState<View>(View.Dashboard);
 
   const renderView = () => {
@@ -286,4 +286,4 @@ export const SAppLayout: React.FC = () => {
   );
 };
 
-export default SAppLayout;
+export default FSAppLayout;
