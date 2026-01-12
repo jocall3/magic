@@ -99,14 +99,14 @@
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
-    "xmlhttprequest": ">=1.7.0",
+    "xmlhttprequest": "1.7.0",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.52.0",
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-react": "^7.37.5",
-    "jq": "^1.7.2",
-    "typescript": "^5.9.3",
+     "jq": "npm:node-jq@^6.3.1",
+     "typescript": "^5.9.3",
     "vite": "^6.2.0"
   }
 }
