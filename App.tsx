@@ -546,12 +546,12 @@ const getModuleTitle = (url: string) => {
   }
 };
 
-const AIModuleCard = ({ url }: { url: string }) => {
+const AIModuleCard = ({ url, className }: { url: string; className?: string }) => {
   const [isLoading, setIsLoading] = useState(true);
   const title = getModuleTitle(url);
 
   return (
-    <div className="flex flex-col h-[500px] w-full bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden hover:border-cyan-500/30 transition-all duration-300 shadow-lg hover:shadow-cyan-500/10 group">
+    <div className={`flex flex-col w-full bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden hover:border-cyan-500/30 transition-all duration-300 shadow-lg hover:shadow-cyan-500/10 group ${className || 'h-[500px]'}`}>
       <div className="px-4 py-3 border-b border-gray-800 bg-gray-950 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
@@ -582,27 +582,106 @@ const AIModuleCard = ({ url }: { url: string }) => {
 };
 
 const ExternalIframeCollection = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev + 1) % AI_MODULES.length);
+  };
+
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev - 1 + AI_MODULES.length) % AI_MODULES.length);
+  };
+
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col">
-      <div className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-gray-800 px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white">
-            <ArrowLeft size={20} />
-          </Link>
-          <h1 className="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 uppercase font-mono">
-            AI Nexus // Module Grid
-          </h1>
+    <div className="flex h-screen bg-[#050505] overflow-hidden">
+      {/* Sidebar */}
+      <div className={`${isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full'} transition-all duration-300 border-r border-gray-800 bg-gray-950 flex flex-col fixed md:relative z-20 h-full`}>
+        <div className="p-4 border-b border-gray-800 flex items-center justify-between bg-gray-950">
+          <div className="flex items-center gap-2">
+            <Terminal size={16} className="text-cyan-400" />
+            <span className="font-mono font-bold text-gray-200 tracking-wider">MODULES</span>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="text-gray-500 hover:text-white">
+            <ArrowLeft size={16} />
+          </button>
         </div>
-        <div className="text-xs font-mono text-gray-500">
-          ACTIVE NODES: <span className="text-cyan-400">{AI_MODULES.length}</span>
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+          {AI_MODULES.map((url, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveIndex(index)}
+              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-mono transition-all duration-200 flex items-center gap-3 ${
+                activeIndex === index
+                  ? 'bg-cyan-900/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                  : 'text-gray-500 hover:bg-gray-900 hover:text-gray-300 border border-transparent'
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${activeIndex === index ? 'bg-cyan-400 animate-pulse' : 'bg-gray-700'}`} />
+              <span className="truncate">{getModuleTitle(url)}</span>
+            </button>
+          ))}
         </div>
       </div>
-      
-      <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-        <div className="max-w-[1800px] mx-auto grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
-          {AI_MODULES.map((url, index) => (
-            <AIModuleCard key={`${url}-${index}`} url={url} />
-          ))}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 bg-black relative">
+        {/* Top Bar */}
+        <div className="h-16 border-b border-gray-800 bg-gray-950/50 backdrop-blur-xl flex items-center justify-between px-6 z-10">
+          <div className="flex items-center gap-4">
+            {!isSidebarOpen && (
+              <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
+                <Terminal size={20} />
+              </button>
+            )}
+            <Link to="/" className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors group">
+              <div className="p-1.5 rounded-md bg-gray-900 group-hover:bg-gray-800 border border-gray-800 group-hover:border-gray-700">
+                <ArrowLeft size={14} />
+              </div>
+              <span className="text-xs font-mono tracking-widest">RETURN TO OS</span>
+            </Link>
+          </div>
+          
+          <div className="flex items-center gap-4">
+             <div className="px-3 py-1 rounded-full bg-gray-900 border border-gray-800 text-[10px] font-mono text-gray-400">
+               MODULE {activeIndex + 1} / {AI_MODULES.length}
+             </div>
+          </div>
+        </div>
+
+        {/* Card Area */}
+        <div className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center overflow-hidden relative">
+           {/* Navigation Buttons (Desktop) */}
+           <button 
+             onClick={handlePrev}
+             className="absolute left-6 z-10 p-4 rounded-full bg-black/50 backdrop-blur border border-gray-800 text-gray-400 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-950/30 transition-all duration-300 group hidden md:flex"
+           >
+             <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
+           </button>
+
+           <button 
+             onClick={handleNext}
+             className="absolute right-6 z-10 p-4 rounded-full bg-black/50 backdrop-blur border border-gray-800 text-gray-400 hover:text-white hover:border-cyan-500/50 hover:bg-cyan-950/30 transition-all duration-300 group hidden md:flex"
+           >
+             <ArrowLeft size={24} className="rotate-180 group-hover:translate-x-1 transition-transform" />
+           </button>
+
+           {/* The Card */}
+           <div className="w-full h-full max-w-[1400px] relative flex flex-col">
+             <div className="flex-1 relative animate-in fade-in zoom-in-95 duration-500">
+               <AIModuleCard 
+                 key={activeIndex} 
+                 url={AI_MODULES[activeIndex]} 
+                 className="h-full shadow-[0_0_50px_rgba(0,0,0,0.5)] border-gray-800" 
+               />
+             </div>
+             
+             {/* Mobile Nav */}
+             <div className="flex md:hidden items-center justify-between mt-4 gap-4">
+               <button onClick={handlePrev} className="flex-1 py-3 bg-gray-900 rounded-xl border border-gray-800 text-gray-400">Prev</button>
+               <button onClick={handleNext} className="flex-1 py-3 bg-gray-900 rounded-xl border border-gray-800 text-gray-400">Next</button>
+             </div>
+           </div>
         </div>
       </div>
     </div>
