@@ -221,7 +221,7 @@ import GlobalChatbot from './GlobalChatbot';
  * appropriate child component. It also orchestrates the main layout, including
  * the Sidebar, Header, and main content area.
  */
-const App: React.FC = () => {
+const SApp: React.FC = () => {
     const [activeView, setActiveView] = useState<View>(View.MetaDashboard);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [previousView, setPreviousView] = useState<View | null>(null);
@@ -544,4 +544,4 @@ const App: React.FC = () => {
     );
 };
 
-export default App;
+export default SApp;
