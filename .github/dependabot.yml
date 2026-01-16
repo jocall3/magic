@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"                    # Root of your repo where package.json lives
+    schedule:
+      interval: "daily"               # Check for updates every day
+    open-pull-requests-limit: 5
+    # Only allow security updates to reduce failures
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Ignore optional updates that may cause conflicts
+    ignore:
+      - dependency-name: "qs"
+        versions:
+          - "*"
+      - dependency-name: "form-data"
+        versions:
+          - "*"
+    commit-message:
+      prefix: "chore"
+    labels:
+      - "dependencies"
+      - "automated"
