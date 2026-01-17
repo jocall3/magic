@@ -1,12 +1,10 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Card from './Card';
-import { Book, ChevronRight, FileText, List, Search, ArrowLeft } from 'lucide-react';
+import { Book, ChevronRight, FileText, List, Search, ArrowLeft, Sparkles, Bot, Loader } from 'lucide-react';
 
 // --- DATA STRUCTURE FOR THE 527 PAGES ---
 // This acts as the "database" for the book content.
 // In a real app, this would be fetched from a markdown folder or CMS.
-// We generate a massive structure here to simulate the depth required.
 
 interface Chapter {
     id: string;
@@ -20,74 +18,50 @@ interface Page {
     content: string;
 }
 
-const generateBookContent = (): Chapter[] => {
-    const parts = [
-        "I. The Vision",
-        "II. High-Level Architecture",
-        "III. Asset Domains Encyclopaedia",
-        "IV. Banking & Integration",
-        "V. Intelligence Systems",
-        "VI. Component Library",
-        "VII. Operational Playbooks",
-        "VIII. Developer Appendix"
-    ];
+const loadBookContent = (): Chapter[] => {
+    const modules = import.meta.glob('../book/*.md', { as: 'raw', eager: true });
+    const pages: Page[] = [];
 
-    let pageCounter = 1;
-    const chapters: Chapter[] = [];
-
-    parts.forEach((partTitle, partIndex) => {
-        // Generate chapters for each part
-        const chapterCount = partIndex === 2 ? 20 : 5; // Make Asset Domains huge
+    for (const path in modules) {
+        const content = modules[path] as unknown as string;
+        const filename = path.split('/').pop() || '';
+        // Extract number from filename (e.g., 'page1.md' -> 1)
+        const match = filename.match(/(\d+)/);
+        const pageNum = match ? parseInt(match[0], 10) : 0;
         
-        for (let i = 1; i <= chapterCount; i++) {
-            const chapterId = `part${partIndex + 1}-chap${i}`;
-            const chapterTitle = `${partTitle} - Chapter ${i}: The ${partIndex === 2 ? 'Asset' : 'Protocol'} of ${Math.random().toString(36).substring(7)}`;
-            
-            const pages: Page[] = [];
-            // Generate pages for each chapter
-            const pageCount = partIndex === 5 ? 10 : 5; // Component library has many pages
-            
-            for (let j = 1; j <= pageCount; j++) {
-                pages.push({
-                    id: `page-${pageCounter}`,
-                    title: `Page ${pageCounter}: Section ${j} of ${chapterTitle}`,
-                    content: `
-                        ### ${chapterTitle}
-                        **Subsection ${j}.0 - Core Principles**
+        pages.push({
+            id: `page-${pageNum}`,
+            title: `Page ${pageNum}`,
+            content: content
+        });
+    }
 
-                        The Infinite Intelligence Foundation dictates that information flow must be unhindered yet verified. 
-                        In this section, we explore the specific mechanics of ${partIndex === 2 ? 'asset tokenization' : 'system architecture'}.
-                        
-                        *   **Principle A:** Absolute Truth. The ledger cannot lie.
-                        *   **Principle B:** Infinite Scalability. The system grows with the network.
-                        *   **Principle C:** Benevolent Oversight. The AI ensures compliance and ethical alignment.
-
-                        This protocol serves as the binding agent for the entire ecosystem. 
-                        By adhering to these standards, we ensure that the Foundation remains a beacon of stability in a chaotic financial world.
-
-                        *Ref: Protocol Standard 527.${pageCounter}.${j}*
-                    `
-                });
-                pageCounter++;
-            }
-
-            chapters.push({
-                id: chapterId,
-                title: chapterTitle,
-                pages: pages
-            });
-        }
+    // Sort pages numerically based on the number in the filename
+    pages.sort((a, b) => {
+        const numA = parseInt(a.id.replace('page-', ''));
+        const numB = parseInt(b.id.replace('page-', ''));
+        return numA - numB;
     });
 
-    return chapters;
+    return [{
+        id: 'the-book',
+        title: 'The Book',
+        pages: pages
+    }];
 };
 
-const BOOK_DATA = generateBookContent();
+const BOOK_DATA = loadBookContent();
 
 const TheBookView: React.FC = () => {
     const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
     const [selectedPage, setSelectedPage] = useState<Page | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [aiResponse, setAiResponse] = useState<string>('');
+    const [isAiLoading, setIsAiLoading] = useState(false);
+
+    useEffect(() => {
+        setAiResponse('');
+    }, [selectedPage]);
 
     const filteredChapters = useMemo(() => {
         if (!searchQuery) return BOOK_DATA;
@@ -109,6 +83,50 @@ const TheBookView: React.FC = () => {
     const handleBackToToC = () => {
         setSelectedChapter(null);
         setSelectedPage(null);
+    };
+
+    const handleAiExpand = async () => {
+        if (!selectedPage) return;
+
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
+        
+        if (!apiKey) {
+            console.error("Gemini API key not found.");
+            return;
+        }
+
+        setIsAiLoading(true);
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Expand on this content significantly, providing more depth, context, and operational details:\n\n${selectedPage.content}`
+                        }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            if (generatedText) {
+                setAiResponse(generatedText);
+            }
+        } catch (error) {
+            console.error("Error expanding content with AI:", error);
+            setAiResponse("Failed to generate AI analysis. Please try again later.");
+        } finally {
+            setIsAiLoading(false);
+        }
     };
 
     return (
@@ -200,6 +218,40 @@ const TheBookView: React.FC = () => {
                                 <div className="mt-12 pt-8 border-t border-gray-800 flex justify-between text-sm text-gray-500">
                                     <span>Infinite Intelligence Foundation</span>
                                     <span>Page {selectedPage.id.split('-')[1]} of 527</span>
+                                </div>
+
+                                {/* AI Expansion Section */}
+                                <div className="mt-8">
+                                    {!aiResponse && !isAiLoading && (
+                                        <button 
+                                            onClick={handleAiExpand}
+                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            Expand with AI
+                                        </button>
+                                    )}
+
+                                    {isAiLoading && (
+                                        <div className="flex items-center gap-2 text-indigo-400">
+                                            <Loader className="w-5 h-5 animate-spin" />
+                                            <span className="text-sm">Analyzing protocol data...</span>
+                                        </div>
+                                    )}
+
+                                    {aiResponse && (
+                                        <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-6 mt-6">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2 bg-indigo-500/20 rounded-lg">
+                                                    <Bot className="w-5 h-5 text-indigo-400" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-white">AI Analysis</h3>
+                                            </div>
+                                            <div className="prose prose-invert prose-sm text-gray-300 leading-relaxed whitespace-pre-line">
+                                                {aiResponse}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
