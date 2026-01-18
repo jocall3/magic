@@ -736,7 +736,7 @@ const RootRedirect = () => {
 
 const theme = createTheme({ palette: { mode: 'dark' } });
 
-function App() {
+function DApp() {
   return (
     <Auth0Provider
       domain="aibankinguniversity.us.auth0.com"
@@ -794,4 +794,4 @@ function App() {
   );
 }
 
-export default App;
+export default DApp;
