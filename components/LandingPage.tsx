@@ -1,22 +1,41 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
     Book, Users, Globe, Shield, Activity, Brain, 
     ArrowRight, Star, Heart, CheckCircle, Lock,
     ChevronRight, GraduationCap, Building, Radio, Cpu,
-    Infinity, Library
+    Infinity, Library, LayoutDashboard, DollarSign, Zap, Terminal,
+    Briefcase, Film, TrendingUp, Settings, Grid, Eye, Code,
+    Wallet, Landmark, BarChart3, Fingerprint
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext';
+import { DataContext } from '../context/DataContext';
 import Card from './Card'; 
+import { View } from '../types';
 
-// --- Landing Page Types ---
-type Tab = 'MISSION' | 'ACADEMY' | 'PLATFORM' | 'MANIFESTO';
+// Define the structure for a portal link
+interface PortalLink {
+    title: string;
+    description: string;
+    icon: React.FC<any>;
+    color: string;
+    path: string; // URL path or View enum key
+    isExternal?: boolean;
+    view?: View;
+}
 
-const LandingPage: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) => {
+const LandingPage: React.FC = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading } = useAuth();
-    const [activeTab, setActiveTab] = useState<Tab>('MISSION');
+    const authContext = useContext(AuthContext);
+    const dataContext = useContext(DataContext);
+
+    if (!authContext || !dataContext) {
+        // Should not happen if App.tsx structure is correct
+        return <div>Error: Contexts not loaded.</div>;
+    }
+
+    const { isAuthenticated, isLoading } = authContext;
+    const { setActiveView } = dataContext;
 
     // Automatically redirect to dashboard if already logged in
     useEffect(() => {
@@ -25,7 +44,16 @@ const LandingPage: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) 
         }
     }, [isAuthenticated, isLoading, navigate]);
 
-    const handleJoin = () => onLoginClick ? onLoginClick() : navigate('/login');
+    const handleNavigation = (link: PortalLink) => {
+        if (link.isExternal) {
+            window.open(link.path, '_blank');
+        } else if (link.view) {
+            setActiveView(link.view);
+            navigate('/app');
+        } else {
+            navigate(link.path);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -38,206 +66,221 @@ const LandingPage: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) 
         );
     }
 
-    const renderContent = () => {
-        switch(activeTab) {
-            case 'MISSION':
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="space-y-6">
-                            <h2 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 leading-tight">
-                                Infinite Intelligence <br/> Foundation
-                            </h2>
-                            <p className="text-xl text-gray-300 leading-relaxed">
-                                We are the architects of a new era. We leverage the 527 Protocol to disseminate knowledge, empower communities, and build a single source of truth for economic prosperity.
-                            </p>
-                            <div className="flex gap-4 pt-4">
-                                <button onClick={handleJoin} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all transform hover:scale-105 flex items-center gap-2">
-                                    <Infinity size={20} /> Access The Foundation
-                                </button>
-                                <button onClick={() => setActiveTab('MANIFESTO')} className="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl border border-gray-700 transition-all flex items-center gap-2">
-                                    <Book size={20} /> The 527 Protocol
-                                </button>
-                            </div>
-                        </div>
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 rounded-3xl blur-3xl"></div>
-                            <div className="relative bg-gray-900/80 backdrop-blur-xl border border-gray-700 rounded-3xl p-8 shadow-2xl">
-                                <div className="flex items-center gap-3 mb-6 border-b border-gray-700 pb-4">
-                                    <Radio className="w-6 h-6 text-green-500 animate-pulse" />
-                                    <span className="text-sm font-mono text-gray-400">FOUNDATION SIGNAL // ONLINE</span>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-gray-800 rounded-lg border-l-4 border-cyan-500">
-                                        <h4 className="font-bold text-white mb-1">Teaching & Education</h4>
-                                        <p className="text-sm text-gray-400">Empowering the public through deep financial literacy.</p>
-                                    </div>
-                                    <div className="p-4 bg-gray-800 rounded-lg border-l-4 border-purple-500">
-                                        <h4 className="font-bold text-white mb-1">Community Support</h4>
-                                        <p className="text-sm text-gray-400">Direct allocation of resources to civic projects.</p>
-                                    </div>
-                                    <div className="p-4 bg-gray-800 rounded-lg border-l-4 border-green-500">
-                                        <h4 className="font-bold text-white mb-1">Infinite Intelligence</h4>
-                                        <p className="text-sm text-gray-400">A perpetually learning system for global good.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'ACADEMY':
-                return (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                        <div className="text-center max-w-3xl mx-auto">
-                            <h2 className="text-3xl font-bold text-white mb-4">The Foundation Academy</h2>
-                            <p className="text-gray-400">Access our vast library of knowledge. From macro-economics to algorithmic governance, we provide the tools to understand the machine.</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {[
-                                { title: "Protocol 527", desc: "Understanding the legal framework of influence.", icon: Book, color: "text-blue-400" },
-                                { title: "Algorithmic Governance", desc: "How code dictates policy in the digital age.", icon: Cpu, color: "text-purple-400" },
-                                { title: "Civic Engineering", desc: "Building the infrastructure of tomorrow.", icon: Building, color: "text-red-400" },
-                            ].map((course, i) => (
-                                <Card key={i} className="hover:border-cyan-500 transition-colors cursor-pointer group">
-                                    <div className={`w-12 h-12 rounded-lg bg-gray-800 flex items-center justify-center mb-4 ${course.color} group-hover:scale-110 transition-transform`}>
-                                        <course.icon size={24} />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">{course.title}</h3>
-                                    <p className="text-sm text-gray-400">{course.desc}</p>
-                                    <div className="mt-4 flex items-center text-sm text-cyan-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Enter Archive <ChevronRight size={16} />
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    </div>
-                );
-            case 'PLATFORM':
-                return (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-center mb-10">
-                            <h2 className="text-3xl font-bold text-white mb-4">The Foundation Platform</h2>
-                            <p className="text-gray-400">A unified operating system for the modern citizen-financier.</p>
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <Activity size={100} className="text-white" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-4">FlowMatrix Transaction Engine</h3>
-                                <p className="text-gray-400 mb-6">Analyze every cent. Our AI categorizes and scrutinizes all financial activity to ensure alignment with your strategic goals.</p>
-                                <ul className="space-y-2 text-sm text-gray-300">
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Real-time anomaly detection</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Automatic tax harvesting</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Privacy-first architecture</li>
-                                </ul>
-                            </div>
-                            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <Brain size={100} className="text-white" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-4">CivicMind AI Core</h3>
-                                <p className="text-gray-400 mb-6">Your personal advisor for compliance, growth, and community support. It doesn't just answer; it guides.</p>
-                                <ul className="space-y-2 text-sm text-gray-300">
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Proactive regulatory alerts</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Opportunity scanning</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Narrative verification</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'MANIFESTO':
-                return (
-                    <div className="max-w-4xl mx-auto bg-gray-900 border border-gray-800 rounded-2xl p-8 md:p-12 animate-in fade-in duration-500 relative">
-                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-500"></div>
-                         <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-8 font-serif">The Foundation Mandate</h2>
-                         <div className="prose prose-invert prose-lg text-gray-300 leading-relaxed">
-                             <p>
-                                 The Infinite Intelligence Foundation operates as a perpetual 527 organization. Our mission is not merely financial; it is cognitive.
-                             </p>
-                             <p>
-                                 We exist to disseminate accurate information, correct market inefficiencies caused by misinformation, and support leadership that aligns with the principles of infinite growth and stability.
-                             </p>
-                             <p>
-                                 This platform serves as the Single Source of Truth. Through our Academy, our Tools, and our Community, we are building a legacy that transcends individual wealth.
-                             </p>
-                             <div className="mt-8 p-4 bg-black/30 border-l-4 border-cyan-500 italic text-cyan-200">
-                                 "We build the future by educating the present." — The Caretaker
-                             </div>
-                         </div>
-                    </div>
-                );
-        }
-    };
+    if (isAuthenticated) {
+        // If authenticated but not yet redirected, show a brief loading state
+        return (
+            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                    <p className="text-indigo-500 font-mono text-xs animate-pulse">REDIRECTING TO NEXUS OS...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const handleLogin = () => navigate('/login');
+
+    const CORE_SYSTEMS: PortalLink[] = [
+        {
+            title: "The Book (527 Protocol)",
+            description: "The foundational legal and philosophical text. Access the source code of influence.",
+            icon: Book,
+            color: "text-red-400",
+            path: '/app',
+            view: View.TheBook,
+        },
+        {
+            title: "The Vision (Strategic Mandate)",
+            description: "High-level objectives, long-term planning, and global impact metrics.",
+            icon: Eye,
+            color: "text-cyan-400",
+            path: '/app',
+            view: View.TheVision,
+        },
+        {
+            title: "Blueprints (Zeitgeist & WorldBuilder)",
+            description: "Architectural plans for future systems, governance models, and AI deployment.",
+            icon: Code,
+            color: "text-green-400",
+            path: '/app',
+            view: View.DeveloperHub, // Placeholder for Blueprints hub
+        },
+        {
+            title: "MegaDashboard (Infra & Security)",
+            description: "Real-time monitoring of infrastructure, compliance, and threat detection systems.",
+            icon: Shield,
+            color: "text-yellow-400",
+            path: '/app',
+            view: View.SecurityCenter,
+        },
+    ];
+
+    const FINANCIAL_PORTALS: PortalLink[] = [
+        {
+            title: "Personal Finance Nexus",
+            description: "Manage individual wealth, budgets, investments, and credit health.",
+            icon: Wallet,
+            color: "text-indigo-400",
+            path: '/app',
+            view: View.Dashboard,
+        },
+        {
+            title: "Corporate Command Center",
+            description: "Treasury management, corporate actions, and global financial reporting.",
+            icon: Briefcase,
+            color: "text-purple-400",
+            path: '/app',
+            view: View.CorporateCommand,
+        },
+        {
+            title: "Wealth Timeline (Legacy Builder)",
+            description: "Long-term planning, tax optimization, and philanthropic strategy.",
+            icon: TrendingUp,
+            color: "text-emerald-400",
+            path: '/app',
+            view: View.LegacyBuilder,
+        },
+        {
+            title: "Investment Matrix",
+            description: "Access to Algo Trading, Forex, Commodities, and Venture Capital desks.",
+            icon: BarChart3,
+            color: "text-orange-400",
+            path: '/app',
+            view: View.Investments,
+        },
+    ];
+
+    const UTILITY_MODULES: PortalLink[] = [
+        {
+            title: "Voice Control (AI Assistant)",
+            description: "Interact with the Nexus OS using natural language commands.",
+            icon: Radio,
+            color: "text-pink-400",
+            path: '/app',
+            view: View.VoiceControl,
+        },
+        {
+            title: "AI Module Collection",
+            description: "Explore external, experimental AI applications and sandboxes.",
+            icon: Terminal,
+            color: "text-cyan-400",
+            path: '/modules',
+            isExternal: false,
+        },
+        {
+            title: "Settings & Personalization",
+            description: "Configure your environment, security, and notification preferences.",
+            icon: Settings,
+            color: "text-gray-400",
+            path: '/app',
+            view: View.Settings,
+        },
+        {
+            title: "Plaid & Stripe Nexus",
+            description: "Direct access to core financial integration dashboards.",
+            icon: Landmark,
+            color: "text-lime-400",
+            path: '/app',
+            view: View.StripeNexus,
+        },
+    ];
+
+    const PortalCard: React.FC<{ link: PortalLink }> = ({ link }) => (
+        <button
+            onClick={() => handleNavigation(link)}
+            className={`relative flex flex-col p-6 bg-gray-900/70 backdrop-blur-sm border border-gray-800 rounded-2xl text-left transition-all duration-300 hover:bg-gray-800/90 hover:border-cyan-500/50 group shadow-xl hover:shadow-cyan-500/10`}
+        >
+            <div className={`w-12 h-12 rounded-xl bg-gray-950/50 flex items-center justify-center mb-4 border border-gray-700/50 ${link.color} group-hover:scale-105 transition-transform`}>
+                <link.icon size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">{link.title}</h3>
+            <p className="text-sm text-gray-400 flex-1">{link.description}</p>
+            <div className="mt-4 flex items-center text-sm font-medium text-cyan-500 group-hover:text-cyan-300 transition-colors">
+                Enter Portal <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+            </div>
+        </button>
+    );
 
     return (
-        <div className="min-h-screen bg-gray-950 text-white font-sans selection:bg-cyan-500/30">
+        <div className="min-h-screen bg-gray-950 text-white font-sans selection:bg-cyan-500/30 overflow-hidden">
             {/* Navbar */}
             <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-500/20">
-                            <Infinity size={24} className="text-white"/>
+                            <Grid size={24} className="text-white"/>
                         </div>
-                        <span className="font-bold tracking-widest text-lg">INFINITE<span className="text-cyan-400">.FOUNDATION</span></span>
+                        <span className="font-bold tracking-widest text-lg">NEXUS<span className="text-cyan-400">.OS</span></span>
                     </div>
                     
-                    <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
-                        {['MISSION', 'ACADEMY', 'PLATFORM', 'MANIFESTO'].map((tab) => (
-                            <button 
-                                key={tab}
-                                onClick={() => setActiveTab(tab as Tab)}
-                                className={`hover:text-white transition-colors uppercase tracking-wide ${activeTab === tab ? 'text-white border-b-2 border-cyan-500' : ''}`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-
                     <div className="flex items-center gap-4">
-                        <button onClick={handleJoin} className="text-sm font-bold text-cyan-400 hover:text-cyan-300">
+                        <button onClick={handleLogin} className="text-sm font-bold text-cyan-400 hover:text-cyan-300">
                             Log In
                         </button>
-                        <button onClick={handleJoin} className="bg-white text-black px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors">
-                            Join Now
+                        <button onClick={handleLogin} className="bg-cyan-600 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-cyan-500 transition-colors shadow-lg shadow-cyan-500/20">
+                            Access OS
                         </button>
                     </div>
                 </div>
             </nav>
 
-            {/* Main Content */}
-            <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
-                {renderContent()}
+            {/* Main Content - Grand Central Station */}
+            <main className="pt-32 pb-20 px-6 max-w-[1400px] mx-auto">
+                <header className="text-center mb-16">
+                    <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 leading-tight tracking-tighter italic font-mono animate-in fade-in slide-in-from-top-8 duration-700">
+                        GRAND CENTRAL STATION
+                    </h1>
+                    <p className="mt-4 text-xl text-gray-400 max-w-3xl mx-auto font-mono">
+                        The Sovereign Nexus Operating System. A unified portal to infinite intelligence, financial command, and global infrastructure.
+                    </p>
+                    <div className="mt-8 flex justify-center">
+                        <button onClick={handleLogin} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:scale-[1.02] flex items-center gap-2 text-lg">
+                            <Fingerprint size={20} /> Authenticate & Enter
+                        </button>
+                    </div>
+                </header>
+
+                {/* Core Systems Grid */}
+                <section className="mb-16">
+                    <h2 className="text-3xl font-bold text-white mb-8 border-b border-gray-800 pb-3 flex items-center gap-3">
+                        <Cpu size={24} className="text-cyan-400" /> Core Foundation Systems
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {CORE_SYSTEMS.map((link, i) => (
+                            <PortalCard key={i} link={link} />
+                        ))}
+                    </div>
+                </section>
+
+                {/* Financial Command Grid */}
+                <section className="mb-16">
+                    <h2 className="text-3xl font-bold text-white mb-8 border-b border-gray-800 pb-3 flex items-center gap-3">
+                        <DollarSign size={24} className="text-green-400" /> Financial Command & Wealth Engineering
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {FINANCIAL_PORTALS.map((link, i) => (
+                            <PortalCard key={i} link={link} />
+                        ))}
+                    </div>
+                </section>
+
+                {/* Utility & Entertainment Grid */}
+                <section>
+                    <h2 className="text-3xl font-bold text-white mb-8 border-b border-gray-800 pb-3 flex items-center gap-3">
+                        <Zap size={24} className="text-yellow-400" /> Utility & AI Modules
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {UTILITY_MODULES.map((link, i) => (
+                            <PortalCard key={i} link={link} />
+                        ))}
+                    </div>
+                </section>
             </main>
 
             {/* Footer */}
             <footer className="border-t border-gray-800 bg-black py-12 px-6">
-                <div className="max-w-7xl auto grid grid-cols-1 md:grid-cols-4 gap-12">
-                    <div className="col-span-2">
-                        <h4 className="text-2xl font-bold text-white mb-4">Infinite Intelligence Foundation</h4>
-                        <p className="text-gray-500 max-w-sm">
-                            A perpetual 527 organization dedicated to education, truth, and community empowerment.
-                        </p>
-                    </div>
-                    <div>
-                        <h5 className="font-bold text-white mb-4">The Academy</h5>
-                        <ul className="space-y-2 text-sm text-gray-500">
-                            <li className="hover:text-cyan-400 cursor-pointer">Curriculum</li>
-                            <li className="hover:text-cyan-400 cursor-pointer">Faculty</li>
-                            <li className="hover:text-cyan-400 cursor-pointer">Research</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h5 className="font-bold text-white mb-4">Network</h5>
-                        <ul className="space-y-2 text-sm text-gray-500">
-                            <li className="hover:text-cyan-400 cursor-pointer">Login</li>
-                            <li className="hover:text-cyan-400 cursor-pointer">Register</li>
-                            <li className="hover:text-cyan-400 cursor-pointer">Contact</li>
-                        </ul>
-                    </div>
-                </div>
                 <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-900 text-center text-xs text-gray-600 font-mono">
-                    COPYRIGHT © 2025 INFINITE INTELLIGENCE FOUNDATION.
+                    NEXUS OS // SOVEREIGN INTELLIGENCE PLATFORM // ACCESS RESTRICTED
                 </div>
             </footer>
         </div>
