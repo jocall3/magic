@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sovereign AI Banking Nexus</title>
+    <title>Jellyfish Magic Financial OS</title>
+    <meta name="description" content="The Magic Jellyfish Financial Operating System: Sovereign AI Core for next-generation finance." />
+    <meta name="theme-color" content="#06b6d4" /> <!-- Cyan 500 -->
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
@@ -130,23 +132,9 @@
 </head>
 
   <body>
-    <div class="app-container">
-      <!-- Initial Splash Screen / Loading State -->
-      <div id="loading" class="loading-state">
-        <div class="loading-text">Synchronizing with Quantum Core...</div>
-      </div>
-
-      <!-- Static Error Catch -->
-      <div id="error" class="error-state" style="display: none;">
-        <div class="error-title">Oops!</div>
-        <div class="error-message">Nexus Handshake Interrupted</div>
-        <div id="error-details" class="error-sub-message"></div>
-      </div>
-
-      <!-- React Mount Point -->
-      <div id="root" class="main-card-wrapper" style="display: none;">
-          <!-- React will render here -->
-      </div>
+    <!-- React Mount Point -->
+    <div id="root" class="app-container">
+        <!-- React will render here -->
     </div>
 
     <script type="module" src="/index.tsx"></script>
