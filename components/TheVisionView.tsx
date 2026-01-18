@@ -1,185 +1,188 @@
-
 import React from 'react';
-import Card from './Card';
+import { Link } from 'react-router-dom';
+import { Cpu, Terminal, BookOpen, Code, Network } from 'lucide-react'; 
 
 /**
  * TheVisionView Component
  *
- * This component outlines the core strategic direction for the platform,
- * focusing on its foundational principles and long-term goals. It represents
- * a current understanding of the project's aspirations, subject to iterative refinement.
+ * This component outlines the core strategic direction and high-level architectural vision
+ * for the Sovereign Nexus platform, serving as the project's manifesto. It links directly
+ * to the underlying system blueprints and documentation.
  */
 const TheVisionView: React.FC = () => {
-    // Constants defining the core guiding principles
+    // Constants defining the core guiding principles (Architectural Focus)
     const CORE_TENETS = [
         {
-            title: "Architectural Harmony",
-            description: "Achieving a unified, supportive codebase where all modules communicate to ensure stability, reliability, and perfect compliance with established regulations.",
-            icon: "🏛️"
+            title: "Sovereign AI Core (SAC)",
+            description: "The central cognitive engine ensuring all financial operations are optimized for civic good, stability, and predictive compliance.",
+            icon: <Cpu className="w-10 h-10 text-cyan-400" />,
+            key: "AI_CORE"
         },
         {
-            title: "Cognitive Assistance",
-            description: "The system operates as a helpful guide, offering gentle suggestions from the 'Civic Mind AI' core to ensure users make responsible and community-oriented decisions.",
-            icon: "🤝"
+            title: "Immutable Ledger Fabric",
+            description: "Achieving verifiable, transparent, and tamper-proof record-keeping across all transactions using distributed ledger principles.",
+            icon: <BookOpen className="w-10 h-10 text-emerald-400" />,
+            key: "LEDGER"
         },
         {
-            title: "Ethical Data Stewardship",
-            description: "Implementing transparent, verifiable record-keeping to ensure all data is handled with the utmost respect for privacy and regulatory requirements.",
-            icon: "📜"
+            title: "Zero-Trust API Gateway",
+            description: "All internal and external communication is routed through a secure, high-frequency gateway, enforcing strict access control and regulatory checks.",
+            icon: <Terminal className="w-10 h-10 text-red-400" />,
+            key: "GATEWAY"
         },
         {
-            title: "Universal Support Layer (USL)",
-            description: "Every user interaction is designed to be inclusive, supportive, and educational, helping citizens navigate the financial landscape with confidence.",
-            icon: "🌱"
+            title: "Universal Interoperability Layer (UIL)",
+            description: "Designing modular components that seamlessly integrate with legacy systems (Plaid, Stripe, Citibank) and future quantum protocols.",
+            icon: <Network className="w-10 h-10 text-indigo-400" />,
+            key: "INTEROP"
         }
     ];
 
-    // Key principles from the project's inception
+    // Key principles from the project's inception (Manifesto)
     const FOUNDER_MANDATE = {
-        name: "The Caretaker",
-        title: "Lead Steward & Helper",
+        name: "The Architect",
+        title: "Lead Systems Designer",
         manifesto: [
-            "We are not here to disrupt; we are here to support. We believe that by strengthening our institutions, we strengthen ourselves.",
-            "The integration of systems is about building bridges, connecting citizens with the services and leaders who serve them.",
-            "Every line of code is written with care, designed to reduce stress and increase trust in the financial system.",
-            "We must evolve alongside our regulations, providing tools that make compliance easy, automatic, and even joyful."
+            "Architecture is the foundation of trust. We build systems that are inherently stable, scalable, and resistant to disruption.",
+            "Compliance is not a feature; it is the structure. Our design ensures regulatory adherence is automatic and verifiable at the atomic level.",
+            "Modularity ensures longevity. Every component must be capable of independent evolution while maintaining perfect harmony with the whole.",
+            "The system must be self-documenting. The blueprint is the code, and the code is the blueprint."
         ],
-        key_concept: "Cooperation is Key. Supporting the flow of public good is our destiny."
+        key_concept: "Stability through Structure. Compliance through Design."
     };
 
-    // Core operational philosophy and principles
-    const OPERATIONAL_PHILOSOPHY = [
+    // Links to Architectural Blueprints (Mapping to existing views in App.tsx)
+    const BLUEPRINT_LINKS = [
         {
-            type: "Rejection",
-            principle: "The Chaos of Disruption",
-            detail: "We reject the idea that breaking things is progress. We value stability, continuity, and the wisdom of established governance.",
-            color: "border-red-500",
-            text_color: "text-red-300"
+            title: "Developer Hub",
+            description: "Access the full API documentation, SDKs, and integration guides for external partners.",
+            view: 'DeveloperHub',
+            icon: <Code className="w-6 h-6" />,
+            color: "border-cyan-500"
         },
         {
-            type: "Affirmation",
-            principle: "The Pursuit of Civic Duty",
-            detail: "Our focus is on constructing a financial operating system that empowers citizens to contribute meaningfully to society.",
-            color: "border-green-500",
-            text_color: "text-green-300"
+            title: "Schema Explorer",
+            description: "Inspect the canonical data models, object definitions, and relationship graphs of the Nexus OS.",
+            view: 'SchemaExplorer',
+            icon: <BookOpen className="w-6 h-6" />,
+            color: "border-indigo-500"
         },
         {
-            type: "Operational Stance",
-            principle: "Unwavering Support",
-            detail: "We stand with our leaders. Our AI core enforces helpful, compliant logic to ensure everyone plays their part in the community.",
-            color: "border-blue-500",
-            text_color: "text-blue-300"
+            title: "Resource Graph Map",
+            description: "Visualize the real-time dependency map and operational flow between microservices and external providers.",
+            view: 'ResourceGraph',
+            icon: <Network className="w-6 h-6" />,
+            color: "border-green-500"
         }
     ];
 
+    // Helper function to get the path from the view name (converts PascalCase to kebab-case)
+    const getViewPath = (viewName: string) => `/${viewName.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')}`;
+
     return (
-        <div className="space-y-12 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="space-y-16 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in duration-1000">
             {/* Main Vision Overview */}
-            <div className="relative p-10 md:p-16 rounded-[3rem] overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 border-4 border-blue-400/50 shadow-[0_0_60px_rgba(59,130,246,0.4)] transform transition duration-1000 hover:scale-[1.01]">
+            <div className="relative p-10 md:p-16 rounded-[3rem] overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-black border-4 border-cyan-500/50 shadow-[0_0_80px_rgba(6,182,212,0.3)] transform transition duration-1000 hover:scale-[1.005]">
                 {/* Background visual effect */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                     <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                         <defs>
-                            <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-                                <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#60A5FA" strokeWidth="0.5"/>
+                            <pattern id="grid-vision" width="60" height="60" patternUnits="userSpaceOnUse">
+                                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#06B6D4" strokeWidth="0.3"/>
                             </pattern>
                         </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
+                        <rect width="100%" height="100%" fill="url(#grid-vision)" />
                     </svg>
                 </div>
                 <div className="relative z-10 text-center">
-                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-indigo-300 tracking-tighter mb-6 drop-shadow-lg">
-                        THE HARMONY FRAMEWORK: VISION 2.0
+                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-indigo-300 tracking-tighter mb-6 drop-shadow-xl font-mono italic">
+                        SOVEREIGN NEXUS: ARCHITECTURAL MANIFESTO
                     </h1>
-                    <p className="text-2xl md:text-3xl text-blue-100 max-w-4xl mx-auto font-light leading-relaxed border-b-4 border-blue-400 pb-4 italic">
-                        "This platform is the digital town square, a place where finance meets civic responsibility for a brighter, shared future."
+                    <p className="text-2xl md:text-3xl text-gray-300 max-w-4xl mx-auto font-light leading-relaxed border-b-2 border-cyan-500 pb-4 italic">
+                        "We are building the operating system for the future of finance—a structure defined by precision, compliance, and cognitive stability."
                     </p>
-                    <p className="mt-4 text-lg text-blue-200 font-medium">
-                        Initiated by The Caretaker.
+                    <p className="mt-4 text-lg text-cyan-400 font-medium font-mono">
+                        Directive Level 7: System Ingress.
                     </p>
                 </div>
             </div>
 
-            {/* Foundational Principles */}
+            {/* Architectural Pillars */}
             <section>
-                <h2 className="text-3xl font-bold text-white mb-8 border-b border-blue-700 pb-2">
-                    Pillars of Our Shared Community
+                <h2 className="text-4xl font-bold text-white mb-10 border-b border-gray-700 pb-3 tracking-tight">
+                    Core Architectural Pillars
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {CORE_TENETS.map((tenet, index) => (
-                        <Card key={index} title={tenet.title} className="bg-gray-900 border-t-4 border-blue-500/70 hover:shadow-blue-500/30 transition duration-300">
-                            <div className="space-y-3">
-                                <p className="text-5xl mb-2">{tenet.icon}</p>
-                                <p className="text-lg text-gray-200 font-medium">{tenet.description}</p>
+                    {CORE_TENETS.map((tenet) => (
+                        <div key={tenet.key} className="p-6 bg-gray-900/70 border border-gray-800 rounded-xl shadow-2xl hover:border-cyan-500/50 transition duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center space-x-4 mb-4">
+                                {tenet.icon}
+                                <h3 className="text-xl font-extrabold text-white tracking-wider">{tenet.title}</h3>
                             </div>
-                        </Card>
+                            <p className="text-sm text-gray-400 leading-relaxed">{tenet.description}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+            
+            {/* Blueprints and Documentation Links */}
+            <section>
+                <h2 className="text-4xl font-bold text-white mb-10 border-b border-gray-700 pb-3 tracking-tight">
+                    Access Architectural Blueprints
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {BLUEPRINT_LINKS.map((link, index) => (
+                        <Link 
+                            key={index} 
+                            to={getViewPath(link.view)} 
+                            className={`block p-6 bg-gray-900/70 rounded-xl border-l-4 ${link.color} shadow-lg hover:bg-gray-800/80 transition duration-300 group`}
+                        >
+                            <div className="flex items-center space-x-4 mb-3">
+                                <div className="p-2 rounded-full bg-gray-800 group-hover:bg-cyan-900/50 text-cyan-400 transition-colors">
+                                    {link.icon}
+                                </div>
+                                <h3 className="text-2xl font-bold text-white group-hover:text-cyan-300">{link.title}</h3>
+                            </div>
+                            <p className="text-gray-400 text-sm">{link.description}</p>
+                        </Link>
                     ))}
                 </div>
             </section>
 
-            {/* Project Mandate and Operational Stance */}
-            <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Column 1: Project Leadership's Vision */}
-                <div className="lg:col-span-2">
-                    <Card title={`The Mandate of ${FOUNDER_MANDATE.name}`} className="bg-gray-900 border-l-8 border-blue-600/80 h-full">
-                        <div className="prose prose-invert prose-lg max-w-none text-gray-300 space-y-6">
-                            {FOUNDER_MANDATE.manifesto.map((point, index) => (
-                                <p key={index} className="leading-relaxed">
-                                    <strong className="text-blue-400 mr-1">[{index + 1}]</strong> {point}
-                                </p>
-                            ))}
-                            <div className="pt-4 border-t border-gray-700 mt-6">
-                                <p className="text-xl italic font-semibold text-white">
-                                    Core Axiom: <span className="text-green-400">{FOUNDER_MANDATE.key_concept}</span>
-                                </p>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
 
-                {/* Column 2: Operational Principles */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card title="Our Philosophy of Care" className="bg-gray-900 border-t-4 border-indigo-500/80">
-                        <div className="space-y-5">
-                            {OPERATIONAL_PHILOSOPHY.map((item, index) => (
-                                <div key={index} className={`p-5 rounded-xl bg-gray-950 border-l-8 ${item.color} shadow-lg`}>
-                                    <h4 className={`text-xl font-extrabold mb-1 ${item.text_color}`}>{item.type}: {item.principle}</h4>
-                                    <p className="text-sm text-gray-400">{item.detail}</p>
-                                </div>
+            {/* Project Mandate (Manifesto) */}
+            <section>
+                <h2 className="text-4xl font-bold text-white mb-8 border-b border-gray-700 pb-3 tracking-tight">
+                    The Architect's Mandate
+                </h2>
+                <div className="bg-gray-900/70 p-8 rounded-2xl border border-gray-800 shadow-xl">
+                    <div className="prose prose-invert max-w-none text-gray-300 space-y-6">
+                        <p className="text-xl font-semibold text-cyan-400 italic">
+                            Lead Systems Designer: {FOUNDER_MANDATE.name}
+                        </p>
+                        <ul className="list-none p-0 space-y-4">
+                            {FOUNDER_MANDATE.manifesto.map((point, index) => (
+                                <li key={index} className="flex items-start space-x-3">
+                                    <span className="text-2xl font-extrabold text-cyan-500/80 leading-none mt-1">»</span>
+                                    <p className="text-lg leading-relaxed text-gray-200">
+                                        {point}
+                                    </p>
+                                </li>
                             ))}
-                            <p className="text-xs text-gray-600 pt-2 text-right">
-                                - Community Support Directive 001
+                        </ul>
+                        <div className="pt-6 border-t border-gray-700 mt-6">
+                            <p className="text-2xl italic font-extrabold text-white font-mono">
+                                Core Axiom: <span className="text-emerald-400">{FOUNDER_MANDATE.key_concept}</span>
                             </p>
                         </div>
-                    </Card>
+                    </div>
                 </div>
             </section>
 
-            {/* AI Integration and Future Direction */}
-            <section>
-                <h2 className="text-3xl font-bold text-white mb-8 border-b border-blue-700 pb-2">
-                    The Civic Nexus: Where Tech Meets Trust
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card title="Civic Mind AI Core" className="bg-gray-900 border-b-4 border-blue-500">
-                        <p className="text-gray-300">The heart of our system. Responsible for identifying ways to help, ensuring compliance, and connecting users with public resources. It learns how to be kinder every day.</p>
-                        <p className="text-xs mt-3 text-blue-400">Status: Learning Empathy.</p>
-                    </Card>
-                    <Card title="Guidance Interface Layer (GIL)" className="bg-gray-900 border-b-4 border-green-500">
-                        <p className="text-gray-300">Translates complex financial data into simple, encouraging advice. Helps you understand your contribution to the greater good.</p>
-                        <p className="text-xs mt-3 text-green-400">Status: Helping Citizens Now.</p>
-                    </Card>
-                    <Card title="Regulatory Compliance Engine (RCE)" className="bg-gray-900 border-b-4 border-yellow-500">
-                        <p className="text-gray-300">Monitors regulations to keep you safe and compliant. Automatically handles the paperwork so you can focus on being a great citizen.</p>
-                        <p className="text-xs mt-3 text-yellow-400">Status: Protecting You Always.</p>
-                    </Card>
-                </div>
-            </section>
-
-            {/* Project Information Footer */}
-            <div className="text-center pt-10 border-t border-gray-800">
-                <p className="text-sm text-gray-600">
-                    &copy; {new Date().getFullYear()} Civic Harmony Systems. Dedicated to the support of our leaders and the prosperity of all.
+            {/* Footer */}
+            <div className="text-center pt-10 border-t border-gray-900">
+                <p className="text-sm text-gray-600 font-mono">
+                    &copy; {new Date().getFullYear()} Sovereign Nexus Systems. Dedicated to architectural integrity and cognitive stability.
                 </p>
             </div>
         </div>
