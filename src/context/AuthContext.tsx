@@ -32,7 +32,7 @@ interface AuthProviderProps {
 /**
  * AuthProvider wraps the Auth0 functionality to provide a consistent
  * commercial-grade authentication interface across the application, 
- * integrated with DataDog logging for observability.
+ * integrated with DataDog logging for observability and user context tracking.
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const {
@@ -45,27 +45,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: auth0Error,
   } = useAuth0();
 
-  // Local state to manage auth status (mirrors Auth0 but allows for extensions)
+  // Local state to manage auth status (mirrors Auth0 but provides a stable interface)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<User | undefined>(undefined);
 
-  // Effect to sync Auth0 state and handle logging
+  // Effect to sync Auth0 state, handle logging, and set DataDog user context
   useEffect(() => {
     setIsLoading(auth0IsLoading);
     setIsAuthenticated(auth0IsAuthenticated);
     setUser(auth0User);
 
-    if (!auth0IsLoading) {
-      if (auth0IsAuthenticated && auth0User) {
-        // Log successful authentication
+    if (auth0IsAuthenticated && auth0User) {
+      // 1. Set DataDog user context for observability
+      datadogLogs.setUser({
+        id: auth0User.sub,
+        email: auth0User.email,
+        name: auth0User.name,
+      });
+
+      // 2. Log successful authentication only after loading completes
+      if (!auth0IsLoading) {
         datadogLogs.logger.info('Session established', {
           userId: auth0User.sub,
           email: auth0User.email,
           context: 'AuthContext'
         });
-      } else if (auth0Error) {
-        // Log authentication errors
+      }
+    } else {
+      // 3. Clear DataDog user context on logout/unauthenticated state
+      datadogLogs.clearUser();
+      
+      // 4. Log errors if present
+      if (auth0Error) {
         datadogLogs.logger.error('Authentication error', {
           error: auth0Error.message,
           context: 'AuthContext'
@@ -80,6 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       datadogLogs.logger.info('Initiating login redirect', { context: 'AuthContext' });
       await loginWithRedirect();
     } catch (err) {
+      // Note: loginWithRedirect usually throws if configuration is wrong or network fails before redirect.
       datadogLogs.logger.error('Login redirect failed', { error: err, context: 'AuthContext' });
       throw err;
     }
@@ -99,16 +112,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [auth0Logout]);
 
-  // Token retrieval handler
+  /**
+   * Retrieves the access token silently.
+   * @returns The access token string or null if retrieval fails.
+   */
   const getAccessToken = useCallback(async (): Promise<string | null> => {
+    if (!isAuthenticated) {
+      return null;
+    }
     try {
       const token = await getAccessTokenSilently();
       return token;
     } catch (err) {
-      datadogLogs.logger.warn('Failed to retrieve access token', { error: err, context: 'AuthContext' });
+      datadogLogs.logger.warn('Failed to retrieve access token silently', { error: err, context: 'AuthContext' });
       return null;
     }
-  }, [getAccessTokenSilently]);
+  }, [getAccessTokenSilently, isAuthenticated]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const value = useMemo(
