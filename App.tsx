@@ -66,7 +66,6 @@ import GlobalSsiHubView from './components/GlobalSsiHubView';
 import CustomerDashboard from './components/CustomerDashboard';
 import VerificationReportsView from './components/VerificationReportsView';
 import FinancialReportingView from './components/FinancialReportingView';
-import StripeNexusDashboard from './components/StripeNexusDashboard';
 import TheBookView from './components/TheBookView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
 import VoiceControl from './components/VoiceControl';
@@ -309,7 +308,6 @@ const SAppLayout = () => {
       case View.CustomerDashboard: return <CustomerDashboard />;
       case View.VerificationReports: return <VerificationReportsView customerId="c1" />;
       case View.FinancialReporting: return <FinancialReportingView />;
-      case View.StripeNexusDashboard: return <StripeNexusDashboard />;
       case View.TheBook: return <TheBookView />;
       case View.KnowledgeBase: return <KnowledgeBaseView />;
       case View.CitibankAccounts: return <CitibankAccountsView />;
