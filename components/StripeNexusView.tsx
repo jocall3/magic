@@ -1,409 +1,138 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useContext } from 'react';
+import Card from './Card';
+import { DataContext } from '../context/DataContext';
+import { 
+    Zap, Users, Layers, FileText, 
+    ShieldCheck, Activity, CheckCircle2, ArrowUpRight, 
+    ArrowDownLeft, Filter
+} from 'lucide-react';
+import VirtualAccountsDashboard from './VirtualAccountsDashboard';
+import ReconciliationHubView from './ReconciliationHubView';
+import CounterpartyDashboardView from './CounterpartyDashboardView';
 
-// Instead of parsing a massive YAML string which requires an external library,
-// we define the data directly as a JavaScript object. This is safer and faster for this view.
+type Tab = 'PAYMENTS' | 'ENTITIES' | 'VIRTUAL_LEDGER' | 'RECONCILIATION';
 
-const stripeResourcesData = {
-  "account": {
-    "business_profile": {
-      "mcc": null,
-      "name": null,
-      "product_description": null,
-      "support_address": null,
-      "support_email": null,
-      "support_phone": null,
-      "support_url": null,
-      "url": null
-    },
-    "business_type": null,
-    "capabilities": {
-      "card_payments": "active",
-      "transfers": "active"
-    },
-    "charges_enabled": false,
-    "country": "US",
-    "created": 1234567890,
-    "default_currency": "usd",
-    "details_submitted": false,
-    "email": "site@stripe.com",
-    "id": "acct_1MWlHDJITzLVzkSm",
-    "object": "account",
-    "payouts_enabled": false,
-    "type": "standard"
-  },
-  "balance": {
-    "available": [
-      {
-        "amount": 0,
-        "currency": "usd",
-        "source_types": {
-          "card": 0
+const useStripeNexusView: React.FC = () => {
+    const [activeTab, setActiveTab] = useState<Tab>('PAYMENTS');
+    const { deductCredits } = useContext(DataContext)!;
+
+    const mockPayments = [
+        { id: 'pi_1', status: 'Succeeded', amount: 12500, customer: 'Nexus Corp', date: '2025-01-22 14:30' },
+        { id: 'pi_2', status: 'Pending', amount: 5400, customer: 'Alpha Ventures', date: '2025-01-22 14:45' },
+        { id: 'pi_3', status: 'Failed', amount: 98000, customer: 'Gamma Systems', date: '2025-01-21 09:00' }
+    ];
+
+    const handleAction = (cost: number) => {
+        if (deductCredits(cost)) {
+            alert(`Action authorized. Cost: ${cost} SC deducted from Sovereign Balance.`);
         }
-      }
-    ],
-    "livemode": false,
-    "object": "balance",
-    "pending": [
-      {
-        "amount": 0,
-        "currency": "usd",
-        "source_types": {
-          "card": 0
-        }
-      }
-    ]
-  },
-  "charge": {
-    "amount": 100,
-    "amount_captured": 0,
-    "amount_refunded": 0,
-    "balance_transaction": "txn_1MlLhiJITzLVzkSm0tDIM70A",
-    "billing_details": {
-      "address": {
-        "city": null,
-        "country": null,
-        "line1": null,
-        "line2": null,
-        "postal_code": null,
-        "state": null
-      },
-      "email": null,
-      "name": "Jenny Rosen",
-      "phone": null
-    },
-    "captured": false,
-    "created": 1234567890,
-    "currency": "usd",
-    "description": "My First Test Charge (created for API docs)",
-    "disputed": false,
-    "id": "ch_1Mcd6UJITzLVzkSmp1XIBHoW",
-    "livemode": false,
-    "object": "charge",
-    "paid": true,
-    "payment_method": "card_1Mcd6SJITzLVzkSmqkE2eJHO",
-    "status": "succeeded"
-  },
-  "customer": {
-    "address": null,
-    "balance": 0,
-    "created": 1234567890,
-    "currency": "usd",
-    "default_source": null,
-    "delinquent": false,
-    "description": null,
-    "email": null,
-    "id": "cus_NNNslJKODLsLoG",
-    "invoice_prefix": "1A66DA4",
-    "livemode": false,
-    "name": null,
-    "next_invoice_sequence": 1,
-    "object": "customer",
-    "phone": null
-  },
-  "dispute": {
-    "amount": 1000,
-    "balance_transactions": [],
-    "charge": "ch_1Mcd6UJITzLVzkSmp1XIBHoW",
-    "created": 1234567890,
-    "currency": "usd",
-    "evidence": {
-        "reason": "fraudulent"
-    },
-    "id": "dp_1MlLi1JITzLVzkSmdqrdx0Ir",
-    "is_charge_refundable": true,
-    "livemode": false,
-    "object": "dispute",
-    "reason": "general",
-    "status": "warning_needs_response"
-  },
-  "invoice": {
-    "account_country": "US",
-    "amount_due": 1000,
-    "amount_paid": 0,
-    "amount_remaining": 1000,
-    "attempt_count": 0,
-    "attempted": false,
-    "auto_advance": true,
-    "billing_reason": "manual",
-    "collection_method": "charge_automatically",
-    "created": 1234567890,
-    "currency": "usd",
-    "customer": "cus_NNNslJKODLsLoG",
-    "description": null,
-    "id": "in_1MlLhvJITzLVzkSmcKw0tIgl",
-    "livemode": false,
-    "object": "invoice",
-    "paid": false,
-    "status": "draft",
-    "subtotal": 1000,
-    "total": 1000
-  },
-  "payout": {
-    "amount": 1100,
-    "arrival_date": 1234567890,
-    "automatic": true,
-    "balance_transaction": "txn_1MlLhiJITzLVzkSm0tDIM70A",
-    "created": 1234567890,
-    "currency": "usd",
-    "description": "STRIPE PAYOUT",
-    "destination": "ba_1MlLiCJITzLVzkSmzTHBeJt2",
-    "id": "po_1MlLiCJITzLVzkSmTO8DFctc",
-    "livemode": false,
-    "method": "standard",
-    "object": "payout",
-    "status": "in_transit",
-    "type": "bank_account"
-  },
-  "refund": {
-    "amount": 100,
-    "balance_transaction": null,
-    "charge": "ch_1Mcd6UJITzLVzkSmp1XIBHoW",
-    "created": 1234567890,
-    "currency": "usd",
-    "id": "re_1MlLi1JITzLVzkSmYjN8VXsL",
-    "object": "refund",
-    "reason": null,
-    "status": "succeeded"
-  },
-  "subscription": {
-    "application_fee_percent": null,
-    "billing_cycle_anchor": 1234567890,
-    "cancel_at_period_end": false,
-    "collection_method": "charge_automatically",
-    "created": 1234567890,
-    "currency": "usd",
-    "current_period_end": 1234567890,
-    "current_period_start": 1234567890,
-    "customer": "cus_NNNslJKODLsLoG",
-    "id": "sub_1MlLi1JITzLVzkSmbGPN6d9R",
-    "items": {
-      "data": [],
-      "has_more": false,
-      "object": "list",
-      "url": "/v1/subscription_items?subscription=sub_1MlLi1JITzLVzkSmbGPN6d9R"
-    },
-    "livemode": false,
-    "object": "subscription",
-    "start_date": 1234567890,
-    "status": "active"
-  }
-};
+    };
 
-const JsonViewer: React.FC<{ data: object }> = ({ data }) => (
-  <pre style={styles.jsonViewer}>
-    {JSON.stringify(data, null, 2)}
-  </pre>
-);
-
-interface ResourceViewProps {
-  resourceKey: string | null;
-  resourceData: any;
-}
-
-const ResourceView: React.FC<ResourceViewProps> = ({ resourceKey, resourceData }) => {
-  if (!resourceKey || !resourceData) {
-    return (
-      <div style={styles.resourceViewWelcome}>
-        <h2>Welcome to Stripe Nexus</h2>
-        <p>Select a resource from the list on the left to view its details.</p>
-      </div>
+    const renderPayments = () => (
+        <div className="space-y-6 animate-in slide-in-from-bottom-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-emerald-950/10 border-emerald-500/30">
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Gross Volume (24h)</p>
+                    <p className="text-3xl font-black text-white font-mono">$1,284,500</p>
+                </Card>
+                <Card className="bg-indigo-950/10 border-indigo-500/30">
+                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Net Volume (24h)</p>
+                    <p className="text-3xl font-black text-white font-mono">$1,210,000</p>
+                </Card>
+                <Card className="bg-amber-950/10 border-amber-500/30">
+                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Success Rate</p>
+                    <p className="text-3xl font-black text-white font-mono">99.8%</p>
+                </Card>
+            </div>
+            
+            <Card title="Payment Intent Registry" className="p-0 overflow-hidden bg-black/40 border-gray-800">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left font-mono">
+                        <thead className="bg-gray-900/80 border-b border-gray-800 text-[10px] text-gray-500 font-black uppercase">
+                            <tr>
+                                <th className="px-6 py-4">Intent ID</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Entity</th>
+                                <th className="px-6 py-4 text-right">Magnitude</th>
+                                <th className="px-6 py-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800">
+                            {mockPayments.map(p => (
+                                <tr key={p.id} className="hover:bg-gray-800/30 transition-colors group">
+                                    <td className="px-6 py-4 text-cyan-400 font-bold">{p.id}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                                            p.status === 'Succeeded' ? 'border-green-500/30 text-green-400 bg-green-500/5' :
+                                            p.status === 'Pending' ? 'border-amber-500/30 text-amber-400 bg-amber-500/5' :
+                                            'border-red-500/30 text-red-400 bg-red-500/5'
+                                        }`}>{p.status.toUpperCase()}</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-300">{p.customer}</td>
+                                    <td className="px-6 py-4 text-right font-black text-white">${p.amount.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-center">
+                                        <button 
+                                            onClick={() => handleAction(100)}
+                                            className="text-[10px] font-black text-gray-500 hover:text-cyan-400 uppercase tracking-widest"
+                                        >
+                                            Refund (100 SC)
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
     );
-  }
-
-  return (
-    <div style={styles.resourceViewContainer}>
-      <h2 style={styles.resourceViewHeader}>{resourceKey}</h2>
-      <JsonViewer data={resourceData} />
-    </div>
-  );
-};
-
-interface SidebarProps {
-  resourceKeys: string[];
-  searchTerm: string;
-  selectedResourceKey: string | null;
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSelectResource: (key: string) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({
-  resourceKeys,
-  searchTerm,
-  selectedResourceKey,
-  onSearchChange,
-  onSelectResource,
-}) => (
-  <div style={styles.sidebar}>
-    <div style={styles.sidebarHeader}>
-      <h1 style={styles.sidebarTitle}>Stripe Nexus</h1>
-      <input
-        type="text"
-        placeholder="Search resources..."
-        value={searchTerm}
-        onChange={onSearchChange}
-        style={styles.searchInput}
-      />
-    </div>
-    <ul style={styles.resourceList}>
-      {resourceKeys.length > 0 ? (
-        resourceKeys.map((key) => (
-          <li
-            key={key}
-            onClick={() => onSelectResource(key)}
-            style={
-              key === selectedResourceKey
-                ? { ...styles.resourceListItem, ...styles.resourceListItemSelected }
-                : styles.resourceListItem
-            }
-          >
-            {key}
-          </li>
-        ))
-      ) : (
-        <li style={{...styles.resourceListItem, cursor: 'default'}}>No results found.</li>
-      )}
-    </ul>
-  </div>
-);
-
-
-const StripeNexusView: React.FC = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedResourceKey, setSelectedResourceKey] = useState<string | null>(null);
-
-    // Use the static data directly
-    const stripeData = stripeResourcesData as any;
-
-    const allResourceKeys = useMemo(() => Object.keys(stripeData).sort(), [stripeData]);
-
-    const filteredResourceKeys = useMemo(() => {
-        if (!searchTerm) {
-            return allResourceKeys;
-        }
-        return allResourceKeys.filter(key =>
-            key.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [allResourceKeys, searchTerm]);
-    
-    const handleSelectResource = useCallback((key: string) => {
-        setSelectedResourceKey(key);
-    }, []);
-
-    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
-    }, []);
-    
-    const selectedResourceData = useMemo(() => {
-        return selectedResourceKey ? stripeData[selectedResourceKey] : null;
-    }, [selectedResourceKey, stripeData]);
 
     return (
-        <div style={styles.container}>
-            <Sidebar
-                resourceKeys={filteredResourceKeys}
-                searchTerm={searchTerm}
-                selectedResourceKey={selectedResourceKey}
-                onSearchChange={handleSearchChange}
-                onSelectResource={handleSelectResource}
-            />
-            <main style={styles.mainContent}>
-                <ResourceView 
-                    resourceKey={selectedResourceKey}
-                    resourceData={selectedResourceData}
-                />
+        <div className="space-y-8 animate-in fade-in duration-500 h-full">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-800 pb-8">
+                <div>
+                    <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter">Stripe Nexus</h1>
+                    <p className="text-cyan-400 text-sm font-mono mt-1 tracking-[0.3em] uppercase">Unified Financial Suite // Rail-01</p>
+                </div>
+                <div className="flex gap-4">
+                    <div className="bg-gray-900 border border-gray-700 px-4 py-2 rounded-xl flex items-center gap-3">
+                        <Activity className="text-green-500 animate-pulse" size={18} />
+                        <span className="text-xs font-bold text-gray-400 uppercase">Rail Status: NOMINAL</span>
+                    </div>
+                </div>
+            </header>
+
+            <div className="flex gap-2 bg-gray-900/50 p-1 rounded-2xl border border-gray-800 w-fit">
+                {[
+                    { id: 'PAYMENTS', label: 'Payments', icon: <Zap size={14} /> },
+                    { id: 'ENTITIES', label: 'Counterparties', icon: <Users size={14} /> },
+                    { id: 'VIRTUAL_LEDGER', label: 'Virtual Accounts', icon: <Layers size={14} /> },
+                    { id: 'RECONCILIATION', label: 'Reconciliation', icon: <CheckCircle2 size={14} /> }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as Tab)}
+                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${
+                            activeTab === tab.id ? 'bg-cyan-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
+                        }`}
+                    >
+                        {tab.icon} {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            <main className="min-h-[500px]">
+                {activeTab === 'PAYMENTS' && renderPayments()}
+                {activeTab === 'ENTITIES' && <CounterpartyDashboardView />}
+                {activeTab === 'VIRTUAL_LEDGER' && <VirtualAccountsDashboard />}
+                {activeTab === 'RECONCILIATION' && <ReconciliationHubView />}
             </main>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
-    container: {
-        display: 'flex',
-        height: '100vh',
-        width: '100vw',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
-        color: '#333',
-        overflow: 'hidden',
-    },
-    sidebar: {
-        width: '300px',
-        borderRight: '1px solid #e0e0e0',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#f7f7f7',
-        flexShrink: 0,
-    },
-    sidebarHeader: {
-        padding: '1rem',
-        borderBottom: '1px solid #e0e0e0',
-    },
-    sidebarTitle: {
-        margin: '0 0 0.5rem 0',
-        fontSize: '1.5rem',
-    },
-    searchInput: {
-        width: '100%',
-        padding: '0.5rem',
-        borderRadius: '5px',
-        border: '1px solid #ccc',
-        boxSizing: 'border-box',
-    },
-    resourceList: {
-        listStyle: 'none',
-        padding: 0,
-        margin: 0,
-        overflowY: 'auto',
-        flexGrow: 1,
-    },
-    resourceListItem: {
-        padding: '0.75rem 1rem',
-        cursor: 'pointer',
-        borderBottom: '1px solid #eee',
-        transition: 'background-color 0.2s',
-        fontSize: '14px',
-    },
-    resourceListItemSelected: {
-        backgroundColor: '#e0e7ff',
-        color: '#3730a3',
-        fontWeight: 600,
-    },
-    mainContent: {
-        flexGrow: 1,
-        overflowY: 'auto',
-        padding: '1.5rem',
-        backgroundColor: '#fff',
-    },
-    resourceViewContainer: {
-        height: '100%',
-    },
-    resourceViewHeader: {
-        marginTop: 0,
-        marginBottom: '1rem',
-        borderBottom: '2px solid #e0e0e0',
-        paddingBottom: '0.5rem',
-    },
-    resourceViewWelcome: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: 'calc(100vh - 3rem)',
-        color: '#777',
-        textAlign: 'center',
-    },
-    jsonViewer: {
-        backgroundColor: '#f4f4f4',
-        border: '1px solid #ddd',
-        borderRadius: '5px',
-        padding: '1rem',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-all',
-        fontSize: '14px',
-        color: '#333',
-        maxHeight: 'calc(100vh - 120px)',
-        overflow: 'auto',
-    },
-};
+export default useStripeNexusView;
 
-export default StripeNexusView;
+
+
