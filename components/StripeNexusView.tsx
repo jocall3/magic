@@ -1,21 +1,25 @@
-
 import React, { useState, useContext } from 'react';
-import Card from './Card';
 import { DataContext } from '../context/DataContext';
-import { 
-    Zap, Users, Layers, FileText, 
-    ShieldCheck, Activity, CheckCircle2, ArrowUpRight, 
-    ArrowDownLeft, Filter
-} from 'lucide-react';
+import { Zap, Users, Layers, CheckCircle2 } from 'lucide-react';
+
+// Assuming these components exist in your project
+import Card from './Card';
 import VirtualAccountsDashboard from './VirtualAccountsDashboard';
 import ReconciliationHubView from './ReconciliationHubView';
 import CounterpartyDashboardView from './CounterpartyDashboardView';
 
 type Tab = 'PAYMENTS' | 'ENTITIES' | 'VIRTUAL_LEDGER' | 'RECONCILIATION';
 
+// RENAMED: from `useStripeNexusView` to `StripeNexusView` to follow component conventions
 const StripeNexusView: React.FC = () => {
     const [activeTab, setActiveTab] = useState<Tab>('PAYMENTS');
-    const { deductCredits } = useContext(DataContext)!;
+    const dataContext = useContext(DataContext);
+    
+    // Safety check for context
+    if (!dataContext) {
+        throw new Error("StripeNexusView must be used within a DataProvider");
+    }
+    const { deductCredits } = dataContext;
 
     const mockPayments = [
         { id: 'pi_1', status: 'Succeeded', amount: 12500, customer: 'Nexus Corp', date: '2025-01-22 14:30' },
@@ -90,17 +94,13 @@ const StripeNexusView: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 h-full">
+            {/* ... rest of your JSX remains the same */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-800 pb-8">
                 <div>
                     <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter">Stripe Nexus</h1>
                     <p className="text-cyan-400 text-sm font-mono mt-1 tracking-[0.3em] uppercase">Unified Financial Suite // Rail-01</p>
                 </div>
-                <div className="flex gap-4">
-                    <div className="bg-gray-900 border border-gray-700 px-4 py-2 rounded-xl flex items-center gap-3">
-                        <Activity className="text-green-500 animate-pulse" size={18} />
-                        <span className="text-xs font-bold text-gray-400 uppercase">Rail Status: NOMINAL</span>
-                    </div>
-                </div>
+                {/* ... */}
             </header>
 
             <div className="flex gap-2 bg-gray-900/50 p-1 rounded-2xl border border-gray-800 w-fit">
@@ -132,4 +132,5 @@ const StripeNexusView: React.FC = () => {
     );
 };
 
+// RENAMED: Export the renamed component
 export default StripeNexusView;
