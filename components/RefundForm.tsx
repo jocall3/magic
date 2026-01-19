@@ -40,8 +40,8 @@ import {
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { NexusResourceJSON } from "@/components/stripe-nexus/NexusResourceJSON";
-import { Charge } from "@/lib/stripe-nexus-types";
+import { NexusResourceJSON } from "./stripe-nexus/NexusResourceJSON";
+import { Charge } from "./stripe-nexus-types";
 
 const generateId = (length = 14) => {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
