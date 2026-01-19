@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Check, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "../lib/utils";
-import { useStripeNexus } from "@/components/stripe-nexus/stripe-nexus-provider";
+import { useStripeNexusView } from "./StripeNexusView";
 import {
   Form,
   FormControl,
@@ -54,7 +54,7 @@ const generateId = (length = 14) => {
 
 
 const RefundForm = () => {
-  const { data } = useStripeNexus();
+  const { data } = useStripeNexusView();
   const [createdRefund, setCreatedRefund] = React.useState<object | null>(null);
   const [selectedCharge, setSelectedCharge] = React.useState<Charge | null>(null);
 
