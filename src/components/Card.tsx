@@ -4,15 +4,9 @@ import Link from 'next/link';
 
 /**
  * Interface for the Card component's props.
- * @param {string} title - The main heading of the card.
- * @param {string} description - The body text or description for the card.
- * @param {string} [imageUrl] - Optional URL for an image to display at the top of the card.
- * @param {string} [linkUrl] - Optional URL to make the entire card a clickable link.
- * @param {string} [ctaText='Learn More'] - Optional call-to-action text for the link.
- * @param {string} [className] - Optional additional CSS classes to apply to the card container.
- * @param {React.ReactNode} [children] - Optional children elements to render inside the card's body.
+ * Exported to allow consumers to extend or type-check against it.
  */
-interface CardProps {
+export interface CardProps {
   title: string;
   description: string;
   imageUrl?: string;
@@ -25,7 +19,7 @@ interface CardProps {
 /**
  * A reusable card component for displaying content in a structured and visually appealing way.
  * It supports an optional image, can be wrapped in a link, and allows for custom content via children.
- * The styling is done with Tailwind CSS, including hover effects and dark mode support.
+ * The styling is done with Tailwind CSS, including hover effects, dark mode support, and responsive design.
  */
 const Card: React.FC<CardProps> = ({
   title,
@@ -36,32 +30,43 @@ const Card: React.FC<CardProps> = ({
   className = '',
   children,
 }) => {
-  // The inner content of the card, separated to be used within a Link or a div.
+  // The inner content of the card
   const cardInnerContent = (
     <>
       {imageUrl && (
-        <div className="relative w-full h-56 flex-shrink-0">
+        <div className="relative w-full h-56 flex-shrink-0 bg-gray-100 dark:bg-gray-700 overflow-hidden">
           <Image
             src={imageUrl}
             alt={title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
       )}
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-xl lg:text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+        <h3 className="text-xl lg:text-2xl font-bold mb-3 text-gray-900 dark:text-white line-clamp-2">
           {title}
         </h3>
-        <p className="text-gray-600 dark:text-gray-300 flex-grow">
+        <p className="text-gray-600 dark:text-gray-300 flex-grow mb-4 line-clamp-3">
           {description}
         </p>
-        {children && <div className="mt-4">{children}</div>}
+        
+        {children && <div className="mb-4">{children}</div>}
+        
         {linkUrl && (
-          <div className="mt-auto pt-4">
-            <span className="inline-block text-blue-600 dark:text-blue-400 group-hover:text-blue-800 dark:group-hover:text-blue-300 font-semibold transition-colors duration-300">
-              {ctaText} &rarr;
+          <div className="mt-auto pt-2">
+            <span className="inline-flex items-center text-blue-600 dark:text-blue-400 group-hover:text-blue-800 dark:group-hover:text-blue-300 font-semibold transition-colors duration-300">
+              {ctaText}
+              <svg 
+                className="w-4 h-4 ml-2 transform transition-transform duration-300 group-hover:translate-x-1" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </span>
           </div>
         )}
@@ -69,14 +74,15 @@ const Card: React.FC<CardProps> = ({
     </>
   );
 
-  // Base classes for the card container.
+  // Base classes for the card container
   const cardClasses = `
+    flex flex-col h-full
     bg-white dark:bg-gray-800 
     border border-gray-200 dark:border-gray-700 
-    rounded-xl shadow-md hover:shadow-xl 
+    rounded-xl shadow-sm hover:shadow-xl 
     transition-all duration-300 ease-in-out 
-    transform hover:-translate-y-1.5
-    flex flex-col h-full overflow-hidden group
+    transform hover:-translate-y-1
+    overflow-hidden group
     ${className}
   `;
 
