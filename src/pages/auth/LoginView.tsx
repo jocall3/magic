@@ -32,6 +32,10 @@ const RootPaper = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',
   boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 60px rgba(6, 182, 212, 0.15)', // Custom glow effect
   animation: 'fadeIn 0.8s ease-out',
+  '@keyframes fadeIn': {
+    from: { opacity: 0, transform: 'translateY(20px)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
+  },
 }));
 
 const GradientTypography = styled(Typography)(({ theme }) => ({
@@ -89,7 +93,7 @@ export const LoginView: React.FC = () => {
     event.preventDefault();
   }, []);
 
-  const validateForm = useMemo(() => {
+  const isFormValid = useMemo(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email) && password.length >= 8;
   }, [email, password]);
@@ -98,7 +102,7 @@ export const LoginView: React.FC = () => {
     event.preventDefault();
     setLocalError(null);
 
-    if (!validateForm) {
+    if (!isFormValid) {
       setLocalError('Please enter a valid email and a password of at least 8 characters.');
       return;
     }
@@ -107,11 +111,12 @@ export const LoginView: React.FC = () => {
       await login(email, password);
       // If login succeeds, the useEffect above will handle navigation
     } catch (e) {
-      // Error handling is primarily done via useEffect watching authError, 
+      // Error handling is primarily done via useEffect watching authError,
       // but we catch sync errors here if any.
       console.error("Login submission failed:", e);
+      setLocalError('An unexpected error occurred. Please try again.');
     }
-  }, [email, password, login, validateForm]);
+  }, [email, password, login, isFormValid]);
 
   if (isLoading) {
     return (
@@ -218,7 +223,7 @@ export const LoginView: React.FC = () => {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={!validateForm || isLoading}
+              disabled={!isFormValid || isLoading}
               sx={{ mt: 3, mb: 2 }}
             >
               {isLoading ? (
