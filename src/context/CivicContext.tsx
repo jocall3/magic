@@ -89,7 +89,7 @@ export const CivicProvider = ({ children }: CivicProviderProps) => {
    */
   const addToCart = useCallback((amount: number) => {
     if (amount > 0) {
-      setCartTotal((prevTotal) => prevTotal + amount);
+      setCartTotal((prevTotal) => parseFloat((prevTotal + amount).toFixed(2)));
     }
   }, []);
 
@@ -98,7 +98,7 @@ export const CivicProvider = ({ children }: CivicProviderProps) => {
    * Useful after a successful "donation" or checkout.
    */
   const resetCart = useCallback(() => {
-    setCartTotal(0);
+    setCartTotal(0.0);
   }, []);
 
   /**
