@@ -258,7 +258,7 @@ return (
                     <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
                         <Infinity size={24} className="text-white"/>
                     </div>
-                    <span className="font-bold tracking-[0.2em] text-sm md:text-lg">CITI<span className="text-cyan-400">.DEMO</span></span>
+                    <span className="font-bold tracking-[0.2em] text-sm md:text-lg">CITIBANKDEMO<span className="text-cyan-400">.BUSINESSINC</span></span>
                 </div>
                 
                 <div className="hidden md:flex gap-1 items-center bg-white/5 rounded-full p-1 border border-white/10">
