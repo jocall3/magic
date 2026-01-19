@@ -1,48 +1,150 @@
+import React, { useState, useMemo } from 'react';
 
-import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
-import { Check, ChevronsUpDown } from "lucide-react";
+// --- TYPE DEFINITION (for clarity) ---
+interface Charge {
+  id: string;
+  object: "charge";
+  amount: number; // in cents
+  amount_refunded: number; // in cents
+  currency: string;
+  description: string | null;
+  status: "succeeded" | "pending" | "failed";
+  refunded: boolean;
+  payment_intent: string;
+}
 
-import { cn } from "../lib/utils";
-import { useStripeNexusView } from "./StripeNexusView";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "./ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./ui/popover";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { NexusResourceJSON } from "./stripe-nexus/NexusResourceJSON";
-import { Charge } from "./stripe-nexus-types";
+// --- MOCK DATA (self-contained) ---
+// This data now lives inside the component file, removing the need for DataContext.
+const MOCK_CHARGES: Charge[] = [
+  {
+    id: "ch_3PFr1bLkdIwHu7ix1lA2n6n4",
+    object: "charge",
+    amount: 10000, // $100.00
+    amount_refunded: 0,
+    currency: "usd",
+    description: "Monthly Subscription",
+    status: "succeeded",
+    refunded: false,
+    payment_intent: "pi_1"
+  },
+  {
+    id: "ch_3PFr2cLkdIwHu7ix2mB3o7o5",
+    object: "charge",
+    amount: 2550, // $25.50
+    amount_refunded: 550, // $5.50 already refunded
+    currency: "usd",
+    description: "E-book Purchase",
+    status: "succeeded",
+    refunded: false,
+    payment_intent: "pi_2"
+  },
+  {
+    id: "ch_3PFr3dLkdIwHu7ix3nC4p8p6",
+    object: "charge",
+    amount: 50000,
+    amount_refunded: 50000,
+    currency: "usd",
+    description: "Consulting Fee (Fully Refunded)",
+    status: "succeeded",
+    refunded: true, // This one won't appear in the list
+    payment_intent: "pi_3"
+  },
+  {
+    id: "ch_3PFr4eLkdIwHu7ix4oD5q9q7",
+    object: "charge",
+    amount: 1200,
+    amount_refunded: 0,
+    currency: "usd",
+    description: "Coffee and croissant",
+    status: "pending", // This one won't appear
+    refunded: false,
+    payment_intent: "pi_4"
+  },
+];
 
+// --- STYLING (optional, but makes it look clean) ---
+const styles = `
+  .refund-form-container { 
+    background-color: #1a1a1a; 
+    color: #f0f0f0; 
+    border: 1px solid #333; 
+    border-radius: 8px; 
+    padding: 24px; 
+    max-width: 500px; 
+    margin: 20px auto; 
+    font-family: sans-serif;
+  }
+  .refund-form-title { 
+    font-size: 1.5rem; 
+    font-weight: bold; 
+    margin-bottom: 24px; 
+  }
+  .form-group { 
+    margin-bottom: 20px; 
+  }
+  .form-group label { 
+    display: block; 
+    margin-bottom: 8px; 
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  .form-group input, .form-group select { 
+    width: 100%; 
+    padding: 10px; 
+    border-radius: 4px; 
+    border: 1px solid #444; 
+    background-color: #2a2a2a; 
+    color: #f0f0f0;
+    box-sizing: border-box; /* Important for padding */
+  }
+  .form-group input:disabled {
+    background-color: #222;
+    cursor: not-allowed;
+  }
+  .form-description {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 8px;
+  }
+  .form-error {
+    font-size: 0.8rem;
+    color: #ff6b6b;
+    margin-top: 8px;
+  }
+  .submit-button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .submit-button:hover {
+    background-color: #0056b3;
+  }
+  .response-box {
+    margin-top: 24px;
+    background-color: #222;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 16px;
+  }
+  .response-box h3 {
+    margin-top: 0;
+  }
+  .response-box pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #aaeebb;
+  }
+`;
+
+// --- HELPER FUNCTIONS ---
 const generateId = (length = 14) => {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
@@ -52,219 +154,162 @@ const generateId = (length = 14) => {
   return result;
 };
 
+const formatCurrency = (amountInCents, currency) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amountInCents / 100);
+}
+
 
 const RefundForm = () => {
-  const { data } = useStripeNexusView();
-  const [createdRefund, setCreatedRefund] = React.useState<object | null>(null);
-  const [selectedCharge, setSelectedCharge] = React.useState<Charge | null>(null);
+  // State for form fields, replacing react-hook-form
+  const [chargeId, setChargeId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [errors, setErrors] = useState<{ chargeId?: string, amount?: string }>({});
 
-  const refundableCharges = React.useMemo(() => {
-    return data.charge.filter(
+  // State for API response simulation
+  const [createdRefund, setCreatedRefund] = useState<object | null>(null);
+  
+  // Derived state: Calculate refundable charges from our mock data
+  const refundableCharges = useMemo(() => {
+    return MOCK_CHARGES.filter(
       (c) => c.status === "succeeded" && !c.refunded && c.amount > c.amount_refunded
     );
-  }, [data.charge]);
+  }, []); // This only needs to run once as our mock data is static
 
-  const refundFormSchema = z.object({
-    chargeId: z.string({ required_error: "Please select a charge to refund." }).startsWith("ch_"),
-    amount: z.coerce
-      .number({ required_error: "Please enter a refund amount." })
-      .positive("Amount must be a positive number.")
-      .max(
-        selectedCharge ? (selectedCharge.amount - selectedCharge.amount_refunded) / 100 : Infinity,
-        `Amount cannot exceed the refundable balance.`
-      ),
-    reason: z.enum(["duplicate", "fraudulent", "requested_by_customer", ""]).optional(),
-  });
+  // Derived state: Find the currently selected charge object
+  const selectedCharge = useMemo(() => {
+    return refundableCharges.find(c => c.id === chargeId) || null;
+  }, [chargeId, refundableCharges]);
 
-  const form = useForm<z.infer<typeof refundFormSchema>>({
-    resolver: zodResolver(refundFormSchema),
-    defaultValues: {
-      chargeId: "",
-      amount: undefined,
-      reason: "",
-    },
-  });
+  const handleChargeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newChargeId = e.target.value;
+    setChargeId(newChargeId);
 
-  React.useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "chargeId" && value.chargeId) {
-        const newSelectedCharge = refundableCharges.find(c => c.id === value.chargeId) || null;
-        setSelectedCharge(newSelectedCharge);
-        // Reset amount when charge changes
-        form.setValue("amount", (newSelectedCharge ? (newSelectedCharge.amount - newSelectedCharge.amount_refunded) / 100 : 0));
-        form.trigger("amount");
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, refundableCharges]);
+    // When a charge is selected, automatically fill the amount field
+    const newSelectedCharge = refundableCharges.find(c => c.id === newChargeId);
+    if (newSelectedCharge) {
+      const maxRefundable = (newSelectedCharge.amount - newSelectedCharge.amount_refunded) / 100;
+      setAmount(maxRefundable.toFixed(2));
+    } else {
+      setAmount('');
+    }
+    // Clear errors when changing selection
+    setErrors({});
+    setCreatedRefund(null);
+  };
+  
+  const validateForm = () => {
+    const newErrors: { chargeId?: string, amount?: string } = {};
 
-
-  function onSubmit(values: z.infer<typeof refundFormSchema>) {
     if (!selectedCharge) {
-      toast.error("Invalid charge selected.");
-      return;
+      newErrors.chargeId = "Please select a charge to refund.";
     }
 
-    const refundAmountInCents = Math.round(values.amount * 100);
+    const numericAmount = parseFloat(amount);
+    if (!amount || isNaN(numericAmount)) {
+      newErrors.amount = "Please enter a valid refund amount.";
+    } else if (numericAmount <= 0) {
+      newErrors.amount = "Amount must be a positive number.";
+    } else if (selectedCharge) {
+        const maxRefundableCents = selectedCharge.amount - selectedCharge.amount_refunded;
+        if (numericAmount * 100 > maxRefundableCents) {
+            newErrors.amount = `Amount cannot exceed the refundable balance of ${formatCurrency(maxRefundableCents, selectedCharge.currency)}.`;
+        }
+    }
 
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setCreatedRefund(null);
+
+    const isValid = validateForm();
+    if (!isValid || !selectedCharge) {
+      return;
+    }
+    
+    // Simulate API call and response
+    const refundAmountInCents = Math.round(parseFloat(amount) * 100);
     const newRefund = {
         id: `re_${generateId()}`,
         object: "refund",
         amount: refundAmountInCents,
-        balance_transaction: null,
         charge: selectedCharge.id,
         created: Math.floor(Date.now() / 1000),
         currency: selectedCharge.currency,
-        metadata: {},
-        payment_intent: selectedCharge.payment_intent,
-        reason: values.reason || null,
-        receipt_number: null,
-        source_transfer_reversal: null,
+        reason: reason || null,
         status: "succeeded",
-        transfer_reversal: null,
     };
-
+    
     setCreatedRefund(newRefund);
-    toast.success("Mock Refund Created", {
-      description: `Refund of ${new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedCharge.currency }).format(values.amount)} for charge ${selectedCharge.id}.`,
-    });
-  }
+    window.alert(`Mock refund of ${formatCurrency(refundAmountInCents, selectedCharge.currency)} created successfully!`);
+  };
 
   const getRefundableAmountText = () => {
     if (!selectedCharge) return "";
-    const refundable = (selectedCharge.amount - selectedCharge.amount_refunded) / 100;
-    return `Max refundable: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedCharge.currency }).format(refundable)}`;
+    const refundableCents = selectedCharge.amount - selectedCharge.amount_refunded;
+    return `Max refundable: ${formatCurrency(refundableCents, selectedCharge.currency)}`;
   };
 
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Create a Refund</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-               <FormField
-                control={form.control}
-                name="chargeId"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Charge to Refund</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value
-                              ? refundableCharges.find(
-                                  (charge) => charge.id === field.value
-                                )?.id
-                              : "Select a charge..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[--radix-popover-content-available-height] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search charge ID..." />
-                           <CommandList>
-                          <CommandEmpty>No refundable charges found.</CommandEmpty>
-                          <CommandGroup>
-                            {refundableCharges.map((charge) => (
-                              <CommandItem
-                                value={charge.id}
-                                key={charge.id}
-                                onSelect={() => {
-                                  form.setValue("chargeId", charge.id);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    charge.id === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex flex-col">
-                                  <span>{charge.id}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    Amount: {new Intl.NumberFormat('en-US', { style: 'currency', currency: charge.currency }).format(charge.amount / 100)} - {charge.description || 'No description'}
-                                  </span>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <>
+      <style>{styles}</style>
+      <div className="refund-form-container">
+        <h2 className="refund-form-title">Create a Refund</h2>
+        <form onSubmit={handleSubmit}>
+          
+          <div className="form-group">
+            <label htmlFor="chargeId">Charge to Refund</label>
+            <select id="chargeId" value={chargeId} onChange={handleChargeChange}>
+              <option value="" disabled>Select a charge...</option>
+              {refundableCharges.map(charge => (
+                <option key={charge.id} value={charge.id}>
+                  {charge.id} ({formatCurrency(charge.amount, charge.currency)} - {charge.description})
+                </option>
+              ))}
+            </select>
+            {errors.chargeId && <p className="form-error">{errors.chargeId}</p>}
+          </div>
 
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 20.00" {...field} disabled={!selectedCharge} />
-                    </FormControl>
-                    <FormDescription>
-                      {getRefundableAmountText()}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="form-group">
+            <label htmlFor="amount">Amount</label>
+            <input 
+              type="number"
+              id="amount"
+              step="0.01"
+              placeholder="e.g., 20.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={!selectedCharge}
+            />
+            {selectedCharge && <p className="form-description">{getRefundableAmountText()}</p>}
+            {errors.amount && <p className="form-error">{errors.amount}</p>}
+          </div>
 
-              <FormField
-                control={form.control}
-                name="reason"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reason</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a reason (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="duplicate">Duplicate</SelectItem>
-                        <SelectItem value="fraudulent">Fraudulent</SelectItem>
-                        <SelectItem value="requested_by_customer">Requested by customer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="form-group">
+            <label htmlFor="reason">Reason (Optional)</label>
+            <select id="reason" value={reason} onChange={(e) => setReason(e.target.value)}>
+              <option value="">Select a reason...</option>
+              <option value="duplicate">Duplicate</option>
+              <option value="fraudulent">Fraudulent</option>
+              <option value="requested_by_customer">Requested by customer</option>
+            </select>
+          </div>
+          
+          <button type="submit" className="submit-button">Create Refund</button>
 
-              <Button type="submit">Create Refund</Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-      
-      {createdRefund && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Mock API Response</h3>
-          <NexusResourceJSON resource={createdRefund} />
-        </div>
-      )}
-    </div>
+        </form>
+        
+        {createdRefund && (
+          <div className="response-box">
+            <h3>Mock API Response</h3>
+            <pre>{JSON.stringify(createdRefund, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
