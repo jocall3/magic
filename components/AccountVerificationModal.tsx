@@ -1,42 +1,65 @@
+import React, { useState, useEffect, FC, useRef, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Shield, 
+  Zap, 
+  Lock, 
+  Cpu, 
+  Activity, 
+  MessageSquare, 
+  Send, 
+  CheckCircle, 
+  AlertTriangle, 
+  ChevronRight, 
+  Database, 
+  Key, 
+  Eye, 
+  EyeOff,
+  Terminal,
+  CreditCard,
+  RefreshCw,
+  Search,
+  Settings,
+  UserCheck
+} from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 
-import React, { useState, useEffect, FC } from 'react';
-import axios from 'axios';
+/**
+ * QUANTUM FINANCIAL - ELITE BUSINESS DEMO
+ * COMPONENT: AccountVerificationModal
+ * 
+ * PHILOSOPHY: 
+ * - "Golden Ticket" Experience.
+ * - Homomorphic Encryption Simulation for internal state.
+ * - Integrated Quantum AI Assistant (Gemini-3-Flash).
+ * - Full Audit Logging.
+ * - Stripe-Grade Verification Simulation.
+ */
 
-// Assuming a UI kit is used for components like Modal, Button, Input, etc.
-// These would be replaced with actual library imports (e.g., from @chakra-ui/react or @mui/material)
-// Placeholder components for this file fix
-const Modal = ({ children, isOpen, onClose }: any) => isOpen ? <div className="modal">{children}</div> : null;
-const ModalOverlay = () => null;
-const ModalContent = ({ children }: any) => <div className="modal-content">{children}</div>;
-const ModalHeader = ({ children }: any) => <h3>{children}</h3>;
-const ModalFooter = ({ children }: any) => <div>{children}</div>;
-const ModalBody = ({ children }: any) => <div>{children}</div>;
-const ModalCloseButton = () => <button>Close</button>;
-const Button = (props: any) => <button {...props} />;
-const FormControl = ({ children }: any) => <div>{children}</div>;
-const FormLabel = ({ children }: any) => <label>{children}</label>;
-const FormErrorMessage = ({ children }: any) => <span>{children}</span>;
-const Input = (props: any) => <input {...props} />;
-const Text = ({ children }: any) => <p>{children}</p>;
-const VStack = ({ children }: any) => <div>{children}</div>;
-const HStack = ({ children }: any) => <div>{children}</div>;
-const Select = ({ children, ...props }: any) => <select {...props}>{children}</select>;
-const Spinner = () => <span>Loading...</span>;
-const Alert = ({ children }: any) => <div>{children}</div>;
-const AlertIcon = () => <span>!</span>;
-const useToast = () => (props: any) => console.log(props);
+// --- TYPES & INTERFACES ---
 
-// Simplified types based on the OpenAPI schema for this component's needs
 interface ExternalAccount {
   id: string;
   party_name: string;
   verification_status: 'unverified' | 'pending_verification' | 'verified';
+  account_type: string;
+  routing_number: string;
+  account_number_suffix: string;
 }
 
 interface InternalAccount {
-    id: string;
-    name: string;
-    currency: string;
+  id: string;
+  name: string;
+  currency: string;
+  balance: number;
+}
+
+interface AuditLogEntry {
+  timestamp: string;
+  action: string;
+  actor: string;
+  metadata: any;
+  securityLevel: 'Standard' | 'Elevated' | 'Critical';
 }
 
 interface AccountVerificationModalProps {
@@ -46,7 +69,84 @@ interface AccountVerificationModalProps {
   externalAccount: ExternalAccount | null;
 }
 
-type VerificationStep = 'initiate' | 'confirm' | 'success';
+type VerificationStep = 'initiate' | 'confirm' | 'security_check' | 'success';
+
+// --- HOMOMORPHIC ENCRYPTION SIMULATION ---
+// This class simulates operating on encrypted data without decrypting it.
+class QuantumVault {
+  private static instance: QuantumVault;
+  private storage: Map<string, { cipher: string; noise: string }> = new Map();
+
+  private constructor() {}
+
+  static getInstance() {
+    if (!QuantumVault.instance) QuantumVault.instance = new QuantumVault();
+    return QuantumVault.instance;
+  }
+
+  // Simulates a homomorphic "Add" or "Store"
+  async secureStore(key: string, value: string): Promise<void> {
+    const cipher = btoa(`ENC_${value}_${Math.random()}`);
+    const noise = Math.random().toString(36).substring(7);
+    this.storage.set(key, { cipher, noise });
+    console.log(`[QuantumVault] Securely stored ${key} with homomorphic noise.`);
+  }
+
+  // Simulates a homomorphic comparison (checking if input matches encrypted value without full decryption)
+  async blindVerify(key: string, input: string): Promise<boolean> {
+    const stored = this.storage.get(key);
+    if (!stored) return false;
+    const decoded = atob(stored.cipher);
+    return decoded.includes(`ENC_${input}_`);
+  }
+}
+
+// --- UI COMPONENTS (ELITE POLISH) ---
+
+const QuantumButton: FC<any> = ({ children, variant = 'primary', isLoading, ...props }) => {
+  const baseStyles = "relative px-6 py-3 rounded-lg font-bold transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden group";
+  const variants: any = {
+    primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]",
+    secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
+    ghost: "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white",
+    danger: "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+  };
+
+  return (
+    <button className={`${baseStyles} ${variants[variant]} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`} disabled={isLoading} {...props}>
+      <div className="absolute inset-0 w-1/2 h-full bg-white/10 skew-x-[-25deg] -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000" />
+      {isLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : children}
+    </button>
+  );
+};
+
+const QuantumInput: FC<any> = ({ label, icon: Icon, ...props }) => (
+  <div className="space-y-2 w-full">
+    {label && <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</label>}
+    <div className="relative">
+      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />}
+      <input 
+        className={`w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 ${Icon ? 'pl-10' : 'px-4'} pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
+        {...props}
+      />
+    </div>
+  </div>
+);
+
+const AuditBadge: FC<{ level: string }> = ({ level }) => {
+  const colors: any = {
+    Standard: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    Elevated: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    Critical: "bg-red-500/10 text-red-400 border-red-500/20"
+  };
+  return (
+    <span className={`text-[10px] px-2 py-0.5 rounded border font-mono ${colors[level]}`}>
+      {level}
+    </span>
+  );
+};
+
+// --- MAIN COMPONENT ---
 
 export const AccountVerificationModal: FC<AccountVerificationModalProps> = ({
   isOpen,
@@ -54,234 +154,90 @@ export const AccountVerificationModal: FC<AccountVerificationModalProps> = ({
   onSuccess,
   externalAccount,
 }) => {
+  // State Management
   const [step, setStep] = useState<VerificationStep>('initiate');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [amounts, setAmounts] = useState(['', '']);
   const [internalAccounts, setInternalAccounts] = useState<InternalAccount[]>([]);
   const [selectedInternalAccountId, setSelectedInternalAccountId] = useState<string>('');
-  const toast = useToast();
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+  
+  // AI State
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'ai', content: string}[]>([]);
+  const [isAiThinking, setIsAiThinking] = useState(false);
+
+  // Refs for Secure Storage
+  const vault = useMemo(() => QuantumVault.getInstance(), []);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize AI
+  const ai = useMemo(() => {
+    const apiKey = process.env.GEMINI_API_KEY || "DEMO_KEY";
+    return new GoogleGenAI(apiKey);
+  }, []);
+
+  // --- LOGGING UTILITY ---
+  const addAuditLog = useCallback((action: string, metadata: any = {}, level: AuditLogEntry['securityLevel'] = 'Standard') => {
+    const entry: AuditLogEntry = {
+      timestamp: new Date().toISOString(),
+      action,
+      actor: 'System/User',
+      metadata,
+      securityLevel: level
+    };
+    setAuditLogs(prev => [entry, ...prev].slice(0, 50));
+    console.log(`[AUDIT] ${action}`, metadata);
+  }, []);
+
+  // --- AI LOGIC ---
+  const handleAiChat = async (overridePrompt?: string) => {
+    const prompt = overridePrompt || chatInput;
+    if (!prompt.trim()) return;
+
+    const userMsg = { role: 'user' as const, content: prompt };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setIsAiThinking(true);
+    addAuditLog("AI_QUERY_INITIATED", { prompt }, "Standard");
+
+    try {
+      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      
+      const systemContext = `
+        You are the Quantum Financial Elite Assistant. 
+        You are helping a user verify an external bank account for ${externalAccount?.party_name}.
+        Current Step: ${step}.
+        The user is in a "Golden Ticket" demo environment.
+        Tone: Professional, Secure, High-Performance.
+        You can trigger actions by including specific tags in your response:
+        [ACTION:START_VERIFICATION] - To start the micro-deposit process.
+        [ACTION:COMPLETE_VERIFICATION] - To finish verification.
+        [ACTION:SHOW_AUDIT] - To show the audit trail.
+        Do not mention Citibank. Use "Quantum Financial".
+      `;
+
+      const result = await model.generateContent([systemContext, ...chatMessages.map(m => m.content), prompt]);
+      const responseText = result.response.text();
+
+      // Parse Actions
+      if (responseText.includes('[ACTION:START_VERIFICATION]')) handleStartVerification();
+      if (responseText.includes('[ACTION:COMPLETE_VERIFICATION]')) handleCompleteVerification();
+      if (responseText.includes('[ACTION:SHOW_AUDIT]')) setShowAudit(true);
+
+      setChatMessages(prev => [...prev, { role: 'ai', content: responseText.replace(/\[ACTION:.*\]/g, '') }]);
+      addAuditLog("AI_RESPONSE_RECEIVED", { length: responseText.length }, "Standard");
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'ai', content: "I apologize, but my neural link is experiencing latency. Please proceed manually or try again." }]);
+      addAuditLog("AI_ERROR", { error: err }, "Elevated");
+    } finally {
+      setIsAiThinking(false);
+    }
+  };
+
+  // --- BUSINESS LOGIC ---
 
   useEffect(() => {
     if (isOpen && externalAccount) {
-      // Reset state on open
-      setError(null);
-      setIsLoading(false);
-      setAmounts(['', '']);
-
-      // Determine the initial step based on the account's current status
-      if (externalAccount.verification_status === 'pending_verification') {
-        setStep('confirm');
-      } else {
-        setStep('initiate');
-        // Fetch internal accounts needed for starting the verification
-        const fetchInternalAccounts = async () => {
-          try {
-            setIsLoading(true);
-            // Simulate API call
-            // const response = await axios.get('/api/internal_accounts');
-            // setInternalAccounts(response.data);
-            const mockInternalAccounts = [{ id: 'int_1', name: 'Operating', currency: 'USD' }];
-            setInternalAccounts(mockInternalAccounts);
-            if (mockInternalAccounts.length > 0) {
-              setSelectedInternalAccountId(mockInternalAccounts[0].id);
-            }
-          } catch (e) {
-            setError('Failed to load necessary data. Please try again.');
-          } finally {
-            setIsLoading(false);
-          }
-        };
-        fetchInternalAccounts();
-      }
-    }
-  }, [isOpen, externalAccount]);
-
-  const handleStartVerification = async () => {
-    if (!externalAccount || !selectedInternalAccountId) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-    //   await axios.post(`/api/external_accounts/${externalAccount.id}/verify`, {
-    //     originating_account_id: selectedInternalAccountId,
-    //     payment_type: 'ach', // Assuming ACH for micro-deposits
-    //   });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setStep('confirm');
-      toast({
-        title: 'Verification Started',
-        description: 'Micro-deposits are on their way to your account.',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (e: any) {
-      setError(e.response?.data?.errors?.message || 'An unexpected error occurred.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCompleteVerification = async () => {
-    if (!externalAccount) return;
-    const parsedAmounts = amounts.map(a => Math.round(parseFloat(a) * 100)).filter(a => !isNaN(a));
-
-    if (parsedAmounts.length !== 2 || parsedAmounts.some(a => a <= 0)) {
-        setError('Please enter two valid, positive deposit amounts.');
-        return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-    //   await axios.post(`/api/external_accounts/${externalAccount.id}/complete_verification`, {
-    //     amounts: parsedAmounts,
-    //   });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setStep('success');
-      // Delay closing to show success message, then call success callback
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 2000);
-    } catch (e: any) {
-       setError(e.response?.data?.errors?.message || 'Verification failed. Please double-check the amounts and try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAmountChange = (index: number, value: string) => {
-    const newAmounts = [...amounts];
-    // Allow only numbers and a single decimal point
-    if (/^[0-9]*\.?[0-9]{0,2}$/.test(value)) {
-        newAmounts[index] = value;
-        setAmounts(newAmounts);
-    }
-  };
-
-  const renderContent = () => {
-    if (!externalAccount) return <Spinner />;
-
-    switch (step) {
-      case 'initiate':
-        return (
-          <VStack>
-            <Text>
-              To verify your account, we will send two small deposits (less than $1.00) to{' '}
-              <strong>{externalAccount.party_name}</strong>.
-            </Text>
-            <Text>
-              These should appear in your bank account in 1-2 business days. Once you see them, come back here to enter the amounts.
-            </Text>
-            <FormControl>
-                <FormLabel>Originate Deposits From</FormLabel>
-                 {internalAccounts.length > 0 ? (
-                    <Select value={selectedInternalAccountId} onChange={(e: any) => setSelectedInternalAccountId(e.target.value)}>
-                        {internalAccounts.map(acc => (
-                            <option key={acc.id} value={acc.id}>
-                                {acc.name} ({acc.currency})
-                            </option>
-                        ))}
-                    </Select>
-                 ) : <Text>No internal accounts found.</Text>}
-                {!selectedInternalAccountId && <FormErrorMessage>An originating account must be selected.</FormErrorMessage>}
-            </FormControl>
-          </VStack>
-        );
-      case 'confirm':
-        return (
-          <VStack>
-            <Text>
-              Check your bank account for two small deposits from Modern Treasury. Enter the amounts below in USD to complete the verification.
-            </Text>
-            <HStack>
-              <FormControl>
-                <FormLabel>First Deposit Amount</FormLabel>
-                <Input
-                  type="text"
-                  placeholder="0.21"
-                  value={amounts[0]}
-                  onChange={(e: any) => handleAmountChange(0, e.target.value)}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Second Deposit Amount</FormLabel>
-                <Input
-                  type="text"
-                  placeholder="0.45"
-                  value={amounts[1]}
-                  onChange={(e: any) => handleAmountChange(1, e.target.value)}
-                />
-              </FormControl>
-            </HStack>
-            {error && <FormErrorMessage>{error}</FormErrorMessage>}
-          </VStack>
-        );
-      case 'success':
-          return (
-            <VStack>
-                <AlertIcon />
-                <Text>Account Verified!</Text>
-                <Text>Your account has been successfully verified and is ready for use.</Text>
-            </VStack>
-          )
-      default:
-        return null;
-    }
-  };
-
-  const renderFooter = () => {
-    switch (step) {
-        case 'initiate':
-            return (
-                <>
-                    <Button onClick={onClose}>Cancel</Button>
-                    <Button
-                        onClick={handleStartVerification}
-                        disabled={!selectedInternalAccountId || isLoading}
-                    >
-                        {isLoading ? 'Sending...' : 'Send Micro-Deposits'}
-                    </Button>
-                </>
-            );
-        case 'confirm':
-            return (
-                <>
-                    <Button onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleCompleteVerification} disabled={isLoading}>
-                        {isLoading ? 'Verifying...' : 'Verify Account'}
-                    </Button>
-                </>
-            );
-        case 'success':
-            return null;
-        default:
-            return <Button onClick={onClose}>Close</Button>;
-    }
-  }
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Verify Bank Account</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          {error && (
-            <Alert>
-              <AlertIcon />
-              {error}
-            </Alert>
-          )}
-          {isLoading && step !== 'confirm' && <Spinner />}
-          {!isLoading || step === 'confirm' ? renderContent() : null}
-        </ModalBody>
-        <ModalFooter>
-          {renderFooter()}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-};
