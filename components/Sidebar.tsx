@@ -1,9 +1,9 @@
-
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { View } from '../types';
 import { NAV_ITEMS } from '../constants';
 import { DataContext } from '../context/DataContext';
-import { Crown, Sparkles, Terminal } from 'lucide-react';
+import { Crown, Sparkles, Terminal, Building2 } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -21,6 +21,8 @@ const InfiniteIntelligenceLogo: React.FC<{className?: string}> = ({className}) =
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const context = useContext(DataContext);
+    const navigate = useNavigate();
+
     if (!context) return null;
     const { activeView, setActiveView } = context;
     
@@ -51,6 +53,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 </div>
                 
                 <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar">
+                    <div className="space-y-2">
+                        <h3 className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                            Showcase
+                            <div className="h-px bg-gray-800 flex-1"></div>
+                        </h3>
+                        <div className="space-y-1">
+                            <button
+                                onClick={() => navigate('/business-demo')}
+                                className="flex items-center w-full text-left px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 group text-amber-400 hover:text-amber-200 hover:bg-amber-900/20 border border-amber-500/20"
+                            >
+                                <Building2 className="w-4 h-4 mr-3 transition-colors text-amber-400 group-hover:text-amber-200" />
+                                <span className="flex-1">Enterprise Demo</span>
+                                <Sparkles size={12} className="text-amber-400 animate-pulse" />
+                            </button>
+                        </div>
+                    </div>
+
                     {NAV_ITEMS.map((group, index) => (
                         <div key={index} className="space-y-2">
                             <h3 className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
