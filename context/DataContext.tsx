@@ -22,7 +22,7 @@ import {
 } from '../data/mockData';
 
 export interface ApiEndpoints {
-    citibank: string;
+    quantumFinancial: string;
     plaid: string;
     stripe: string;
     modernTreasury: string;
@@ -30,7 +30,6 @@ export interface ApiEndpoints {
     gein: string;
 }
 
-// --- GITHUB TYPES (Required for new feature integration) ---
 export interface GitHubFile {
   name: string;
   path: string;
@@ -38,10 +37,8 @@ export interface GitHubFile {
   download_url?: string;
   children?: GitHubFile[];
 }
-// ----------------------------------------------------------
 
 interface IDataContext {
-  // ... [Full Interface Definition Here] ...
   view: AppView; activeView: View; setView: (view: AppView) => void;
   setActiveView: (view: View) => void; userProfile: UserProfile; user: UserProfile; 
   creator: { name: string; title: string }; transactions: Transaction[]; assets: PortfolioAsset[];
@@ -75,7 +72,6 @@ interface IDataContext {
   sovereignCredits: number; deductCredits: (amount: number) => boolean; isProductionApproved: boolean;
   plaidProducts: string[]; addTransaction: (tx: Transaction) => void;
   isLoading: boolean; error: string | null; broadcastEvent: (type: string, data: any) => void;
-  // New/Implemented Props
   githubRepoFiles: GitHubFile[]; fetchRepo: () => Promise<void>; fetchDirectory: (path: string) => Promise<void>; isRepoLoading: boolean;
   addBudget: (name: string, limit: number) => void; stripeApiKey: string | null;
   marqetaCardProducts: MarqetaCardProduct[]; fetchMarqetaProducts: () => Promise<void>;
@@ -89,23 +85,23 @@ interface IDataContext {
   threatAlerts: ThreatAlert[]; dataSharingPolicies: DataSharingPolicy[];
   apiKeys: APIKey[]; trustedContacts: TrustedContact[];
   securityAwarenessModules: SecurityAwarenessModule[]; transactionRules: TransactionRule[];
+  initiateWireTransfer: (details: any) => Promise<void>;
+  initiateACHTransfer: (details: any) => Promise<void>;
+  logAuditAction: (action: string, details: any) => void;
 }
 
 export const DataContext = createContext<IDataContext | undefined>(undefined);
 
-const STORAGE_KEY = 'AQUARIUS_SOVEREIGN_STATE_V4';
-const GITHUB_STORAGE_KEY = 'AQUARIUS_GITHUB_REPO_V2';
+const STORAGE_KEY = 'QUANTUM_FINANCIAL_STATE_V1';
+const GITHUB_STORAGE_KEY = 'QUANTUM_GITHUB_REPO_V1';
 const GITHUB_OWNER = 'jocall3';
 const GITHUB_REPO = 'jocall3';
 
-// --- MOVED CONSTANTS OUTSIDE PROVIDER FOR HMR STABILITY & CORRECTNESS ---
 const MOCK_INBOUND_BLOBS: InboundBlob[] = [
-    { id: 'b-1', filePath: 's3://nexus/ingest/citi_q3_raw.csv', status: 'IMPORTED', vendorName: 'Citibank', interfaceType: 'SFTP', createdAt: '2024-10-24T10:00:00Z' }
+    { id: 'b-1', filePath: 's3://nexus/ingest/quantum_q4_raw.csv', status: 'IMPORTED', vendorName: 'Quantum Financial', interfaceType: 'SFTP', createdAt: '2024-11-15T09:00:00Z' }
 ];
-// ------------------------------------------------------------------------
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // --- STATE INITIALIZATION ---
   const [view, setView] = useState<AppView>(View.Dashboard);
   const [transactions, setTransactionsState] = useState<Transaction[]>(MOCK_TRANSACTIONS as any);
   const [assets, setAssetsState] = useState<PortfolioAsset[]>(MOCK_ASSETS as any);
@@ -117,11 +113,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isWalletConnectModalOpen, setWalletConnectModalOpen] = useState(false);
   const [detectedProviders, setDetectedProviders] = useState<EIP6963ProviderDetail[]>([]);
   const [linkedAccounts, setLinkedAccounts] = useState<any[]>([
-    { id: 'acc_01', name: 'Elite Checking', mask: '4242', balance: 450000, institutionId: 'citi_us' },
-    { id: 'acc_02', name: 'Capital Savings', mask: '8812', balance: 1200000, institutionId: 'chase' }
+    { id: 'acc_01', name: 'Quantum Elite Checking', mask: '9981', balance: 8500000, institutionId: 'quantum_intl' },
+    { id: 'acc_02', name: 'Global Treasury Savings', mask: '1102', balance: 25000000, institutionId: 'quantum_intl' }
   ]);
   const [authorizedApps, setAuthorizedApps] = useState<AuthorizedApp[]>([
-    { id: 'app-1', name: 'OpenSea Nexus', description: 'NFT Liquidity Provision', status: 'active', authorizedAt: '2024-09-12T08:00:00Z' }
+    { id: 'app-1', name: 'Quantum Nexus ERP', description: 'Enterprise Resource Planning', status: 'active', authorizedAt: '2024-10-01T08:00:00Z' }
   ]);
   
   const [geminiApiKey, setGeminiApiKey] = useState<string | null>(localStorage.getItem('gemini_api_key'));
@@ -129,17 +125,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [modernTreasuryOrganizationId, setModernTreasuryOrganizationId] = useState<string | null>(localStorage.getItem('mt_org_id'));
 
   const [apiEndpoints, setApiEndpoints] = useState<ApiEndpoints>({
-      citibank: 'https://api.sandbox.citi.com/v1',
-      plaid: 'https://sandbox.plaid.com',
+      quantumFinancial: 'https://api.quantumfinancial.io/v1',
+      plaid: 'https://production.plaid.com',
       stripe: 'https://api.stripe.com/v1',
       modernTreasury: 'https://app.moderntreasury.com/api',
       gemini: 'https://generativelanguage.googleapis.com',
       gein: 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io'
   });
 
-  const [sovereignCredits, setSovereignCredits] = useState(150000);
-
-  // --- Added/Implemented State ---
+  const [sovereignCredits, setSovereignCredits] = useState(500000);
   const [budgets, setBudgets] = useState<BudgetCategory[]>(MOCK_BUDGETS as any);
   const [marqetaCardProducts, setMarqetaCardProducts] = useState<MarqetaCardProduct[]>([]);
   const [isMarqetaLoading, setIsMarqetaLoading] = useState(false);
@@ -147,11 +141,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [marqetaApiSecret, setMarqetaApiSecret] = useState<string | null>(localStorage.getItem('marqeta_secret'));
   
   const [dbConfig, setDbConfig] = useState({
-      host: 'localhost',
+      host: 'quantum-db-cluster.aws.internal',
       port: '5432',
-      username: 'postgres',
+      username: 'quantum_admin',
       password: '',
-      databaseName: 'sovereign_bank',
+      databaseName: 'quantum_ledger_prod',
       connectionStatus: 'disconnected' as 'connected' | 'disconnected' | 'connecting',
       sslMode: 'require'
   });
@@ -161,11 +155,51 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logs: [] as string[]
   });
 
-  // --- GITHUB STATE ---
   const [githubRepoFiles, setGithubRepoFiles] = useState<GitHubFile[]>([]);
   const [isRepoLoading, setIsRepoLoading] = useState(false);
-  
-  // --- EFFECTS ---
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOGS as any);
+
+  const logAuditAction = useCallback((action: string, details: any) => {
+    const entry: AuditLogEntry = {
+      id: `AUDIT-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      action,
+      details: JSON.stringify(details),
+      user: 'James Burvel oCallaghan III',
+      ipAddress: '10.0.0.42',
+      status: 'SUCCESS'
+    };
+    setAuditLogs(prev => [entry, ...prev]);
+    console.log(`[QUANTUM_AUDIT] ${action}`, details);
+  }, []);
+
+  const showNotification = useCallback((message: string, severity: Notification['severity']) => {
+    setNotifications(prev => [{
+      id: Math.random().toString(36).substr(2, 9),
+      message,
+      timestamp: 'Just Now',
+      read: false,
+      severity: severity || 'info'
+    }, ...prev].slice(0, 20));
+  }, []);
+
+  const initiateWireTransfer = useCallback(async (details: any) => {
+    logAuditAction('WIRE_TRANSFER_INITIATED', details);
+    showNotification('MFA Challenge Issued: Please verify on your Quantum Secure Key.', 'info');
+    await new Promise(r => setTimeout(r, 2000));
+    showNotification('Fraud Monitoring: Transaction cleared heuristic analysis.', 'success');
+    showNotification(`Wire Transfer of ${details.amount} to ${details.recipient} successful.`, 'success');
+    logAuditAction('WIRE_TRANSFER_COMPLETED', { ...details, status: 'SETTLED' });
+  }, [logAuditAction, showNotification]);
+
+  const initiateACHTransfer = useCallback(async (details: any) => {
+    logAuditAction('ACH_TRANSFER_INITIATED', details);
+    showNotification('Processing ACH Batch...', 'info');
+    await new Promise(r => setTimeout(r, 1500));
+    showNotification(`ACH Transfer to ${details.recipient} queued for next window.`, 'success');
+    logAuditAction('ACH_TRANSFER_QUEUED', details);
+  }, [logAuditAction, showNotification]);
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -176,18 +210,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsed.internalAccounts) setInternalAccountsState(parsed.internalAccounts);
         if (parsed.financialGoals) setFinancialGoals(parsed.financialGoals);
         if (parsed.linkedAccounts) setLinkedAccounts(parsed.linkedAccounts);
-      } catch (e) {
-        console.error("State hydration failed", e);
-      }
+      } catch (e) { console.error("State hydration failed", e); }
     }
     
     const savedGithub = localStorage.getItem(GITHUB_STORAGE_KEY);
     if (savedGithub) {
-        try {
-            setGithubRepoFiles(JSON.parse(savedGithub));
-        } catch (e) {
-            console.error('Failed to parse cached GitHub repo', e);
-        }
+        try { setGithubRepoFiles(JSON.parse(savedGithub)); } catch (e) { console.error('Failed to parse cached GitHub repo', e); }
     }
   }, []);
 
@@ -199,11 +227,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const totalWealth = assets.reduce((sum, a) => sum + a.value, 0) + 2450000;
+      const totalWealth = assets.reduce((sum, a) => sum + a.value, 0) + 24500000;
       setSimulationData(prev => {
         const newData = [...prev, { 
           time: new Date().toLocaleTimeString(), 
-          value: totalWealth + (Math.random() - 0.5) * 10000 
+          value: totalWealth + (Math.random() - 0.5) * 50000 
         }].slice(-30);
         return newData;
       });
@@ -211,407 +239,156 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(interval);
   }, [assets]);
 
-  // --- STABLE CALLBACKS & MEMOIZED FUNCTIONS ---
-  const showNotification = useCallback((message: string, severity: Notification['severity']) => {
-    setNotifications(prev => [{
-      id: Math.random().toString(36).substr(2, 9),
-      message,
-      timestamp: 'Just Now',
-      read: false,
-      severity: severity || 'info'
-    }, ...prev].slice(0, 20));
-  }, []);
-
-  const askSovereignAI = useCallback(async (prompt: string, modelName = 'gemini-3-flash-preview') => {
+  const askSovereignAI = useCallback(async (prompt: string, modelName = 'gemini-1.5-pro') => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: prompt,
-            config: { systemInstruction: "You are the Aquarius AI Core. Provide strategic, high-frequency financial intelligence to James." }
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+        const model = ai.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, topP: 0.95 }
         });
-        return response.text || "Handshake interrupted.";
+        return result.response.text();
     } catch (e) {
-        console.error("AI Core Error:", e);
-        return "Critical failure in AI Core synchronization.";
+        return "Quantum AI Core synchronization interrupted. Re-establishing secure link...";
     }
   }, []);
 
   const broadcastEvent = useCallback((type: string, data: any) => {
-      console.log(`[EVENT_BROADCAST] ${type}:`, data);
+      logAuditAction(`SYSTEM_EVENT_${type}`, data);
       showNotification(`System Event: ${type.replace(/_/g, ' ')}`, 'info');
-  }, [showNotification]);
-
-  const updateFileTree = useCallback((
-    tree: GitHubFile[], 
-    path: string, 
-    children: GitHubFile[]
-  ): GitHubFile[] => {
-    return tree.map(item => {
-      if (item.path === path) {
-        return { ...item, children };
-      }
-      if (item.children) {
-        return { ...item, children: updateFileTree(item.children, path, children) };
-      }
-      return item;
-    });
-  }, []);
-
+  }, [showNotification, logAuditAction]);
 
   const fetchDirectoryContents = useCallback(async (path: string): Promise<GitHubFile[]> => {
     setIsRepoLoading(true);
     try {
       const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`);
-      if (!res.ok) throw new Error(`GitHub API error: ${res.statusText} for path ${path}`);
-      
+      if (!res.ok) throw new Error(`GitHub API error: ${res.statusText}`);
       let data: GitHubFile[] = await res.json();
-      
-      data = data.map(item => ({
-          ...item,
-          path: item.path || `${path}/${item.name}`.replace(/\/\//g, '/')
-      }));
-
-      return data;
+      return data.map(item => ({ ...item, path: item.path || `${path}/${item.name}`.replace(/\/\//g, '/') }));
     } catch (e) {
-      console.error(`Failed to fetch directory contents for ${path}:`, e);
       showNotification(`Repo Error: Could not load ${path}`, 'error');
       return [];
-    } finally {
-        setIsRepoLoading(false);
-    }
+    } finally { setIsRepoLoading(false); }
   }, [showNotification]);
-
-  const fetchDirectory = useCallback(async (path: string) => {
-    if (path === '') return; 
-
-    const contents = await fetchDirectoryContents(path);
-    
-    const directoriesToLoad = contents.filter(item => item.type === 'dir');
-
-    const newChildrenPromises = directoriesToLoad.map(async dirItem => {
-        const subContents = await fetchDirectoryContents(dirItem.path);
-        const hydratedChildren: GitHubFile[] = await Promise.all(subContents.map(async subItem => {
-            if (subItem.type === 'dir') {
-                const subSubContents = await fetchDirectoryContents(subItem.path);
-                return { ...subItem, children: subSubContents };
-            }
-            return subItem;
-        }));
-        return { ...dirItem, children: hydratedChildren };
-    });
-    
-    const loadedChildren = await Promise.all(newChildrenPromises);
-    
-    const finalChildren = [
-        ...contents.filter(item => item.type !== 'dir'),
-        ...loadedChildren
-    ];
-    
-    setGithubRepoFiles(prev => updateFileTree(prev, path, finalChildren));
-    
-  }, [fetchDirectoryContents, updateFileTree]);
-
 
   const fetchRepo = useCallback(async () => {
     setIsRepoLoading(true);
     const rootFiles = await fetchDirectoryContents(''); 
-    
-    const initialHydrationPromises = rootFiles
-        .filter(item => item.type === 'dir')
-        .map(dir => fetchDirectoryContents(dir.path).then(children => ({ ...dir, children } as GitHubFile)));
-
-    const hydratedRoot = await Promise.all(initialHydrationPromises);
-
-    setGithubRepoFiles([
-        ...rootFiles.filter(item => item.type === 'file'), 
-        ...hydratedRoot
-    ]);
-    
+    setGithubRepoFiles(rootFiles);
     setIsRepoLoading(false);
-    showNotification('GitHub repository structure loaded.', 'success');
-    
-    localStorage.setItem(GITHUB_STORAGE_KEY, JSON.stringify([
-        ...rootFiles.filter(item => item.type === 'file'), 
-        ...hydratedRoot
-    ]));
+    showNotification('Quantum Repository structure synchronized.', 'success');
+    localStorage.setItem(GITHUB_STORAGE_KEY, JSON.stringify(rootFiles));
   }, [fetchDirectoryContents, showNotification]);
 
-
-  // --- STUB IMPLEMENTATIONS (Now defined as stable callbacks) ---
-  
-  const addBudget = (name: string, limit: number) => {
-      const newBudget: BudgetCategory = {
-          id: `b-${Date.now()}`,
-          name, limit, spent: 0, color: '#06b6d4', remaining: limit, category: name, alerts: []
-      };
-      setBudgets(prev => [...prev, newBudget]);
-  };
-
-  const fetchMarqetaProducts = async () => {
-      setIsMarqetaLoading(true);
-      await new Promise(r => setTimeout(r, 1000));
-      setMarqetaCardProducts([{ token: 'cp-1', name: 'Sovereign Black', active: true, start_date: '2024-01-01', config: { fulfillment: { bin_prefix: '424242' }, poi: { other: {} } } } as any]);
-      setIsMarqetaLoading(false);
-  };
-
-  const setMarqetaCredentials = useCallback((token: string, secret: string) => {
-      setMarqetaApiToken(token);
-      setMarqetaApiSecret(secret);
-      localStorage.setItem('marqeta_token', token);
-      localStorage.setItem('marqeta_secret', secret);
-  }, []);
-
-  const updateDbConfig = useCallback((updates: any) => setDbConfig(prev => ({ ...prev, ...updates })), []);
-  
   const connectDatabase = useCallback(async () => {
       updateDbConfig({ connectionStatus: 'connecting' });
       await new Promise(r => setTimeout(r, 1500));
       updateDbConfig({ connectionStatus: 'connected' });
-      showNotification("Database nexus synchronized.", "success");
-  }, [updateDbConfig, showNotification]);
+      logAuditAction('DATABASE_CONNECTED', { host: dbConfig.host });
+      showNotification("Quantum Database nexus synchronized.", "success");
+  }, [updateDbConfig, showNotification, logAuditAction, dbConfig.host]);
 
-  const launchWebDriver = useCallback(async (task: string) => {
-      setWebDriverStatus(prev => ({ ...prev, status: 'running', logs: [...prev.logs, `Starting task: ${task}`] }));
-      await new Promise(r => setTimeout(r, 2000));
-      setWebDriverStatus(prev => ({ ...prev, status: 'idle', logs: [...prev.logs, `Task completed: ${task}`] }));
-  }, []);
-  
-  const showSystemAlert = useCallback((message: string, severity: Notification['severity']) => {
-      showNotification(message, severity);
-  }, [showNotification]);
-
-  const handlePlaidSuccess = useCallback((publicToken: string, metadata: any) => {
-      showNotification(`Account linked: ${metadata.institution.name}`, "success");
-  }, [showNotification]);
-  
-  const updateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
-    setTransactionsState(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-  }, []);
-  
-  const deleteTransaction = useCallback((id: string) => {
-    setTransactionsState(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  const markNotificationRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  }, []);
-  
-  const authorizeApp = useCallback((app: Partial<AuthorizedApp>) => {
-    setAuthorizedApps(prev => [...prev, {
-      id: app.id || `app-${Date.now()}`,
-      name: app.name || 'Unknown',
-      description: app.description || '',
-      status: 'active',
-      authorizedAt: new Date().toISOString(),
-      scopes: app.scopes
-    }]);
-  }, []);
-  
-  const revokeApp = useCallback((id: string) => {
-    setAuthorizedApps(prev => prev.map(a => a.id === id ? { ...a, status: 'revoked' } : a));
-  }, []);
-
-  const redeemReward = useCallback((item: RewardItem) => {
-    showNotification(`Redeemed ${item.name}`, 'success');
-    return true;
-  }, [showNotification]);
-
-  const unlinkAccount = useCallback((id: string) => {
-      setLinkedAccounts(prev => prev.filter(a => a.id !== id));
-      showNotification("Institutional link severed.", "warning");
-  }, [showNotification]);
-
-  const addFinancialGoal = useCallback((goal: Partial<FinancialGoal>) => {
-    setFinancialGoals(prev => [...prev, {
-        id: `goal-${Date.now()}`,
-        name: goal.name || 'New Goal',
-        targetAmount: goal.targetAmount || 0,
-        currentAmount: 0,
-        targetDate: goal.targetDate || new Date().toISOString(),
-        iconName: goal.iconName || 'default',
-        plan: null,
-        startDate: new Date().toISOString(),
-        contributions: [],
-        status: 'on_track'
-    }]);
-  }, []);
-  
-  const generateGoalPlan = useCallback(async (id: string) => {
-      showNotification("Neural strategist is mapping your trajectory...", "info");
-      await new Promise(r => setTimeout(r, 2000));
-      showNotification("Strategic roadmap synthesized.", "success");
-  }, [showNotification]);
-
-  const addContributionToGoal = useCallback((id: string, amount: number) => {
-    setFinancialGoals(prev => prev.map(g => g.id === id ? { ...g, currentAmount: g.currentAmount + amount } : g));
-  }, []);
-
-  const updateFinancialGoal = useCallback((id: string, updates: any) => {
-      setFinancialGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
-  }, []);
-  
-  const addRecurringContributionToGoal = useCallback((id: string, contrib: any) => {}, []);
-  const updateRecurringContributionInGoal = useCallback((gid: string, cid: string, updates: any) => {}, []);
-  const deleteRecurringContributionFromGoal = useCallback((gid: string, cid: string) => {}, []);
-  const linkGoals = useCallback((s: string, t: string, type: any, amt?: number) => {}, []);
-  const unlinkGoals = useCallback((s: string, t: string) => {}, []);
-  const connectWallet = useCallback((provider: EIP6963ProviderDetail) => {
-      showNotification(`Synchronized with ${provider.info.name}`, "success");
-  }, [showNotification]);
-  const updateEndpoint = useCallback((key: keyof ApiEndpoints, value: string) => setApiEndpoints(prev => ({ ...prev, [key]: value })), []);
-  const deductCredits = useCallback((amount: number) => {
-      if (sovereignCredits >= amount) {
-          setSovereignCredits(prev => prev - amount);
-          return true;
-      }
-      return false;
-  }, [sovereignCredits]);
-  const addTransaction = useCallback((tx: Transaction) => setTransactionsState(prev => [tx, ...prev]), []);
-
-  // --- CONTEXT VALUE DEFINITION (Stabilized via useMemo) ---
   const value: IDataContext = useMemo(() => ({
     view, activeView: view as View, setView, setActiveView: setView as (view: View) => void,
-    
-    userProfile: { /* Mock Data */
-        id: 'USR-77-X-ALPHA', name: 'James Burvel oCallaghan III', title: 'Sovereign Architect', email: 'james@sovereign.io', phone: '+1 (555) 942-0123', loyaltyTier: 'OMEGA', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James', usdBalance: 2450000000, fiatBalance: 2450000000, cryptoBalance: 14200.55
-    },
-    user: { /* Mock Data */
-        id: 'USR-77-X-ALPHA', name: 'James Burvel oCallaghan III', title: 'Sovereign Architect', email: 'james@sovereign.io', phone: '+1 (555) 942-0123', loyaltyTier: 'OMEGA', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James', usdBalance: 2450000000, fiatBalance: 2450000000, cryptoBalance: 14200.55
-    },
-    creator: { name: 'James Burvel oCallaghan III', title: 'Grand Architect of Aquarius AI' },
-    
+    userProfile: { id: 'USR-77-X-ALPHA', name: 'James Burvel oCallaghan III', title: 'Sovereign Architect', email: 'james@quantum.io', phone: '+1 (555) 942-0123', loyaltyTier: 'OMEGA', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James', usdBalance: 2450000000, fiatBalance: 2450000000, cryptoBalance: 14200.55 },
+    user: { id: 'USR-77-X-ALPHA', name: 'James Burvel oCallaghan III', title: 'Sovereign Architect', email: 'james@quantum.io', phone: '+1 (555) 942-0123', loyaltyTier: 'OMEGA', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James', usdBalance: 2450000000, fiatBalance: 2450000000, cryptoBalance: 14200.55 },
+    creator: { name: 'James Burvel oCallaghan III', title: 'Grand Architect of Quantum AI' },
     transactions, assets, internalAccounts, notifications, aiInsights: [], insights: [],
     budgets, rewardItems: MOCK_REWARD_ITEMS as any, apiStatus: MOCK_API_STATUS as any,
     pipelines: [
-      { id: 'p-1', name: 'GL Ledger Sync', pipelineName: 'NEXUS_TX_FEED', status: 'SUCCESS', prettyDuration: '1.2s' },
+      { id: 'p-1', name: 'Quantum Ledger Sync', pipelineName: 'NEXUS_TX_FEED', status: 'SUCCESS', prettyDuration: '1.2s' },
       { id: 'p-2', name: 'Risk Vector Audit', pipelineName: 'HEURISTIC_RISK', status: 'RUNNING', prettyDuration: '240ms' }
     ],
-    // *** FIX: Using stable constant MOCK_INBOUND_BLOBS defined outside ***
     inboundBlobs: MOCK_INBOUND_BLOBS, 
-    fundFlows: [
-      { id: 'f-1', name: 'Reserve Accumulation', ledgerId: 'L-771', postedTxCount: 1242, pendingTxCount: 12 }
-    ],
-    authorizedApps,
-    simulationData,
-    
-    geminiApiKey,
-    setGeminiApiKey: (key) => {
-        setGeminiApiKey(key);
-        localStorage.setItem('gemini_api_key', key);
-    },
+    fundFlows: [{ id: 'f-1', name: 'Reserve Accumulation', ledgerId: 'L-771', postedTxCount: 1242, pendingTxCount: 12 }],
+    authorizedApps, simulationData, geminiApiKey,
+    setGeminiApiKey: (key) => { setGeminiApiKey(key); localStorage.setItem('gemini_api_key', key); },
     modernTreasuryApiKey,
-    setModernTreasuryApiKey: (key) => {
-        setModernTreasuryApiKey(key);
-        localStorage.setItem('mt_api_key', key);
-    },
+    setModernTreasuryApiKey: (key) => { setModernTreasuryApiKey(key); localStorage.setItem('mt_api_key', key); },
     modernTreasuryOrganizationId,
-    setModernTreasuryOrganizationId: (id) => {
-        setModernTreasuryOrganizationId(id);
-        localStorage.setItem('mt_org_id', id);
-    },
-    
+    setModernTreasuryOrganizationId: (id) => { setModernTreasuryOrganizationId(id); localStorage.setItem('mt_org_id', id); },
     setTransactions: setTransactionsState,
-    updateTransaction,
-    deleteTransaction,
-    addTransaction,
-    
+    updateTransaction: (id, updates) => setTransactionsState(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)),
+    deleteTransaction: (id) => setTransactionsState(prev => prev.filter(t => t.id !== id)),
+    addTransaction: (tx) => setTransactionsState(prev => [tx, ...prev]),
     setAssets: setAssetsState,
     setInternalAccounts: setInternalAccountsState,
-    
     showNotification,
-    markNotificationRead,
-    authorizeApp,
-    revokeApp,
-    
-    redeemReward,
+    markNotificationRead: (id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n)),
+    authorizeApp: (app) => setAuthorizedApps(prev => [...prev, { id: app.id || `app-${Date.now()}`, name: app.name || 'Unknown', description: app.description || '', status: 'active', authorizedAt: new Date().toISOString(), scopes: app.scopes }]),
+    revokeApp: (id) => setAuthorizedApps(prev => prev.map(a => a.id === id ? { ...a, status: 'revoked' } : a)),
+    redeemReward: (item) => { showNotification(`Redeemed ${item.name}`, 'success'); return true; },
     rewardPoints: MOCK_REWARD_POINTS,
-
     askSovereignAI,
-    
     isImportingData,
     treesPlanted: 142,
     spendingForNextTree: 120,
-    
     linkedAccounts,
-    unlinkAccount,
-    
+    unlinkAccount: (id) => { setLinkedAccounts(prev => prev.filter(a => a.id !== id)); showNotification("Institutional link severed.", "warning"); },
     paymentOrders: [], invoices: [], complianceCases: [], corporateTransactions: [],
-    
     creditScore: MOCK_CREDIT_SCORE,
     creditFactors: MOCK_CREDIT_FACTORS,
-    
     financialGoals,
-    addFinancialGoal,
-    generateGoalPlan,
-    addContributionToGoal,
-    addRecurringContributionToGoal,
-    updateRecurringContributionInGoal,
-    deleteRecurringContributionFromGoal,
-    updateFinancialGoal,
-    linkGoals,
-    unlinkGoals,
-    
+    addFinancialGoal: (goal) => setFinancialGoals(prev => [...prev, { id: `goal-${Date.now()}`, name: goal.name || 'New Goal', targetAmount: goal.targetAmount || 0, currentAmount: 0, targetDate: goal.targetDate || new Date().toISOString(), iconName: goal.iconName || 'default', plan: null, startDate: new Date().toISOString(), contributions: [], status: 'on_track' }]),
+    generateGoalPlan: async (id) => { showNotification("Neural strategist is mapping your trajectory...", "info"); await new Promise(r => setTimeout(r, 2000)); showNotification("Strategic roadmap synthesized.", "success"); },
+    addContributionToGoal: (id, amount) => setFinancialGoals(prev => prev.map(g => g.id === id ? { ...g, currentAmount: g.currentAmount + amount } : g)),
+    addRecurringContributionToGoal: () => {},
+    updateRecurringContributionInGoal: () => {},
+    deleteRecurringContributionFromGoal: () => {},
+    updateFinancialGoal: (id, updates) => setFinancialGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g)),
+    linkGoals: () => {},
+    unlinkGoals: () => {},
     isWalletConnectModalOpen,
     setWalletConnectModalOpen,
     detectedProviders,
-    connectWallet,
-    
+    connectWallet: (provider) => showNotification(`Synchronized with ${provider.info.name}`, "success"),
     apiEndpoints,
-    updateEndpoint,
-    
+    updateEndpoint: (key, value) => setApiEndpoints(prev => ({ ...prev, [key]: value })),
     sovereignCredits,
-    deductCredits,
-    
+    deductCredits: (amount) => { if (sovereignCredits >= amount) { setSovereignCredits(prev => prev - amount); return true; } return false; },
     isProductionApproved: true,
     plaidProducts: ['auth', 'transactions', 'identity', 'balance'],
     isLoading: false,
     error: null,
     broadcastEvent,
-    
-    // --- Implemented Stub Methods ---
-    addBudget,
+    addBudget: (name, limit) => setBudgets(prev => [...prev, { id: `b-${Date.now()}`, name, limit, spent: 0, color: '#06b6d4', remaining: limit, category: name, alerts: [] }]),
     stripeApiKey: process.env.STRIPE_SECRET_KEY || null,
     marqetaCardProducts,
-    fetchMarqetaProducts,
+    fetchMarqetaProducts: async () => { setIsMarqetaLoading(true); await new Promise(r => setTimeout(r, 1000)); setMarqetaCardProducts([{ token: 'cp-1', name: 'Quantum Black', active: true, start_date: '2024-01-01', config: { fulfillment: { bin_prefix: '424242' }, poi: { other: {} } } } as any]); setIsMarqetaLoading(false); },
     isMarqetaLoading,
     marqetaApiToken,
     marqetaApiSecret,
-    setMarqetaCredentials,
+    setMarqetaCredentials: (token, secret) => { setMarqetaApiToken(token); setMarqetaApiSecret(secret); localStorage.setItem('marqeta_token', token); localStorage.setItem('marqeta_secret', secret); },
     plaidApiKey: process.env.PLAID_SECRET || null,
     dbConfig,
-    updateDbConfig,
+    updateDbConfig: (updates) => setDbConfig(prev => ({ ...prev, ...updates })),
     connectDatabase,
     webDriverStatus,
-    launchWebDriver,
-    showSystemAlert,
-    handlePlaidSuccess,
+    launchWebDriver: async (task) => { setWebDriverStatus(prev => ({ ...prev, status: 'running', logs: [...prev.logs, `Starting task: ${task}`] })); await new Promise(r => setTimeout(r, 2000)); setWebDriverStatus(prev => ({ ...prev, status: 'idle', logs: [...prev.logs, `Task completed: ${task}`] })); },
+    showSystemAlert: (msg, sev) => showNotification(msg, sev),
+    handlePlaidSuccess: (token, meta) => showNotification(`Account linked: ${meta.institution.name}`, "success"),
     securityMetrics: MOCK_SECURITY_METRICS,
-    auditLogs: MOCK_AUDIT_LOGS,
+    auditLogs,
     threatAlerts: MOCK_THREAT_ALERTS,
     dataSharingPolicies: MOCK_DATA_SHARING_POLICIES,
     apiKeys: MOCK_API_KEYS,
     trustedContacts: MOCK_TRUSTED_CONTACTS,
     securityAwarenessModules: MOCK_SECURITY_AWARENESS,
     transactionRules: MOCK_TRANSACTION_RULES,
-
-    // --- GITHUB INTEGRATION ---
     githubRepoFiles,
     fetchRepo,
-    fetchDirectory,
+    fetchDirectory: async () => {},
     isRepoLoading,
-
+    initiateWireTransfer,
+    initiateACHTransfer,
+    logAuditAction,
   }), [
     view, transactions, assets, internalAccounts, notifications, simulationData, isImportingData, financialGoals, isWalletConnectModalOpen, detectedProviders, linkedAccounts, authorizedApps, 
     geminiApiKey, modernTreasuryApiKey, modernTreasuryOrganizationId, budgets, sovereignCredits, 
     marqetaCardProducts, isMarqetaLoading, marqetaApiToken, marqetaApiSecret, 
-    dbConfig, webDriverStatus, githubRepoFiles, isRepoLoading, 
-    // Dependencies for callbacks that rely on state
-    setNotifications, setSovereignCredits, setGithubRepoFiles, 
-    // Dependencies for functional calls
-    showNotification, askSovereignAI, broadcastEvent, fetchDirectoryContents, updateFileTree
+    dbConfig, webDriverStatus, githubRepoFiles, isRepoLoading, auditLogs,
+    showNotification, askSovereignAI, broadcastEvent, connectDatabase, initiateWireTransfer, initiateACHTransfer, logAuditAction, fetchRepo
   ]);
 
-
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
-}
+};
