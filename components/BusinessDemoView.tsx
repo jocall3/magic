@@ -42,7 +42,7 @@ import {
   AlertTriangle,
   Sparkles
 } from 'lucide-react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 // --- Mock Data Generation ---
 
@@ -393,8 +393,8 @@ const ChatInterface = ({ onAction }: { onAction: (action: any) => void }) => {
         throw new Error("API Key missing");
       }
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const genAI = new GoogleGenAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const systemPrompt = `
         You are an AI assistant for a banking dashboard called NexusBank.
