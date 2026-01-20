@@ -23,7 +23,7 @@ import {
   UserCheck,
   AlertTriangle
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/generai";
+import { GoogleGenAI } from "@google/genai";
 
 /**
  * QUANTUM FINANCIAL - AI COMMAND & AUDIT MONOLITH
