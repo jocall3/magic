@@ -150,6 +150,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sslMode: 'require'
   });
 
+  const updateDbConfig = useCallback((updates: any) => {
+    setDbConfig(prev => ({ ...prev, ...updates }));
+  }, []);
+
   const [webDriverStatus, setWebDriverStatus] = useState({
       status: 'idle' as 'idle' | 'running' | 'error',
       logs: [] as string[]
@@ -361,7 +365,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMarqetaCredentials: (token, secret) => { setMarqetaApiToken(token); setMarqetaApiSecret(secret); localStorage.setItem('marqeta_token', token); localStorage.setItem('marqeta_secret', secret); },
     plaidApiKey: process.env.PLAID_SECRET || null,
     dbConfig,
-    updateDbConfig: (updates) => setDbConfig(prev => ({ ...prev, ...updates })),
+    updateDbConfig,
     connectDatabase,
     webDriverStatus,
     launchWebDriver: async (task) => { setWebDriverStatus(prev => ({ ...prev, status: 'running', logs: [...prev.logs, `Starting task: ${task}`] })); await new Promise(r => setTimeout(r, 2000)); setWebDriverStatus(prev => ({ ...prev, status: 'idle', logs: [...prev.logs, `Task completed: ${task}`] })); },
@@ -387,7 +391,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     geminiApiKey, modernTreasuryApiKey, modernTreasuryOrganizationId, budgets, sovereignCredits, 
     marqetaCardProducts, isMarqetaLoading, marqetaApiToken, marqetaApiSecret, 
     dbConfig, webDriverStatus, githubRepoFiles, isRepoLoading, auditLogs,
-    showNotification, askSovereignAI, broadcastEvent, connectDatabase, initiateWireTransfer, initiateACHTransfer, logAuditAction, fetchRepo
+    showNotification, askSovereignAI, broadcastEvent, connectDatabase, initiateWireTransfer, initiateACHTransfer, logAuditAction, fetchRepo, updateDbConfig
   ]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
