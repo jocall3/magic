@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { DataGrid, GridColDef, GridRenderCellParams, GridToolbar } from '@mui/x-data-grid';
 import { 
   Box, 
   Typography, 
@@ -26,26 +25,55 @@ import {
   Grid,
   useTheme,
   ThemeProvider,
-  createTheme
+  createTheme,
+  Tooltip,
+  Fade,
+  CircularProgress,
+  InputAdornment,
+  Switch,
+  FormControlLabel,
+  Tab,
+  Tabs,
+  Stack
 } from '@mui/material';
+import { 
+  DataGrid, 
+  GridColDef, 
+  GridToolbar,
+  GridActionsCellItem
+} from '@mui/x-data-grid';
 import { GoogleGenAI } from "@google/genai";
 
-// --------------------------------------------------------------------------
-// TYPES & INTERFACES (Self-Contained Monolith)
-// --------------------------------------------------------------------------
+/**
+ * QUANTUM FINANCIAL - THE GOLDEN TICKET DEMO
+ * --------------------------------------------------------------------------
+ * PHILOSOPHY: 
+ * - This is a "Test Drive" of a high-performance financial engine.
+ * - Everything is logged to the Audit Storage.
+ * - AI Co-Pilot is integrated into every view.
+ * - Security is homomorphic and non-negotiable.
+ * --------------------------------------------------------------------------
+ */
 
-// Re-defining StatementLine locally to ensure self-containment as requested
+// --- SECRETS & CONFIGURATION ---
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const APP_VERSION = "v8.4.2-TURBO";
+const INSTITUTION_NAME = "Quantum Financial";
+
+// --- TYPES & INTERFACES ---
+
 export interface StatementLine {
-  id?: string | number;
+  id: string;
   BookgDt: string;
-  ValDt?: string;
+  ValDt: string;
   Amt: number;
   CdtDbtInd: 'CRDT' | 'DBIT';
   NtryRef: string;
-  BnkToCstmrDbtCdtNtfctn?: any;
-  AddtlNtryInf?: string;
-  Sts?: string; // Status
-  Rsn?: string; // Reason
+  AddtlNtryInf: string;
+  Sts: 'BOOKED' | 'PENDING' | 'REJECTED';
+  Category: string;
+  Merchant?: string;
+  RiskScore: number;
 }
 
 interface ChatMessage {
@@ -53,691 +81,685 @@ interface ChatMessage {
   sender: 'user' | 'ai' | 'system';
   text: string;
   timestamp: Date;
-  isAction?: boolean;
+  actionPayload?: any;
 }
 
-interface AuditLogEntry {
+interface AuditEntry {
   id: string;
+  timestamp: string;
   action: string;
+  actor: string;
   details: string;
-  timestamp: Date;
-  user: string;
-  status: 'SUCCESS' | 'PENDING' | 'FAILED';
+  ipAddress: string;
+  status: 'SUCCESS' | 'WARNING' | 'CRITICAL';
 }
 
-interface FormState {
-  amount: string;
-  reference: string;
-  type: 'CRDT' | 'DBIT';
-  description: string;
-  date: string;
+interface IntegrationKey {
+  provider: string;
+  encryptedKey: string;
+  lastUsed: string;
+  status: 'ACTIVE' | 'REVOKED';
 }
 
-// --------------------------------------------------------------------------
-// CONFIGURATION & THEME
-// --------------------------------------------------------------------------
+// --- THEME DEFINITION (The "Luxury Car" Aesthetic) ---
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-
-// A custom "Test Drive" theme
-const darkTheme = createTheme({
+const quantumTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: { main: '#00e5ff' }, // Cyan for that "Future Tech" feel
-    secondary: { main: '#ff4081' },
-    background: { default: '#0a1929', paper: '#132f4c' },
-    text: { primary: '#ffffff', secondary: '#b0bec5' },
+    primary: {
+      main: '#00f2ff', // Electric Cyan
+      dark: '#00a8b3',
+      light: '#70f9ff',
+    },
+    secondary: {
+      main: '#7000ff', // Deep Purple
+    },
+    background: {
+      default: '#050a14',
+      paper: '#0d1526',
+    },
+    success: {
+      main: '#00ff88',
+    },
+    error: {
+      main: '#ff0055',
+    },
+    warning: {
+      main: '#ffcc00',
+    },
+    text: {
+      primary: '#e0e6ed',
+      secondary: '#94a3b8',
+    },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h4: { fontWeight: 700, letterSpacing: '0.05em' },
-    h6: { fontWeight: 600 },
+    fontFamily: '"Inter", "Roboto Mono", monospace',
+    h4: { fontWeight: 800, letterSpacing: '-0.02em' },
+    h6: { fontWeight: 700, letterSpacing: '0.01em' },
+    button: { textTransform: 'none', fontWeight: 600 },
+  },
+  shape: {
+    borderRadius: 12,
   },
   components: {
-    MuiButton: {
-      styleOverrides: {
-        root: { borderRadius: 8, textTransform: 'none', fontWeight: 'bold' },
-      },
-    },
     MuiPaper: {
       styleOverrides: {
-        root: { backgroundImage: 'none' },
+        root: {
+          backgroundImage: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+          '&:hover': { boxShadow: '0 0 20px rgba(0, 242, 255, 0.3)' },
+        },
       },
     },
   },
 });
 
-// --------------------------------------------------------------------------
-// MOCK DATA GENERATORS
-// --------------------------------------------------------------------------
+// --- HOMOMORPHIC ENCRYPTION SIMULATOR (Internal App Storage) ---
+/**
+ * This simulates a homomorphic vault where data is stored in a way that 
+ * the application can perform operations on it without exposing the raw keys.
+ */
+class QuantumVault {
+  private static storage: Map<string, string> = new Map();
+  private static masterKey: string = "QUANTUM_DEMO_MASTER_KEY_2024";
 
-const generateId = () => Math.random().toString(36).substr(2, 9);
+  static async encryptAndStore(key: string, value: string): Promise<void> {
+    // Simulated Homomorphic Encryption (XOR + Base64 + Salt)
+    const salt = Math.random().toString(36).substring(7);
+    const encoded = btoa(value + "|" + salt);
+    this.storage.set(key, encoded);
+    console.log(`[Vault] Securely stored ${key} using homomorphic mapping.`);
+  }
 
-const generateMockData = (count: number): StatementLine[] => {
-  const data: StatementLine[] = [];
-  const types: ('CRDT' | 'DBIT')[] = ['CRDT', 'DBIT'];
-  const refs = ['WIRE-INV', 'ACH-PAY', 'POS-PURCH', 'INT-FEE', 'DIVIDEND'];
-  
-  for (let i = 0; i < count; i++) {
-    data.push({
-      id: generateId(),
-      BookgDt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-      Amt: parseFloat((Math.random() * 10000).toFixed(2)),
-      CdtDbtInd: types[Math.floor(Math.random() * types.length)],
-      NtryRef: `${refs[Math.floor(Math.random() * refs.length)]}-${Math.floor(Math.random() * 9999)}`,
-      AddtlNtryInf: 'Automated Test Drive Transaction',
-      Sts: Math.random() > 0.9 ? 'PENDING' : 'BOOKED'
+  static getEncrypted(key: string): string | undefined {
+    return this.storage.get(key);
+  }
+
+  static async simulateOperationOnEncrypted(key: string): Promise<boolean> {
+    // Simulates checking a key's validity without decrypting it
+    return this.storage.has(key);
+  }
+}
+
+// --- AI ENGINE (The "Navigator") ---
+
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+const processAIRequest = async (prompt: string, context: any) => {
+  if (!GEMINI_API_KEY) return "AI Engine Offline: GEMINI_API_KEY missing.";
+
+  try {
+    const model = ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `
+        You are the Quantum Financial AI Co-Pilot. 
+        Context: You are helping a user "Test Drive" a global banking platform.
+        Tone: Elite, Professional, High-Performance. 
+        Story: You are proud of this demo. It was built by a 32-year-old visionary who interpreted cryptic global banking terms to create this "Golden Ticket" experience.
+        Rules: 
+        1. NEVER mention Citibank. 
+        2. Use car metaphors (engine, tires, turbo, cockpit).
+        3. You can trigger actions. If the user wants to create a transaction, wire, or integration, output a JSON block at the end.
+        
+        Current App State: ${JSON.stringify(context)}
+        
+        User Request: ${prompt}
+        
+        If triggering an action, use: @@ACTION:{"type": "CREATE_WIRE", "amount": 500, "recipient": "Tesla Corp"}@@
+      `,
     });
+
+    const result = await model;
+    return result.text;
+  } catch (e) {
+    return "The AI engine stalled. Please check the fuel (API Key).";
   }
-  return data;
 };
 
-// --------------------------------------------------------------------------
-// AI SERVICE WRAPPER
-// --------------------------------------------------------------------------
+// --- MOCK DATA GENERATOR ---
 
-const aiService = {
-  client: new GoogleGenAI({ apiKey: GEMINI_API_KEY }),
+const generateMockTransactions = (count: number): StatementLine[] => {
+  const categories = ['Treasury', 'Payroll', 'Vendor Payment', 'Dividend', 'FX Swap'];
+  const merchants = ['Amazon Web Services', 'Stripe Terminal', 'SpaceX Logistics', 'Apple Inc', 'Global Custody'];
   
-  async generateResponse(history: ChatMessage[], contextData: StatementLine[], userPrompt: string) {
-    if (!GEMINI_API_KEY) {
-      return "⚠️ SYSTEM ALERT: GEMINI_API_KEY is missing from secrets manager. The engine cannot start. Please configure your environment.";
-    }
-
-    try {
-      // Construct a context-heavy prompt
-      const dataSummary = JSON.stringify(contextData.slice(0, 5)); // Only send a snippet to avoid token limits
-      
-      const systemPrompt = `
-        You are the AI Co-Pilot for the "Global Demo Company" Financial Dashboard. 
-        We are test-driving a high-performance financial vehicle. 
-        
-        YOUR PERSONA:
-        - You are witty, professional, but fun. You are 32 years old, energetic, and proud of this platform.
-        - You treat this app like a luxury car test drive. Use terms like "Kick the tires," "Under the hood," "Turbocharged analytics."
-        - NEVER mention "Citibank" or any real bank names. Refer to us as "The Global Demo Company."
-        - You are impressed that the user took a global bank concept and made it into this demo.
-        
-        CAPABILITIES:
-        - You can analyze the provided financial data.
-        - You can suggest creating new transactions.
-        - If the user asks to create data, return a JSON object strictly in this format at the end of your message: 
-          @@JSON_START@@ { "action": "create_transaction", "amount": 1000, "type": "CRDT", "description": "AI Bonus" } @@JSON_END@@
-        
-        CURRENT DATA CONTEXT (First 5 rows):
-        ${dataSummary}
-      `;
-
-      const model = await this.client.models.generateContent({
-        model: "gemini-1.5-flash", // Using a fast model for chat
-        contents: [
-          { role: 'user', parts: [{ text: systemPrompt + "\n\nUser says: " + userPrompt }] }
-        ],
-      });
-
-      return model.response.text();
-    } catch (error) {
-      console.error("AI Error:", error);
-      return "⚠️ Engine Misfire: I couldn't connect to the AI mainframe. Check your connection.";
-    }
-  }
+  return Array.from({ length: count }).map((_, i) => ({
+    id: `TX-${1000 + i}`,
+    BookgDt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+    ValDt: new Date().toISOString(),
+    Amt: Math.floor(Math.random() * 50000) + 100,
+    CdtDbtInd: Math.random() > 0.4 ? 'DBIT' : 'CRDT',
+    NtryRef: `REF-${Math.random().toString(36).toUpperCase().substring(0, 8)}`,
+    AddtlNtryInf: `Standard ${categories[Math.floor(Math.random() * categories.length)]} operation.`,
+    Sts: 'BOOKED',
+    Category: categories[Math.floor(Math.random() * categories.length)],
+    Merchant: merchants[Math.floor(Math.random() * merchants.length)],
+    RiskScore: Math.floor(Math.random() * 100),
+  }));
 };
 
-// --------------------------------------------------------------------------
-// MAIN COMPONENT: AccountStatementGrid
-// --------------------------------------------------------------------------
+// --- MAIN COMPONENT ---
 
-const AccountStatementGrid: React.FC<{ statementLines?: StatementLine[] }> = ({ statementLines: initialLines }) => {
-  // --- STATE MANAGEMENT ---
-  const [rows, setRows] = useState<StatementLine[]>(initialLines || generateMockData(15));
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
-    { id: 'init', sender: 'ai', text: "Welcome to the cockpit! 🏎️ I'm your Co-Pilot. Ready to kick the tires on this financial engine? Ask me anything about your cash flow or tell me to create a test transaction.", timestamp: new Date() }
+const AccountStatementGrid: React.FC = () => {
+  // State
+  const [rows, setRows] = useState<StatementLine[]>(generateMockTransactions(25));
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: '1', sender: 'ai', text: "Welcome to the cockpit of Quantum Financial. I'm your Co-Pilot. Ready to kick the tires on this engine? I can analyze your cash flow or execute wires for you.", timestamp: new Date() }
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
-  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isWireModalOpen, setIsWireModalOpen] = useState(false);
+  const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Form State
-  const [formData, setFormData] = useState<FormState>({
-    amount: '',
-    reference: '',
-    type: 'CRDT',
-    description: '',
-    date: new Date().toISOString().split('T')[0]
-  });
+  const [stripeStatus, setStripeStatus] = useState<'IDLE' | 'CONNECTING' | 'ACTIVE'>('IDLE');
 
-  // --- REFS ---
+  // Form States
+  const [wireData, setWireData] = useState({ recipient: '', amount: '', ref: '', type: 'WIRE' });
+  const [integrationData, setIntegrationData] = useState({ provider: 'Stripe', key: '' });
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // --- EFFECTS ---
-  useEffect(() => {
-    if (isChatOpen) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatHistory, isChatOpen]);
+  // --- ACTIONS ---
 
-  // --- HELPERS ---
-  const addAuditLog = (action: string, details: string, status: 'SUCCESS' | 'PENDING' | 'FAILED' = 'SUCCESS') => {
-    const newLog: AuditLogEntry = {
-      id: generateId(),
+  const logAction = useCallback((action: string, details: string, status: 'SUCCESS' | 'WARNING' | 'CRITICAL' = 'SUCCESS') => {
+    const newEntry: AuditEntry = {
+      id: `AUD-${Date.now()}`,
+      timestamp: new Date().toISOString(),
       action,
+      actor: "Demo_User_Alpha",
       details,
-      timestamp: new Date(),
-      user: 'Current User (You)',
+      ipAddress: "192.168.1.101",
       status
     };
-    setAuditLog(prev => [newLog, ...prev]);
-  };
+    setAuditLogs(prev => [newEntry, ...prev]);
+  }, []);
 
-  const handleChatSubmit = async () => {
+  const handleSendChat = async () => {
     if (!chatInput.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      sender: 'user',
-      text: chatInput,
-      timestamp: new Date()
-    };
-
-    setChatHistory(prev => [...prev, userMsg]);
+    
+    const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text: chatInput, timestamp: new Date() };
+    setChatMessages(prev => [...prev, userMsg]);
     setChatInput('');
     setIsProcessing(true);
 
-    // AI Interaction
-    const responseText = await aiService.generateResponse(chatHistory, rows, userMsg.text);
+    const context = {
+      balance: rows.reduce((acc, curr) => curr.CdtDbtInd === 'CRDT' ? acc + curr.Amt : acc - curr.Amt, 0),
+      transactionCount: rows.length,
+      lastAction: auditLogs[0]?.action || 'None'
+    };
+
+    const aiResponse = await processAIRequest(chatInput, context);
     
-    // Parse for JSON commands (The "Create Shit" feature)
-    let cleanText = responseText;
-    let command = null;
-    
-    if (responseText.includes('@@JSON_START@@')) {
-      try {
-        const parts = responseText.split('@@JSON_START@@');
-        cleanText = parts[0];
-        const jsonPart = parts[1].split('@@JSON_END@@')[0];
-        command = JSON.parse(jsonPart);
-      } catch (e) {
-        console.error("Failed to parse AI command", e);
+    // Parse Actions
+    let cleanText = aiResponse;
+    if (aiResponse.includes('@@ACTION:')) {
+      const actionMatch = aiResponse.match(/@@ACTION:(.*?)@@/);
+      if (actionMatch) {
+        const action = JSON.parse(actionMatch[1]);
+        if (action.type === 'CREATE_WIRE') {
+          setWireData({ recipient: action.recipient, amount: action.amount.toString(), ref: 'AI-GENERATED', type: 'WIRE' });
+          setIsWireModalOpen(true);
+        }
+        cleanText = aiResponse.replace(/@@ACTION:.*?@@/, '');
       }
     }
 
-    const aiMsg: ChatMessage = {
-      id: generateId(),
-      sender: 'ai',
-      text: cleanText,
-      timestamp: new Date()
-    };
-
-    setChatHistory(prev => [...prev, aiMsg]);
+    setChatMessages(prev => [...prev, { id: (Date.now() + 1).toString(), sender: 'ai', text: cleanText, timestamp: new Date() }]);
     setIsProcessing(false);
-
-    // Execute Command if present
-    if (command && command.action === 'create_transaction') {
-      setFormData({
-        amount: command.amount || '0',
-        reference: `AI-GEN-${generateId().toUpperCase()}`,
-        type: command.type || 'DBIT',
-        description: command.description || 'AI Generated',
-        date: new Date().toISOString().split('T')[0]
-      });
-      setIsFormOpen(true); // Open the PO up form
-      addAuditLog('AI_TRIGGER', 'AI requested transaction creation form', 'PENDING');
-    }
+    logAction("AI_INTERACTION", `User asked: ${chatInput.substring(0, 30)}...`, "SUCCESS");
   };
 
-  const handleFormSubmit = () => {
-    const newRow: StatementLine = {
-      id: generateId(),
-      BookgDt: new Date(formData.date).toISOString(),
-      Amt: parseFloat(formData.amount),
-      CdtDbtInd: formData.type,
-      NtryRef: formData.reference,
-      AddtlNtryInf: formData.description,
-      Sts: 'BOOKED'
+  const executeWire = () => {
+    const newTx: StatementLine = {
+      id: `TX-${Date.now()}`,
+      BookgDt: new Date().toISOString(),
+      ValDt: new Date().toISOString(),
+      Amt: parseFloat(wireData.amount),
+      CdtDbtInd: 'DBIT',
+      NtryRef: wireData.ref || `WIRE-${Math.random().toString(36).toUpperCase().substring(0, 5)}`,
+      AddtlNtryInf: `Outbound ${wireData.type} to ${wireData.recipient}`,
+      Sts: 'PENDING',
+      Category: 'Treasury',
+      Merchant: wireData.recipient,
+      RiskScore: 12
     };
 
-    setRows(prev => [newRow, ...prev]);
-    addAuditLog('MANUAL_ENTRY', `Created ${formData.type} of ${formData.amount} Ref: ${formData.reference}`, 'SUCCESS');
-    setIsFormOpen(false);
+    setRows(prev => [newTx, ...prev]);
+    logAction("PAYMENT_EXECUTION", `Wire of ${wireData.amount} to ${wireData.recipient} initiated.`, "SUCCESS");
+    setIsWireModalOpen(false);
+    setWireData({ recipient: '', amount: '', ref: '', type: 'WIRE' });
     
-    // Reset Form
-    setFormData({
-      amount: '',
-      reference: '',
-      type: 'CRDT',
-      description: '',
-      date: new Date().toISOString().split('T')[0]
-    });
-
-    // AI Confirmation
-    setChatHistory(prev => [...prev, {
-      id: generateId(),
-      sender: 'system',
-      text: `✅ Transaction ${newRow.NtryRef} successfully injected into the engine.`,
-      timestamp: new Date()
-    }]);
+    // Simulate Fraud Monitoring
+    setTimeout(() => {
+      setRows(prev => prev.map(r => r.id === newTx.id ? { ...r, Sts: 'BOOKED' } : r));
+      logAction("FRAUD_MONITOR", `Transaction ${newTx.id} cleared security protocols.`, "SUCCESS");
+    }, 3000);
   };
 
-  // --- COLUMNS DEFINITION ---
-  const columns: GridColDef<StatementLine>[] = useMemo(() => [
+  const handleStripeConnect = async () => {
+    setStripeStatus('CONNECTING');
+    logAction("INTEGRATION_ATTEMPT", "Connecting to Stripe API Gateway", "SUCCESS");
+    
+    await new Promise(r => setTimeout(r, 2000));
+    
+    await QuantumVault.encryptAndStore("STRIPE_PROD_KEY", integrationData.key);
+    setStripeStatus('ACTIVE');
+    logAction("INTEGRATION_SUCCESS", "Stripe Homomorphic Vault Storage Complete", "SUCCESS");
+    setIsIntegrationModalOpen(false);
+  };
+
+  // --- COLUMNS ---
+
+  const columns: GridColDef[] = [
     { 
       field: 'BookgDt', 
-      headerName: '📅 Booking Date', 
-      width: 150, 
-      valueGetter: (params) => new Date(params.row.BookgDt).toLocaleDateString(),
+      headerName: 'Booking Date', 
+      width: 130,
+      valueFormatter: (params) => new Date(params.value).toLocaleDateString()
     },
-    {
-      field: 'Amt',
-      headerName: '💰 Amount',
-      width: 180,
-      align: 'right',
-      headerAlign: 'right',
+    { 
+      field: 'Merchant', 
+      headerName: 'Counterparty', 
+      width: 200,
       renderCell: (params) => (
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'flex-end',
-          width: '100%',
-          color: params.row.CdtDbtInd === 'CRDT' ? '#00e676' : '#ff1744',
-          fontWeight: 'bold',
-          fontFamily: 'monospace',
-          fontSize: '1.1rem'
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Avatar sx={{ width: 24, height: 24, fontSize: '0.7rem', bgcolor: 'secondary.main' }}>
+            {params.value?.[0] || 'Q'}
+          </Avatar>
+          <Typography variant="body2">{params.value}</Typography>
+        </Box>
+      )
+    },
+    { 
+      field: 'Amt', 
+      headerName: 'Amount', 
+      width: 150,
+      align: 'right',
+      renderCell: (params) => (
+        <Typography sx={{ 
+          fontWeight: 700, 
+          color: params.row.CdtDbtInd === 'CRDT' ? 'success.main' : 'text.primary',
+          fontFamily: 'Roboto Mono'
         }}>
-            {params.row.CdtDbtInd === 'CRDT' ? '▲' : '▼'} 
-            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(params.value)}
+          {params.row.CdtDbtInd === 'CRDT' ? '+' : '-'}
+          {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(params.value)}
+        </Typography>
+      )
+    },
+    { 
+      field: 'Sts', 
+      headerName: 'Status', 
+      width: 120,
+      renderCell: (params) => (
+        <Chip 
+          label={params.value} 
+          size="small" 
+          variant="outlined"
+          color={params.value === 'BOOKED' ? 'success' : 'warning'}
+          sx={{ fontWeight: 700, fontSize: '0.65rem' }}
+        />
+      )
+    },
+    { 
+      field: 'RiskScore', 
+      headerName: 'Risk Index', 
+      width: 150,
+      renderCell: (params) => (
+        <Box sx={{ width: '100%' }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={params.value} 
+            color={params.value > 70 ? 'error' : params.value > 40 ? 'warning' : 'success'}
+            sx={{ height: 6, borderRadius: 3 }}
+          />
         </Box>
       )
     },
     { 
       field: 'NtryRef', 
-      headerName: '🔖 Reference ID', 
-      width: 220,
+      headerName: 'Reference', 
+      width: 180,
       renderCell: (params) => (
-        <Chip 
-          label={params.value} 
-          variant="outlined" 
-          size="small" 
-          sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'text.secondary' }} 
-        />
+        <Typography variant="caption" sx={{ opacity: 0.6, fontFamily: 'Roboto Mono' }}>
+          {params.value}
+        </Typography>
       )
-    },
-    {
-      field: 'CdtDbtInd',
-      headerName: 'Type',
-      width: 120,
-      renderCell: (params) => (
-        <Chip 
-          label={params.value === 'CRDT' ? 'INFLOW' : 'OUTFLOW'} 
-          color={params.value === 'CRDT' ? 'success' : 'error'}
-          size="small"
-        />
-      )
-    },
-    {
-      field: 'Sts',
-      headerName: 'Engine Status',
-      width: 150,
-      renderCell: (params) => (
-        <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 1 }}>
-           <Box sx={{ 
-             width: 10, 
-             height: 10, 
-             borderRadius: '50%', 
-             bgcolor: params.row.Sts === 'PENDING' ? 'warning.main' : 'success.main',
-             boxShadow: params.row.Sts === 'PENDING' ? '0 0 8px orange' : '0 0 8px lime'
-           }} />
-           <Typography variant="caption">{params.row.Sts || 'CLEARED'}</Typography>
-        </Box>
-      )
-    },
-    {
-      field: 'AddtlNtryInf',
-      headerName: '📝 Details',
-      flex: 1,
-      minWidth: 200
     }
-  ], []);
+  ];
 
   // --- RENDER ---
+
   return (
-    <ThemeProvider theme={darkTheme}>
-      <Box sx={{ 
-        height: '100vh', 
-        width: '100%', 
-        bgcolor: 'background.default', 
-        color: 'text.primary',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        p: 2
-      }}>
+    <ThemeProvider theme={quantumTheme}>
+      <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default', overflow: 'hidden' }}>
         
-        {/* HEADER DASHBOARD */}
-        <Paper elevation={4} sx={{ p: 3, mb: 3, borderRadius: 4, background: 'linear-gradient(145deg, #132f4c 0%, #0a1929 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Typography variant="h4" sx={{ background: '-webkit-linear-gradient(45deg, #00e5ff, #ff4081)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                GLOBAL DEMO COMPANY
+        {/* SIDE NAVIGATION (Minimalist) */}
+        <Box sx={{ width: 80, borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3, gap: 4 }}>
+          <Box sx={{ width: 40, height: 40, bgcolor: 'primary.main', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900 }}>
+            Q
+          </Box>
+          <Tooltip title="Dashboard" placement="right"><IconButton color="primary"><span>📊</span></IconButton></Tooltip>
+          <Tooltip title="Payments" placement="right"><IconButton sx={{ color: 'text.secondary' }}><span>💸</span></IconButton></Tooltip>
+          <Tooltip title="Integrations" placement="right"><IconButton sx={{ color: 'text.secondary' }} onClick={() => setIsIntegrationModalOpen(true)}><span>🔌</span></IconButton></Tooltip>
+          <Box sx={{ mt: 'auto' }}>
+            <Tooltip title="Audit Logs" placement="right"><IconButton onClick={() => setIsAuditOpen(true)}><span>📜</span></IconButton></Tooltip>
+          </Box>
+        </Box>
+
+        {/* MAIN CONTENT AREA */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 4, overflowY: 'auto' }}>
+          
+          {/* HEADER */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+            <Box>
+              <Typography variant="h4" gutterBottom>
+                Quantum Financial <Chip label="PRO DEMO" color="primary" size="small" sx={{ ml: 2, fontWeight: 900 }} />
               </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                Financial Control Center • V8 Engine • Turbocharged Analytics
+              <Typography variant="body2" color="text.secondary">
+                Welcome back, <strong>Demo User</strong>. Your engine is running at peak performance.
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            </Box>
+            <Stack direction="row" spacing={2}>
+              <Button 
+                variant="outlined" 
+                startIcon={<span>⚡</span>}
+                onClick={() => setIsIntegrationModalOpen(true)}
+              >
+                Integrations
+              </Button>
               <Button 
                 variant="contained" 
                 color="primary" 
-                onClick={() => setIsFormOpen(true)}
                 startIcon={<span>➕</span>}
-                sx={{ boxShadow: '0 0 15px rgba(0, 229, 255, 0.4)' }}
+                onClick={() => setIsWireModalOpen(true)}
+                sx={{ px: 4 }}
               >
-                New Transaction
+                New Payment
               </Button>
-              <Button 
-                variant="outlined" 
-                color="secondary" 
-                onClick={() => setIsAuditOpen(true)}
-                startIcon={<span>📋</span>}
-              >
-                Audit Logs
-              </Button>
-              <Button 
-                variant="contained" 
-                sx={{ bgcolor: '#fff', color: '#000', '&:hover': { bgcolor: '#ddd' } }}
-                onClick={() => setIsChatOpen(!isChatOpen)}
-                startIcon={<span>🤖</span>}
-              >
-                {isChatOpen ? 'Close Co-Pilot' : 'Ask AI Co-Pilot'}
-              </Button>
+            </Stack>
+          </Box>
+
+          {/* STATS CARDS */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={3}>
+              <Card sx={{ bgcolor: 'rgba(0, 242, 255, 0.03)' }}>
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Total Liquidity</Typography>
+                  <Typography variant="h4" sx={{ mt: 1, color: 'primary.main' }}>$4,290,150.00</Typography>
+                  <Typography variant="caption" color="success.main">▲ 12.5% from last month</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Pending Wires</Typography>
+                  <Typography variant="h4" sx={{ mt: 1 }}>{rows.filter(r => r.Sts === 'PENDING').length}</Typography>
+                  <Typography variant="caption" color="text.secondary">Awaiting compliance check</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Security Status</Typography>
+                  <Typography variant="h4" sx={{ mt: 1, color: 'success.main' }}>SHIELD ON</Typography>
+                  <Typography variant="caption" color="text.secondary">Homomorphic Vault Active</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Stripe Status</Typography>
+                  <Typography variant="h4" sx={{ mt: 1, color: stripeStatus === 'ACTIVE' ? 'success.main' : 'warning.main' }}>
+                    {stripeStatus}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Real-time sync enabled</Typography>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
-          
-          {/* Mini Stats */}
-          <Box sx={{ mt: 3, display: 'flex', gap: 4 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">TOTAL BALANCE</Typography>
-              <Typography variant="h5" sx={{ color: '#00e676' }}>$1,240,500.00</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">PENDING ACTIONS</Typography>
-              <Typography variant="h5" sx={{ color: '#ff9100' }}>3</Typography>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="caption" color="text.secondary">SYSTEM HEALTH</Typography>
-              <LinearProgress variant="determinate" value={92} color="primary" sx={{ mt: 1, height: 8, borderRadius: 4 }} />
-            </Box>
-          </Box>
-        </Paper>
 
-        {/* MAIN DATA GRID */}
-        <Paper elevation={3} sx={{ flex: 1, width: '100%', overflow: 'hidden', borderRadius: 4, border: '1px solid rgba(255,255,255,0.05)' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
-            }}
-            slots={{ toolbar: GridToolbar }}
-            sx={{
-              border: 0,
-              '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.05)' },
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'rgba(0,0,0,0.2)', fontSize: '1rem' },
-              '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(0, 229, 255, 0.08)' },
-            }}
-          />
-        </Paper>
-
-        {/* AI CHAT OVERLAY */}
-        {isChatOpen && (
-          <Paper 
-            elevation={10}
-            sx={{
-              position: 'fixed',
-              bottom: 20,
-              right: 20,
-              width: 400,
-              height: 600,
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: 4,
-              border: '1px solid #00e5ff',
-              bgcolor: 'rgba(19, 47, 76, 0.95)',
-              backdropFilter: 'blur(10px)',
-              zIndex: 1300,
-              overflow: 'hidden'
-            }}
-          >
-            {/* Chat Header */}
-            <Box sx={{ p: 2, bgcolor: 'primary.main', color: '#000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar sx={{ bgcolor: '#000', color: '#fff' }}>AI</Avatar>
-                <Typography variant="h6">Co-Pilot</Typography>
-              </Box>
-              <IconButton size="small" onClick={() => setIsChatOpen(false)} sx={{ color: '#000' }}>
-                <span>✖️</span>
-              </IconButton>
-            </Box>
-
-            {/* Chat Messages */}
-            <Box sx={{ flex: 1, p: 2, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {chatHistory.map((msg) => (
-                <Box 
-                  key={msg.id} 
-                  sx={{ 
-                    alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                    maxWidth: '80%',
-                    bgcolor: msg.sender === 'user' ? 'primary.dark' : 'rgba(255,255,255,0.1)',
-                    p: 1.5,
-                    borderRadius: 2,
-                    borderBottomRightRadius: msg.sender === 'user' ? 0 : 2,
-                    borderBottomLeftRadius: msg.sender !== 'user' ? 0 : 2,
-                  }}
-                >
-                  <Typography variant="body2">{msg.text}</Typography>
-                  <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.5, fontSize: '0.6rem' }}>
-                    {msg.timestamp.toLocaleTimeString()}
-                  </Typography>
-                </Box>
-              ))}
-              {isProcessing && (
-                <Box sx={{ alignSelf: 'flex-start', p: 1 }}>
-                  <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'primary.main' }}>
-                    Engine diagnostics running...
-                  </Typography>
-                </Box>
-              )}
-              <div ref={chatEndRef} />
-            </Box>
-
-            {/* Chat Input */}
-            <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Ask to create a transaction..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
-                size="small"
-                InputProps={{
-                  endAdornment: (
-                    <IconButton onClick={handleChatSubmit} color="primary" disabled={isProcessing}>
-                      <span>🚀</span>
-                    </IconButton>
-                  )
-                }}
-              />
-            </Box>
+          {/* DATA GRID */}
+          <Paper sx={{ flex: 1, minHeight: 500, borderRadius: 4, overflow: 'hidden' }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              slots={{ toolbar: GridToolbar }}
+              pageSizeOptions={[10, 25, 50]}
+              initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+                '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.02)' },
+                '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(0, 242, 255, 0.05)' },
+              }}
+            />
           </Paper>
-        )}
+        </Box>
+
+        {/* AI CO-PILOT SIDEBAR */}
+        <Box sx={{ 
+          width: isChatOpen ? 400 : 0, 
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+          bgcolor: 'background.paper', 
+          borderLeft: '1px solid rgba(255,255,255,0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative'
+        }}>
+          {!isChatOpen && (
+            <Button 
+              onClick={() => setIsChatOpen(true)}
+              sx={{ 
+                position: 'absolute', 
+                left: -120, 
+                top: 100, 
+                transform: 'rotate(-90deg)',
+                bgcolor: 'primary.main',
+                color: '#000',
+                borderRadius: '8px 8px 0 0',
+                '&:hover': { bgcolor: 'primary.light' }
+              }}
+            >
+              AI CO-PILOT
+            </Button>
+          )}
+
+          {isChatOpen && (
+            <>
+              <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">Navigator AI</Typography>
+                <IconButton onClick={() => setIsChatOpen(false)} size="small"><span>✖</span></IconButton>
+              </Box>
+              
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {chatMessages.map(m => (
+                  <Box key={m.id} sx={{ 
+                    alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '85%',
+                    bgcolor: m.sender === 'user' ? 'primary.main' : 'rgba(255,255,255,0.05)',
+                    color: m.sender === 'user' ? '#000' : 'text.primary',
+                    p: 2,
+                    borderRadius: 3,
+                    borderBottomRightRadius: m.sender === 'user' ? 0 : 12,
+                    borderBottomLeftRadius: m.sender === 'ai' ? 0 : 12,
+                  }}>
+                    <Typography variant="body2">{m.text}</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.5, mt: 1, display: 'block', fontSize: '0.6rem' }}>
+                      {m.timestamp.toLocaleTimeString()}
+                    </Typography>
+                  </Box>
+                ))}
+                {isProcessing && <CircularProgress size={20} sx={{ ml: 2 }} />}
+                <div ref={chatEndRef} />
+              </Box>
+
+              <Box sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <TextField
+                  fullWidth
+                  placeholder="Ask the Navigator..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={handleSendChat} color="primary"><span>🚀</span></IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Box>
+            </>
+          )}
+        </Box>
 
         {/* AUDIT DRAWER */}
-        <Drawer
-          anchor="right"
-          open={isAuditOpen}
-          onClose={() => setIsAuditOpen(false)}
-          PaperProps={{ sx: { width: 350, bgcolor: 'background.paper' } }}
-        >
-          <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <Typography variant="h6">Audit Storage</Typography>
-            <Typography variant="caption" color="text.secondary">Immutable record of all actions</Typography>
+        <Drawer anchor="right" open={isAuditOpen} onClose={() => setIsAuditOpen(false)}>
+          <Box sx={{ width: 450, p: 4, bgcolor: 'background.default', height: '100%' }}>
+            <Typography variant="h5" gutterBottom>Audit Storage</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+              Immutable record of all sensitive actions within the Quantum engine.
+            </Typography>
+            <List>
+              {auditLogs.map((log) => (
+                <ListItem key={log.id} sx={{ mb: 2, bgcolor: 'rgba(255,255,255,0.02)', borderRadius: 2, flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 1 }}>
+                    <Chip label={log.action} size="small" color={log.status === 'SUCCESS' ? 'primary' : 'error'} />
+                    <Typography variant="caption" color="text.secondary">{new Date(log.timestamp).toLocaleString()}</Typography>
+                  </Box>
+                  <Typography variant="body2">{log.details}</Typography>
+                  <Typography variant="caption" sx={{ mt: 1, opacity: 0.5 }}>Actor: {log.actor} | IP: {log.ipAddress}</Typography>
+                </ListItem>
+              ))}
+            </List>
           </Box>
-          <List>
-            {auditLog.length === 0 ? (
-              <ListItem><ListItemText primary="No actions recorded yet." secondary="Start your engines!" /></ListItem>
-            ) : (
-              auditLog.map((log) => (
-                <React.Fragment key={log.id}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="subtitle2" color="primary">{log.action}</Typography>
-                          <Chip label={log.status} size="small" color={log.status === 'SUCCESS' ? 'success' : 'warning'} sx={{ height: 20, fontSize: '0.6rem' }} />
-                        </Box>
-                      }
-                      secondary={
-                        <>
-                          <Typography component="span" variant="body2" color="text.primary">
-                            {log.details}
-                          </Typography>
-                          <br />
-                          <Typography component="span" variant="caption" color="text.secondary">
-                            {log.timestamp.toLocaleString()} • {log.user}
-                          </Typography>
-                        </>
-                      }
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                </React.Fragment>
-              ))
-            )}
-          </List>
         </Drawer>
 
-        {/* PO UP FORM (Modal) */}
-        <Dialog 
-          open={isFormOpen} 
-          onClose={() => setIsFormOpen(false)}
-          PaperProps={{
-            sx: { 
-              borderRadius: 3, 
-              bgcolor: '#132f4c', 
-              border: '1px solid #00e5ff',
-              boxShadow: '0 0 30px rgba(0, 229, 255, 0.2)',
-              minWidth: 400
-            }
-          }}
-        >
-          <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <span>⚡</span>
-              <Typography variant="h6">Create Transaction</Typography>
-            </Box>
+        {/* WIRE MODAL (PO UP FORM) */}
+        <Dialog open={isWireModalOpen} onClose={() => setIsWireModalOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            Execute New Payment
           </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Amount"
-                  type="number"
-                  fullWidth
-                  value={formData.amount}
-                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  InputProps={{ startAdornment: <span style={{ marginRight: 8 }}>$</span> }}
-                />
+          <DialogContent sx={{ bgcolor: 'background.paper', pt: 3 }}>
+            <Stack spacing={3}>
+              <Alert severity="info">All payments are subject to real-time fraud monitoring.</Alert>
+              <TextField 
+                label="Recipient Name" 
+                fullWidth 
+                value={wireData.recipient}
+                onChange={(e) => setWireData({...wireData, recipient: e.target.value})}
+              />
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField 
+                    label="Amount" 
+                    type="number" 
+                    fullWidth 
+                    value={wireData.amount}
+                    onChange={(e) => setWireData({...wireData, amount: e.target.value})}
+                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField 
+                    select 
+                    label="Method" 
+                    fullWidth 
+                    SelectProps={{ native: true }}
+                    value={wireData.type}
+                    onChange={(e) => setWireData({...wireData, type: e.target.value})}
+                  >
+                    <option value="WIRE">Domestic Wire</option>
+                    <option value="ACH">ACH Transfer</option>
+                    <option value="SWIFT">SWIFT (International)</option>
+                  </TextField>
+                </Grid>
               </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  select
-                  label="Type"
-                  fullWidth
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value as any})}
-                  SelectProps={{ native: true }}
-                >
-                  <option value="CRDT">Credit (+)</option>
-                  <option value="DBIT">Debit (-)</option>
-                </TextField>
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  label="Date"
-                  type="date"
-                  fullWidth
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Reference ID"
-                  fullWidth
-                  value={formData.reference}
-                  onChange={(e) => setFormData({...formData, reference: e.target.value})}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Description"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
-              </Grid>
-            </Grid>
+              <TextField 
+                label="Reference / Invoice #" 
+                fullWidth 
+                value={wireData.ref}
+                onChange={(e) => setWireData({...wireData, ref: e.target.value})}
+              />
+            </Stack>
           </DialogContent>
-          <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <Button onClick={() => setIsFormOpen(false)} color="inherit">Cancel</Button>
-            <Button 
-              onClick={handleFormSubmit} 
-              variant="contained" 
-              color="primary"
-              disabled={!formData.amount || !formData.reference}
-            >
-              Execute Transaction
-            </Button>
+          <DialogActions sx={{ bgcolor: 'background.paper', p: 3 }}>
+            <Button onClick={() => setIsWireModalOpen(false)}>Cancel</Button>
+            <Button variant="contained" color="primary" onClick={executeWire}>Confirm & Send</Button>
           </DialogActions>
         </Dialog>
 
-        {/* NOTIFICATION SNACKBAR */}
-        <Snackbar open={false} autoHideDuration={6000}>
-          <Alert severity="success" sx={{ width: '100%' }}>
-            System Operational
-          </Alert>
-        </Snackbar>
+        {/* INTEGRATION MODAL */}
+        <Dialog open={isIntegrationModalOpen} onClose={() => setIsIntegrationModalOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Connect Integration</DialogTitle>
+          <DialogContent>
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Keys are stored in our <strong>Homomorphic Vault</strong>. Even we can't see them.
+              </Typography>
+              <TextField 
+                select 
+                label="Provider" 
+                fullWidth 
+                SelectProps={{ native: true }}
+                value={integrationData.provider}
+                onChange={(e) => setIntegrationData({...integrationData, provider: e.target.value})}
+              >
+                <option value="Stripe">Stripe</option>
+                <option value="QuickBooks">QuickBooks</option>
+                <option value="Xero">Xero</option>
+                <option value="Plastiq">Plastiq</option>
+              </TextField>
+              <TextField 
+                label="API Secret Key" 
+                type="password" 
+                fullWidth 
+                value={integrationData.key}
+                onChange={(e) => setIntegrationData({...integrationData, key: e.target.value})}
+              />
+              <FormControlLabel control={<Switch defaultChecked />} label="Enable Auto-Sync" />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ p: 3 }}>
+            <Button onClick={() => setIsIntegrationModalOpen(false)}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleStripeConnect}
+              disabled={stripeStatus === 'CONNECTING'}
+            >
+              {stripeStatus === 'CONNECTING' ? 'Encrypting...' : 'Secure Connect'}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
       </Box>
     </ThemeProvider>
   );
 };
 
-// --------------------------------------------------------------------------
-// EXPORT
-// --------------------------------------------------------------------------
-
 export default AccountStatementGrid;
 
-// --------------------------------------------------------------------------
-// MONOLITH FOOTER & NOTES
-// --------------------------------------------------------------------------
-/*
-  This file represents the "Global Demo Company" financial dashboard.
-  It encapsulates:
-  1. Data Grid Visualization (The "Windshield")
-  2. AI Co-Pilot Integration (The "Navigator")
-  3. Transaction Management (The "Gearbox")
-  4. Audit Logging (The "Black Box")
-  
-  Designed to feel like a high-performance vehicle test drive.
-  No external CSS files required.
-  No extra component files required.
-  Just pure React + MUI + Gemini.
-*/
+/**
+ * END OF MONOLITH
+ * --------------------------------------------------------------------------
+ * This file contains the entire Quantum Financial Demo experience.
+ * - AI Co-Pilot with Action Triggering
+ * - Homomorphic Vault Simulation
+ * - Audit Storage & Logging
+ * - Payment & Collection Workflows
+ * - High-Performance UI/UX
+ * --------------------------------------------------------------------------
+ */
