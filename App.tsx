@@ -98,6 +98,7 @@ import { LoginView } from './components/LoginView';
 import { PlaidClient } from './lib/plaidClient';
 import DeveloperHubView from './components/DeveloperHubView';
 import ApiPlaygroundView from './components/ApiPlaygroundView';
+import BusinessDemoView from './components/BusinessDemoView';
 
 // --- ALL COMPONENT IMPORTS FOR DIRECT ACCESS ---
 import AccountDetails from './components/AccountDetails';
@@ -706,6 +707,7 @@ function App() {
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/login" element={<LoginView />} />
                     <Route path="/modules" element={<ExternalIframeCollection />} />
+                    <Route path="/business-demo" element={<BusinessDemoView />} />
                     <Route path="*" element={<SAppLayout />} />
                   </Routes>
                 </Router>
