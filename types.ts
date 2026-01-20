@@ -1,4 +1,3 @@
-
 import React, { ReactNode } from 'react';
 
 export type UserProfile = User;
@@ -8,7 +7,7 @@ export interface ACHDetails {
   realAccountNumber: string;
 }
 
-export type PaymentRail = 'quantumpay' | 'cashapp' | 'swift_global' | 'blockchain_dlt';
+export type PaymentRail = 'quantumpay' | 'cashapp' | 'swift_global' | 'blockchain_dlt' | 'fedwire' | 'rtp';
 
 export enum View {
     Dashboard = 'dashboard',
@@ -20,7 +19,6 @@ export enum View {
     Personalization = 'personalization',
     Accounts = 'accounts-overview',
     Investments = 'investments',
-    Crypto = 'crypto-web3',
     CryptoWeb3 = 'crypto-web3',
     AlgoTradingLab = 'algo-trading-lab',
     ForexArena = 'forex-arena',
@@ -34,16 +32,16 @@ export enum View {
     LegacyBuilder = 'legacy-builder',
     SovereignWealth = 'sovereign-wealth',
     QuantumAssets = 'quantum-assets',
-    // Citi Connect Core
-    CitibankAccounts = 'citibank-accounts',
-    CitibankAccountProxy = 'citibank-account-proxy',
-    CitibankBillPay = 'citibank-bill-pay',
-    CitibankCrossBorder = 'citibank-cross-border',
-    CitibankPayeeManagement = 'citibank-payee-mgmt',
-    CitibankStandingInstructions = 'citibank-standing-instructions',
-    CitibankDeveloperTools = 'citibank-dev-tools',
-    CitibankEligibility = 'citibank-eligibility',
-    CitibankUnmaskedData = 'citibank-unmasked-data',
+    // Quantum Connect Core (Rebranded from Legacy)
+    QuantumAccounts = 'quantum-accounts',
+    QuantumAccountProxy = 'quantum-account-proxy',
+    QuantumBillPay = 'quantum-bill-pay',
+    QuantumCrossBorder = 'quantum-cross-border',
+    QuantumPayeeManagement = 'quantum-payee-mgmt',
+    QuantumStandingInstructions = 'quantum-standing-instructions',
+    QuantumDeveloperTools = 'quantum-dev-tools',
+    QuantumEligibility = 'quantum-eligibility',
+    QuantumUnmaskedData = 'quantum-unmasked-data',
     // Plaid Nexus
     PlaidMainDashboard = 'plaid-main',
     DataNetwork = 'plaid-data-network',
@@ -164,180 +162,26 @@ export enum View {
     CardCustomization = 'card-customization',
 }
 
-export type UserRole = 'ADMIN' | 'TRADER' | 'CLIENT' | 'VISIONARY' | 'CARETAKER' | 'QUANT_ANALYST' | 'SYSTEM_ARCHITECT' | 'ETHICS_OFFICER' | 'DATA_SCIENTIST' | 'NETWORK_WEAVER' | 'CITIZEN' | 'Founder' | 'Investor' | 'Manager';
-export type SecurityLevel = 'STANDARD' | 'ELEVATED' | 'TRADING_UNLOCKED' | 'QUANTUM_ENCRYPTED' | 'SOVEREIGN_CLEARED' | 'ARCHITECT_LEVEL';
-
-// --- ADDED MISSING TYPES FOR DATA CONTEXT & MOCKS ---
-
-export type AppView = View;
-
-export interface PortfolioAsset {
-  id: string;
-  name: string;
-  value: number;
-  color: string;
-  performanceYTD?: number;
-  assetClass: string;
-  riskLevel: string;
-}
-
-export interface InternalAccount {
-  id: string;
-  name: string;
-  currency: string;
-}
-
-export interface Pipeline {
-  id: string;
-  name: string;
-  pipelineName: string;
-  status: string;
-  prettyDuration: string;
-}
-
-export interface InboundBlob {
-  id: string;
-  filePath: string;
-  status: string;
-  vendorName: string;
-  interfaceType: string;
-  createdAt: string;
-}
-
-export interface FundFlow {
-  id: string;
-  name: string;
-  ledgerId: string;
-  postedTxCount: number;
-  pendingTxCount: number;
-}
-
-export interface AuthorizedApp {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  authorizedAt: string;
-  scopes?: string[];
-}
-
-export interface Portfolio {
-  id: string;
-  name: string;
-  type: string;
-  currency: string;
-  totalValue: number;
-  unrealizedGainLoss: number;
-  todayGainLoss: number;
-  lastUpdated: string;
-  riskTolerance: string;
-  holdings: any[];
-}
-
-export interface SimulationResult {
-  simulationId: string;
-  narrativeSummary: string;
-  keyImpacts: any[];
-}
-
-export interface CorporateAnomaly {
-  id: string;
-  description: string;
-  details: string;
-  severity: 'High' | 'Medium' | 'Low';
-  status: string;
-  entityType: string;
-  entityId: string;
-  timestamp: string;
-  riskScore: number;
-  aiConfidenceScore?: number;
-  recommendedAction?: string;
-}
-
-export interface ComplianceReport {
-  auditId: string;
-  status: string;
-  auditDate: string;
-  periodCovered: any;
-  overallComplianceScore: number;
-  summary: string;
-  findings: any[];
-  recommendedActions: any[];
-}
-
-export interface CashFlowForecast {
-  forecastId: string;
-  period: string;
-  currency: string;
-  overallStatus: string;
-  projectedBalances: any[];
-  inflowForecast: any;
-  outflowForecast: any;
-  liquidityRiskScore: number;
-  aiRecommendations: any[];
-}
-
-export interface FraudRule {
-  id: string;
-  name: string;
-}
-
-export interface WebhookSubscription {
-  id: string;
-}
-
-export interface AccountDetails {
-  id: string;
-  name: string;
-  mask: string;
-  currentBalance: number;
-  type: string;
-  accountHolder: string;
-  currency: string;
-}
-
-// --- UPDATED EXISTING INTERFACES ---
+export type UserRole = 'ADMIN' | 'TRADER' | 'CLIENT' | 'VISIONARY' | 'SYSTEM_ARCHITECT' | 'QUANT_ANALYST' | 'ETHICS_OFFICER' | 'DATA_SCIENTIST' | 'NETWORK_WEAVER' | 'FOUNDER' | 'INVESTOR';
+export type SecurityLevel = 'STANDARD' | 'ELEVATED' | 'QUANTUM_ENCRYPTED' | 'ARCHITECT_LEVEL' | 'SOVEREIGN_CLEARED';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  picture?: string;
   roles?: UserRole[];
   securityLevel?: SecurityLevel;
-  netWorth?: number;
-  display_name?: string;
-  handle?: string;
-  role?: string;
-  businessId?: string;
-  profilePictureUrl?: string;
-  bio?: string;
-  profile?: {
-    interests: string[];
-    skills: string[];
-  };
-  wallet?: {
-    balance: number;
-    currency: string;
-  };
-  businesses?: string[];
-  memberships?: any[];
-  followers?: string[];
-  following?: string[];
-  state?: {
-    mood: string;
-    activity: string;
-    last_active_tick: number;
-  };
-  isAdmin?: boolean;
-  // Added properties used in DataContext and mockData
+  usdBalance?: number;
+  avatarUrl?: string;
   title?: string;
   phone?: string;
   loyaltyTier?: string;
-  usdBalance?: number;
   fiatBalance?: number;
   cryptoBalance?: number;
-  avatarUrl?: string;
+  netWorth?: number;
+  businessId?: string;
+  bio?: string;
+  isAdmin?: boolean;
 }
 
 export interface Transaction {
@@ -348,20 +192,20 @@ export interface Transaction {
   amount: number;
   date: string;
   currency?: string;
+  metadata?: any;
   carbonFootprint?: number;
   aiCategoryConfidence?: number;
-  metadata?: any; // Added to support rich mock data
 }
 
-export interface Asset {
-  id: string; // Added id as it's used in mock data
+export interface PortfolioAsset {
+  id: string;
   name: string;
   value: number;
   color: string;
+  assetClass: string;
   performanceYTD?: number;
+  riskLevel?: string;
   esgRating?: number;
-  description?: string;
-  type?: string; // Added to support mock impact investments
 }
 
 export interface BudgetCategory {
@@ -370,9 +214,9 @@ export interface BudgetCategory {
   limit: number;
   spent: number;
   color: string;
-  remaining: number; // Added as it's used in mock data
-  category: string; // Added as it's used in mock data
-  alerts: any[]; // Added as it's used in mock data
+  remaining: number;
+  category: string;
+  alerts: any[];
 }
 
 export interface FinancialGoal {
@@ -383,11 +227,7 @@ export interface FinancialGoal {
   targetDate: string;
   status: 'on_track' | 'needs_attention' | 'achieved' | 'behind';
   iconName?: string;
-  plan?: any;
   startDate?: string;
-  linkedGoals?: any[];
-  recurringContributions?: any[];
-  contributions?: any[];
 }
 
 export interface Notification {
@@ -395,30 +235,30 @@ export interface Notification {
   message: string;
   timestamp: string;
   read: boolean;
+  severity: 'info' | 'warning' | 'error' | 'success';
   view?: View;
-  severity: 'info' | 'warning' | 'error' | 'success'; // Added severity
 }
 
 export interface APIStatus {
   provider: string;
-  status: 'Operational' | 'Degraded Performance' | 'Partial Outage' | 'Major Outage' | 'Maintenance' | 'Unknown';
+  status: 'Operational' | 'Degraded Performance' | 'Partial Outage' | 'Maintenance' | 'Major Outage' | 'Unknown';
   responseTime: number;
 }
 
-export interface LinkedAccount {
+export interface RewardItem {
   id: string;
   name: string;
+  cost: number;
   type: string;
-  institutionId: string;
-  mask: string;
+  description: string;
+  iconName: string;
 }
 
-export interface Subscription {
-  id: string;
-  name: string;
-  amount: number;
-  nextPayment: string;
-  iconName: string;
+export interface RewardPoints {
+  balance: number;
+  lastEarned: number;
+  currency: string;
+  lastRedeemed?: number;
 }
 
 export interface CreditScore {
@@ -427,43 +267,39 @@ export interface CreditScore {
   rating: string;
 }
 
-export interface UpcomingBill {
-  id: string;
+export interface CreditFactor {
   name: string;
-  amount: number;
-  dueDate: string;
-}
-
-export interface SavingsGoal {
-  id: string;
-  name: string;
-  target: number;
-  saved: number;
-  iconName: string;
-}
-
-export interface MarketMover {
-  ticker: string;
-  name: string;
-  price: number;
-  change: number;
-}
-
-export interface CryptoAsset {
-  ticker: string;
-  name: string;
-  value: number;
-  amount: number;
-  color: string;
-}
-
-export interface PaymentOperation {
-  id: string;
+  status: 'Excellent' | 'Good' | 'Fair' | 'Poor';
   description: string;
-  amount: number;
-  status: string;
-  type: string;
-  date: string;
+}
+
+export interface GitHubFile {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  download_url?: string;
+  children?: GitHubFile[];
+}
+
+export interface SettlementInstruction {
+    messageId: string;
+    creationDateTime: string;
+    numberOfTransactions: number;
+    settlementDate: string;
+    totalAmount: number;
+    currency: string;
+    purpose?: any;
+}
+
+export interface AuditLogEntry {
+    id: string;
+    timestamp: string;
+    userId: string;
+    action: string;
+    targetResource: string;
+    success: boolean;
+    metadata?: any;
+    ipAddress?: string;
 }
 
 export interface CorporateCard {
@@ -493,49 +329,12 @@ export interface CorporateTransaction {
   description: string;
 }
 
-export interface RewardPoints {
-  balance: number;
-  lastEarned: number;
-  lastRedeemed: number;
-  currency: string;
-}
-
-export interface RewardItem {
+export interface FraudRule {
   id: string;
   name: string;
-  cost: number;
-  type: string;
-  description: string;
-  iconName: string;
-}
-
-export interface CreditFactor {
-  name: string;
-  status: 'Excellent' | 'Good' | 'Fair' | 'Poor';
-  description: string;
-}
-
-export interface PaymentOrder {
-  id: string;
-  counterpartyId: string;
-  counterpartyName: string;
-  accountId: string;
-  amount: number;
-  currency: string;
-  direction: string;
-  status: string;
-  date: string;
-  type: string;
-  dueDate?: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  counterpartyName: string;
-  dueDate: string;
-  amount: number;
-  status: string;
+  description?: string;
+  severity: 'High' | 'Medium' | 'Low';
+  isActive: boolean;
 }
 
 export interface ComplianceCase {
@@ -549,63 +348,21 @@ export interface ComplianceCase {
   description?: string;
 }
 
-export interface FinancialAnomaly {
-  id: string;
-  description: string;
-  details: string;
-  severity: 'High' | 'Medium' | 'Low';
-  status: string;
-  entityType: string;
-  entityId: string;
-  entityDescription: string;
-  timestamp: string;
-  riskScore: number;
+export interface AIInsight {
+    id: string;
+    type: string;
+    severity: string;
+    message: string;
+    details: string;
+    timestamp: string;
 }
 
-export interface Post {
-  id: string;
-  author_id: string;
-  userName: string;
-  userProfilePic: string;
-  created_tick: number;
-  content: {
-    text: string;
-    imageUrl?: string;
-  };
-  type: string;
-  tags: string[];
-  metrics: {
-    likes: number;
-    comments: number;
-    shares: number;
-    reach: number;
-  };
-  visibility: string;
-  comments: Comment[];
-}
-
-export interface Comment {
-  id: string;
-  userId: string;
-  userName: string;
-  userProfilePic: string;
-  text: string;
-  timestamp: string;
-}
-
-export interface LendingPoolStats {
-  totalCapital: number;
-  interestRate: number;
-  activeLoans: number;
-  defaultRate: number;
-  totalInterestEarned: number;
-}
-
-export interface AppIntegration {
-  id: string;
-  name: string;
-  logo: React.FC<{ className?: string }>;
-  status: 'connected' | 'issue' | 'disconnected';
+export interface VirtualAccount {
+    id: string;
+    name: string;
+    accountNumber?: string;
+    currency?: string;
+    status?: string;
 }
 
 export interface Counterparty {
@@ -630,115 +387,23 @@ export interface ExternalAccount {
   routing_details: any[];
 }
 
-export interface BiometricData {
-  id: string;
-  type: string;
-  publicKey: string;
-  enrolledDate: string;
+export interface StripeBalance {
+    available: { amount: number; currency: string }[];
+    pending: { amount: number; currency: string }[];
 }
 
-export interface LoginAttempt {
-  id: string;
-  userId: string;
-  userName: string;
-  timestamp: string;
-  ipAddress: string;
-  success: boolean;
-}
-
-export interface AIAgent {
-  id: string;
-  name: string;
-  status: string;
-  specialization: string;
-  traffic: number;
-}
-
-export interface SynapticVault {
-  id: string;
-  ownerIds: string[];
-  ownerNames: string[];
-  status: string;
-  masterPrivateKeyFragment: string;
-  creationDate: string;
-}
-
-export interface MarqetaUser {
-  token: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  active: boolean;
-  created_time: string;
-  last_modified_time: string;
-}
-
-export interface MarqetaCardProduct {
-  token: string;
-  name: string;
-  active: boolean;
-  start_date: string;
-  config: any;
-}
-
-export interface MarqetaCard {
-  token: string;
-}
-
-export interface ComplianceRule {
-  id: string;
-  name: string;
-  description: string;
-  action: string;
-  active: boolean;
-}
-
-export interface Business {
-  id: string;
-  owner_id: string;
-  name: string;
-  type: string;
-  monthly_revenue: number;
-  expenses: number;
-  employees: string[];
-  status: string;
-  marketing_factor: number;
-  businessPlan: string;
-  valuation: number;
-  cashBalance: number;
-  hqLocation: string;
-}
-
-export interface NFTAsset {
-    id: string;
-    name: string;
-    imageUrl: string;
-    contractAddress: string;
-}
-
-export interface EIP6963ProviderDetail {
-    info: {
-        uuid: string;
+export interface PlaidLinkSuccessMetadata {
+    institution: {
         name: string;
-        icon: string;
+        institution_id: string;
     };
-}
-
-export interface MarketplaceProduct {
-    id: string;
-    name: string;
-}
-
-export interface LoginActivity {
-    id: string;
-    device: string;
-    browser: string;
-    os: string;
-    location: string;
-    ip: string;
-    timestamp: string;
-    isCurrent: boolean;
-    userAgent: string;
+    accounts: {
+        id: string;
+        name: string;
+        mask: string;
+        type: string;
+        subtype: string;
+    }[];
 }
 
 export interface Device {
@@ -759,140 +424,18 @@ export interface Device {
     encryptionStatus: string;
 }
 
-export interface DataSharingPolicy {
-    policyId: string;
-    policyName: string;
-    scope: string;
-    lastReviewed: string;
-    isActive: boolean;
-}
-
-export interface TransactionRule {
-    ruleId: string;
-    name: string;
-    triggerCondition: string;
-    action: string;
-    isEnabled: boolean;
-}
-
-export interface ThreatAlert {
-    alertId: string;
-    title: string;
-    description: string;
-    timestamp: string;
-}
-
-export interface AuditLogEntry {
-    id: string;
-    timestamp: string;
-    userId: string;
-    action: string;
-    targetResource: string;
-    success: boolean;
-}
-
-export interface APIKey {
-    id: string;
-    keyName: string;
-    creationDate: string;
-    scopes: string[];
-}
-
-export interface TrustedContact {
-    id: string;
-    name: string;
-    relationship: string;
-    verified: boolean;
-}
-
-export interface SecurityAwarenessModule {
-    moduleId: string;
-    title: string;
-    completionRate: number;
-}
-
-export interface SecurityScoreMetric {
-    metricName: string;
-    currentValue: string;
-}
-
-export interface StripeBalance {
-    available: { amount: number; currency: string }[];
-    pending: { amount: number; currency: string }[];
-}
-
-export interface StripeCharge {
-    id: string;
-    amount: number;
-    currency: string;
-    status: 'succeeded' | 'pending' | 'failed';
-    created: number;
-    description: string;
-    customer_id: string;
-    payment_intent?: string;
-    amount_refunded?: number;
-    refunded?: boolean;
-}
-
-export interface StripeCustomer {
-    id: string;
-    email: string;
-    name: string;
-    created: number;
-    total_spent: number;
-}
-
-export interface StripeSubscription {
-    id: string;
-    customer_id: string;
-    plan_id: string;
-    status: 'active' | 'canceled' | 'past_due';
-    current_period_end: number;
-    amount: number;
-}
-
-export interface AIInsight {
-    id: string;
-    type: string;
-    severity: string;
-    message: string;
-    details: string;
-    timestamp: string;
-}
-
-export interface DetectedSubscription {
-    name: string;
-    estimatedAmount: number;
-    lastCharged: string;
-}
-
-export interface PlaidLinkSuccessMetadata {
-    institution: {
-        name: string;
-        institution_id: string;
-    };
-    accounts: {
-        id: string;
-        name: string;
-        mask: string;
-        type: string;
-        subtype: string;
-    }[];
-}
-
-export type PlaidProduct = 'assets' | 'auth' | 'balance' | 'identity' | 'investments' | 'liabilities' | 'payment_initiation' | 'transactions';
-
-export interface VirtualAccount {
-    id: string;
-    name: string;
-}
-
-export interface SettlementInstruction {
-    messageId: string;
-    creationDateTime: string;
-    numberOfTransactions: number;
-    settlementDate: string;
-    totalAmount: number;
-    currency: string;
-    purpose?: any;
+export interface Business {
+  id: string;
+  owner_id: string;
+  name: string;
+  type: string;
+  monthly_revenue: number;
+  expenses: number;
+  employees: string[];
+  status: string;
+  marketing_factor: number;
+  businessPlan: string;
+  valuation: number;
+  cashBalance: number;
+  hqLocation: string;
 }
