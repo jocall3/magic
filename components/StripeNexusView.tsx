@@ -1,136 +1,201 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { DataContext } from '../context/DataContext';
-import { Zap, Users, Layers, CheckCircle2 } from 'lucide-react';
+import { 
+  Zap, Users, Layers, CheckCircle2, Shield, BarChart3, 
+  Terminal, Send, Lock, AlertTriangle, Cpu, Activity, 
+  Globe, Database, Briefcase, Settings, Info, Play, 
+  RefreshCw, Trash2, Eye, EyeOff, ChevronRight, 
+  MessageSquare, Sparkles, Gauge, Key, History, 
+  FileText, CreditCard, DollarSign, ArrowRightLeft,
+  Search, Filter, Download, Plus, X, UserCheck
+} from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 
-// Assuming these components exist in your project
-import Card from './Card';
-import VirtualAccountsDashboard from './VirtualAccountsDashboard';
-import ReconciliationHubView from './ReconciliationHubView';
-import CounterpartyDashboardView from './CounterpartyDashboardView';
+/**
+ * ================================================================================================
+ * QUANTUM FINANCIAL NEXUS - THE GOLDEN TICKET BUSINESS DEMO
+ * ================================================================================================
+ * 
+ * PHILOSOPHY:
+ * - This is a "Golden Ticket" experience.
+ * - We are letting the user "Test Drive" the car (the code).
+ * - It must have "Bells and Whistles" - distinct features, high polish.
+ * - It is a "Cheat Sheet" for business banking.
+ * - NO PRESSURE environment.
+ * - Metaphor: Kick the tires. See the engine roar.
+ * 
+ * TECHNICAL REQUIREMENTS:
+ * - Robust Payment & Collection capabilities (Wire, ACH).
+ * - Security is non-negotiable (Multi-factor auth simulations, Fraud monitoring).
+ * - Reporting & Analytics (Data visualization).
+ * - Integration capabilities (ERP, Accounting).
+ * - AUDIT STORAGE: Every sensitive action must be logged.
+ * 
+ * TONE:
+ * - Elite, Professional, High-Performance, Secure.
+ * - Do NOT use the name "Citibank" in the UI. Use "The Demo Bank" or "Quantum Financial".
+ * 
+ * AUTHOR: James Burvel oCallaghan III (Sovereign Architect)
+ * VERSION: 4.0.0-QUANTUM-FLUX
+ * ================================================================================================
+ */
 
-type Tab = 'PAYMENTS' | 'ENTITIES' | 'VIRTUAL_LEDGER' | 'RECONCILIATION';
+// --- TYPES & INTERFACES ---
 
-// RENAMED: from `useStripeNexusView` to `StripeNexusView` to follow component conventions
-const StripeNexusView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<Tab>('PAYMENTS');
-    const dataContext = useContext(DataContext);
-    
-    // Safety check for context
-    if (!dataContext) {
-        throw new Error("StripeNexusView must be used within a DataProvider");
-    }
-    const { deductCredits } = dataContext;
+type Tab = 'PAYMENTS' | 'ENTITIES' | 'VIRTUAL_LEDGER' | 'RECONCILIATION' | 'SECURITY' | 'ANALYTICS' | 'INTEGRATION' | 'AUDIT';
 
-    const mockPayments = [
-        { id: 'pi_1', status: 'Succeeded', amount: 12500, customer: 'Nexus Corp', date: '2025-01-22 14:30' },
-        { id: 'pi_2', status: 'Pending', amount: 5400, customer: 'Alpha Ventures', date: '2025-01-22 14:45' },
-        { id: 'pi_3', status: 'Failed', amount: 98000, customer: 'Gamma Systems', date: '2025-01-21 09:00' }
-    ];
+interface AuditEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  user: string;
+  details: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip: string;
+}
 
-    const handleAction = (cost: number) => {
-        if (deductCredits(cost)) {
-            alert(`Action authorized. Cost: ${cost} SC deducted from Sovereign Balance.`);
-        }
-    };
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'ai';
+  content: string;
+  timestamp: string;
+}
 
-    const renderPayments = () => (
-        <div className="space-y-6 animate-in slide-in-from-bottom-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-emerald-950/10 border-emerald-500/30">
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Gross Volume (24h)</p>
-                    <p className="text-3xl font-black text-white font-mono">$1,284,500</p>
-                </Card>
-                <Card className="bg-indigo-950/10 border-indigo-500/30">
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Net Volume (24h)</p>
-                    <p className="text-3xl font-black text-white font-mono">$1,210,000</p>
-                </Card>
-                <Card className="bg-amber-950/10 border-amber-500/30">
-                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Success Rate</p>
-                    <p className="text-3xl font-black text-white font-mono">99.8%</p>
-                </Card>
-            </div>
-            
-            <Card title="Payment Intent Registry" className="p-0 overflow-hidden bg-black/40 border-gray-800">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left font-mono">
-                        <thead className="bg-gray-900/80 border-b border-gray-800 text-[10px] text-gray-500 font-black uppercase">
-                            <tr>
-                                <th className="px-6 py-4">Intent ID</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Entity</th>
-                                <th className="px-6 py-4 text-right">Magnitude</th>
-                                <th className="px-6 py-4 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-800">
-                            {mockPayments.map(p => (
-                                <tr key={p.id} className="hover:bg-gray-800/30 transition-colors group">
-                                    <td className="px-6 py-4 text-cyan-400 font-bold">{p.id}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${
-                                            p.status === 'Succeeded' ? 'border-green-500/30 text-green-400 bg-green-500/5' :
-                                            p.status === 'Pending' ? 'border-amber-500/30 text-amber-400 bg-amber-500/5' :
-                                            'border-red-500/30 text-red-400 bg-red-500/5'
-                                        }`}>{p.status.toUpperCase()}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-300">{p.customer}</td>
-                                    <td className="px-6 py-4 text-right font-black text-white">${p.amount.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <button 
-                                            onClick={() => handleAction(100)}
-                                            className="text-[10px] font-black text-gray-500 hover:text-cyan-400 uppercase tracking-widest"
-                                        >
-                                            Refund (100 SC)
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
+interface PaymentIntent {
+  id: string;
+  status: 'Succeeded' | 'Pending' | 'Failed' | 'Requires Action';
+  amount: number;
+  customer: string;
+  date: string;
+  type: 'ACH' | 'WIRE' | 'INTERNAL';
+  currency: string;
+}
+
+// --- LOCAL COMPONENTS (Self-Contained) ---
+
+const Card: React.FC<{ 
+  title?: string; 
+  subtitle?: string; 
+  children: React.ReactNode; 
+  className?: string;
+  icon?: React.ReactNode;
+  footer?: React.ReactNode;
+}> = ({ title, subtitle, children, className = '', icon, footer }) => (
+  <div className={`bg-gray-900/60 backdrop-blur-xl border border-gray-800 rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 hover:border-cyan-500/40 group ${className}`}>
+    {(title || icon) && (
+      <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gradient-to-r from-gray-900/80 to-transparent">
+        <div className="flex items-center gap-3">
+          {icon && <div className="text-cyan-400 group-hover:scale-110 transition-transform duration-300">{icon}</div>}
+          <div>
+            {title && <h3 className="text-sm font-black text-white uppercase tracking-widest">{title}</h3>}
+            {subtitle && <p className="text-[10px] text-gray-500 font-mono uppercase">{subtitle}</p>}
+          </div>
         </div>
-    );
+        <div className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+      </div>
+    )}
+    <div className="p-6">{children}</div>
+    {footer && <div className="px-6 py-3 bg-black/40 border-t border-gray-800">{footer}</div>}
+  </div>
+);
 
-    return (
-        <div className="space-y-8 animate-in fade-in duration-500 h-full">
-            {/* ... rest of your JSX remains the same */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-800 pb-8">
-                <div>
-                    <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter">Stripe Nexus</h1>
-                    <p className="text-cyan-400 text-sm font-mono mt-1 tracking-[0.3em] uppercase">Unified Financial Suite // Rail-01</p>
-                </div>
-                {/* ... */}
-            </header>
-
-            <div className="flex gap-2 bg-gray-900/50 p-1 rounded-2xl border border-gray-800 w-fit">
-                {[
-                    { id: 'PAYMENTS', label: 'Payments', icon: <Zap size={14} /> },
-                    { id: 'ENTITIES', label: 'Counterparties', icon: <Users size={14} /> },
-                    { id: 'VIRTUAL_LEDGER', label: 'Virtual Accounts', icon: <Layers size={14} /> },
-                    { id: 'RECONCILIATION', label: 'Reconciliation', icon: <CheckCircle2 size={14} /> }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as Tab)}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${
-                            activeTab === tab.id ? 'bg-cyan-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
-                        }`}
-                    >
-                        {tab.icon} {tab.label}
-                    </button>
-                ))}
-            </div>
-
-            <main className="min-h-[500px]">
-                {activeTab === 'PAYMENTS' && renderPayments()}
-                {activeTab === 'ENTITIES' && <CounterpartyDashboardView />}
-                {activeTab === 'VIRTUAL_LEDGER' && <VirtualAccountsDashboard />}
-                {activeTab === 'RECONCILIATION' && <ReconciliationHubView />}
-            </main>
+const Modal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
+  children: React.ReactNode 
+}> = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-gray-900 border border-cyan-500/30 rounded-3xl w-full max-w-2xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.15)]">
+        <div className="px-8 py-6 border-b border-gray-800 flex justify-between items-center bg-gradient-to-r from-cyan-950/20 to-transparent">
+          <h2 className="text-xl font-black text-white uppercase tracking-tighter italic flex items-center gap-3">
+            <Zap className="text-cyan-400" size={20} /> {title}
+          </h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
         </div>
-    );
+        <div className="p-8">{children}</div>
+      </div>
+    </div>
+  );
 };
 
-// RENAMED: Export the renamed component
-export default StripeNexusView;
+// --- MAIN COMPONENT ---
+
+const StripeNexusView: React.FC = () => {
+  // Context & State
+  const dataContext = useContext(DataContext);
+  if (!dataContext) throw new Error("StripeNexusView must be used within a DataProvider");
+  const { deductCredits, showNotification } = dataContext;
+
+  const [activeTab, setActiveTab] = useState<Tab>('PAYMENTS');
+  const [isEngineRunning, setIsEngineRunning] = useState(false);
+  const [auditTrail, setAuditTrail] = useState<AuditEntry[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: '1', role: 'ai', content: "Welcome to the Quantum Financial Nexus. I am your Sovereign Strategist. How can I optimize your capital flow today?", timestamp: new Date().toLocaleTimeString() }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [mfaStep, setMfaStep] = useState<'FORM' | 'CHALLENGE' | 'SUCCESS'>('FORM');
+  const [engineHorsepower, setEngineHorsepower] = useState(0);
+  const [isTurboMode, setIsTurboMode] = useState(false);
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Mock Data
+  const [payments, setPayments] = useState<PaymentIntent[]>([
+    { id: 'PI_771_ALPHA', status: 'Succeeded', amount: 1250000, customer: 'Global Logistics Inc', date: '2025-01-22 14:30', type: 'WIRE', currency: 'USD' },
+    { id: 'PI_772_BETA', status: 'Pending', amount: 540000, customer: 'Alpha Ventures', date: '2025-01-22 14:45', type: 'ACH', currency: 'USD' },
+    { id: 'PI_773_GAMMA', status: 'Failed', amount: 98000, customer: 'Gamma Systems', date: '2025-01-21 09:00', type: 'INTERNAL', currency: 'EUR' },
+    { id: 'PI_774_DELTA', status: 'Requires Action', amount: 2500000, customer: 'Quantum Research Lab', date: '2025-01-22 16:00', type: 'WIRE', currency: 'USD' }
+  ]);
+
+  // --- LOGIC & HANDLERS ---
+
+  const logAudit = useCallback((action: string, details: string, severity: AuditEntry['severity'] = 'low') => {
+    const newEntry: AuditEntry = {
+      id: `AUDIT_${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      timestamp: new Date().toISOString(),
+      action,
+      user: "James B. oCallaghan III",
+      details,
+      severity,
+      ip: "192.168.1.77"
+    };
+    setAuditTrail(prev => [newEntry, ...prev]);
+    // Persist to local storage for "Audit Storage" requirement
+    const existing = JSON.parse(localStorage.getItem('quantum_audit_log') || '[]');
+    localStorage.setItem('quantum_audit_log', JSON.stringify([newEntry, ...existing].slice(0, 100)));
+  }, []);
+
+  const handleEngineToggle = () => {
+    const newState = !isEngineRunning;
+    setIsEngineRunning(newState);
+    logAudit(newState ? "ENGINE_START" : "ENGINE_STOP", `System ignition sequence ${newState ? 'initiated' : 'terminated'}.`, 'medium');
+    showNotification(newState ? "Quantum Engine Online" : "Quantum Engine Offline", newState ? "success" : "warning");
+    
+    if (newState) {
+      let hp = 0;
+      const interval = setInterval(() => {
+        hp += 150;
+        setEngineHorsepower(hp);
+        if (hp >= 1200) clearInterval(interval);
+      }, 50);
+    } else {
+      setEngineHorsepower(0);
+    }
+  };
+
+  const handlePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMfaStep('CHALLENGE');
+    logAudit("PAYMENT_INITIATION", "New high-value wire transfer requested. MFA triggered.", "high");
+  };
+
+  const verifyMfa = () => {
+    setMfaStep('SUCCESS');
+    logAudit("MFA_VERIFIED
