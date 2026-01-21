@@ -1,143 +1,273 @@
-
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { DataContext } from '../context/DataContext';
 import Card from './Card';
-import { Atom, Zap, Share2, TrendingUp, History, Database, Cpu, Loader2 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { 
+    Atom, Zap, Share2, TrendingUp, History, Database, Cpu, Loader2, 
+    MessageSquare, Send, Shield, Lock, FileText, Activity, 
+    AlertTriangle, CheckCircle, XCircle, Plus, Search, 
+    BarChart3, PieChart, Globe, Server, Terminal, Key,
+    CreditCard, DollarSign, Briefcase, UserCheck, Eye,
+    RefreshCw, Download, Upload, Settings, Bell,
+    ChevronRight, ChevronDown, Maximize2, Minimize2
+} from 'lucide-react';
+import { 
+    ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, 
+    CartesianGrid, LineChart, Line, BarChart, Bar, Legend, ComposedChart,
+    ReferenceLine
+} from 'recharts';
+import { GoogleGenAI } from "@google/genai";
 
-const QuantumAssets: React.FC = () => {
-    const { sovereignCredits, deductCredits } = useContext(DataContext)!;
-    const [entanglementLevel, setEntanglementLevel] = useState(87.4);
-    const [isSimulating, setIsSimulating] = useState(false);
+// =================================================================================================
+// QUANTUM FINANCIAL: THE GOLDEN TICKET EXPERIENCE
+// =================================================================================================
+// Philosophy:
+// - This is a "Test Drive". The user is in the driver's seat.
+// - "Bells and Whistles" are mandatory. High polish, elite feel.
+// - No Pressure. Just pure, unadulterated financial power.
+// - Security is paramount. Audit everything.
+// =================================================================================================
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setEntanglementLevel(prev => Math.min(100, Math.max(0, prev + (Math.random() - 0.5) * 2)));
-        }, 3000);
-        return () => clearInterval(interval);
-    }, []);
+// --- TYPES & INTERFACES ---
 
-    const handleSimulate = () => {
-        if (!deductCredits(1000)) return;
-        setIsSimulating(true);
-        setTimeout(() => {
-            setIsSimulating(false);
-            alert("Capital impact study complete. Network resonance increased by 0.15%.");
-        }, 2000);
-    };
+interface Asset {
+    id: string;
+    name: string;
+    symbol: string;
+    balance: number;
+    rate: number;
+    color: string;
+    allocation: number;
+    risk: 'Low' | 'Medium' | 'High' | 'Critical';
+    type: 'Fiat' | 'Crypto' | 'Bond' | 'Commodity' | 'Equity';
+}
 
-    const assets = [
-        { id: 'cpc', name: 'Community Credits', symbol: 'COM', balance: 45020.55, rate: 12.5, color: '#00f3ff' },
-        { id: 'dst', name: 'Public Works Tokens', symbol: 'PUB', balance: 128090.00, rate: 45.2, color: '#bc13fe' },
-        { id: 'qbt', name: 'Civic Bonds', symbol: 'BND', balance: 512.00, rate: 0.8, color: '#ffffff' },
-        { id: 'nrg', name: 'Green Energy', symbol: 'GRN', balance: 8890.45, rate: 8.4, color: '#00ff9d' },
-    ];
+interface AuditLog {
+    id: string;
+    timestamp: string;
+    action: string;
+    user: string;
+    status: 'Success' | 'Failed' | 'Pending' | 'Warning';
+    details: string;
+    hash: string;
+}
 
+interface ChatMessage {
+    id: string;
+    role: 'user' | 'ai' | 'system';
+    content: string;
+    timestamp: Date;
+    isTyping?: boolean;
+}
+
+interface SecurityAlert {
+    id: string;
+    severity: 'Low' | 'Medium' | 'High' | 'Critical';
+    message: string;
+    timestamp: string;
+    active: boolean;
+}
+
+// --- MOCK DATA GENERATORS ---
+
+const generateMockAssets = (): Asset[] => [
+    { id: 'cpc', name: 'Quantum Credits', symbol: 'QCR', balance: 45020.55, rate: 12.5, color: '#00f3ff', allocation: 35, risk: 'Medium', type: 'Crypto' },
+    { id: 'dst', name: 'Global Liquidity', symbol: 'GLQ', balance: 128090.00, rate: 45.2, color: '#bc13fe', allocation: 45, risk: 'Low', type: 'Fiat' },
+    { id: 'qbt', name: 'Sovereign Bonds', symbol: 'SVB', balance: 51200.00, rate: 0.8, color: '#ffffff', allocation: 10, risk: 'Low', type: 'Bond' },
+    { id: 'nrg', name: 'Eco-Energy Futures', symbol: 'EEF', balance: 8890.45, rate: 8.4, color: '#00ff9d', allocation: 10, risk: 'High', type: 'Commodity' },
+];
+
+const generateChartData = (points: number) => {
+    const data = [];
+    let value = 1000;
+    for (let i = 0; i < points; i++) {
+        value += (Math.random() - 0.45) * 50;
+        data.push({
+            time: new Date(Date.now() - (points - i) * 60000).toLocaleTimeString(),
+            value: Math.max(0, value),
+            volume: Math.floor(Math.random() * 1000),
+            prediction: value + (Math.random() - 0.5) * 20
+        });
+    }
+    return data;
+};
+
+// --- HELPER COMPONENTS ---
+
+const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
+    if (!isOpen) return null;
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-800 pb-8">
-                <div>
-                    <h1 className="text-5xl font-black text-white uppercase italic tracking-tighter">Quantum Assets</h1>
-                    <p className="text-cyan-400 text-sm font-mono mt-1 tracking-widest uppercase">Distributed Resource Allocation // Core 04</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-gray-900 border border-cyan-500/30 rounded-2xl w-full max-w-2xl shadow-2xl shadow-cyan-500/20 overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex justify-between items-center p-6 border-b border-gray-800 bg-gray-900/50">
+                    <h3 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
+                        <Terminal className="text-cyan-400" size={20} />
+                        {title}
+                    </h3>
+                    <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+                        <XCircle size={24} />
+                    </button>
                 </div>
-                <div className="bg-cyan-500/10 border border-cyan-500/30 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-xl">
-                    <Atom className="text-cyan-400 animate-spin-slow" />
-                    <div>
-                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Coherence Level</p>
-                        <p className="text-xl font-black text-white font-mono">{entanglementLevel.toFixed(2)}%</p>
-                    </div>
-                </div>
-            </header>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                    <Card title="Asset Topology (Real-Time)">
-                        <div className="h-64 bg-black/40 rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden">
-                             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,#00f3ff_0%,transparent_70%)] animate-pulse"></div>
-                             <div className="text-center space-y-2 z-10">
-                                 <Atom size={48} className="text-cyan-500 mx-auto animate-spin-slow" />
-                                 <p className="text-xs text-gray-500 font-mono tracking-tighter uppercase">Analyzing entangled capital vectors...</p>
-                             </div>
-                        </div>
-                    </Card>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {assets.map(asset => (
-                            <Card key={asset.id} className="relative group overflow-hidden bg-black border-gray-800 hover:border-cyan-500/30 transition-all">
-                                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Database size={100} />
-                                </div>
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white tracking-wide">{asset.name}</h3>
-                                        <p className="text-xs text-gray-500 font-mono">{asset.symbol}</p>
-                                    </div>
-                                    <div className="p-2 rounded-lg bg-gray-900 border border-gray-800">
-                                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: asset.color }}></div>
-                                    </div>
-                                </div>
-                                <p className="text-4xl font-black text-white font-mono tracking-tighter">
-                                    {asset.balance.toLocaleString()}
-                                </p>
-                                <div className="mt-4 flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-2 text-green-400">
-                                        <TrendingUp size={14} />
-                                        <span>+{asset.rate}/sec</span>
-                                    </div>
-                                    <button className="text-gray-500 hover:text-white transition-colors uppercase font-black tracking-widest text-[10px]">Adjust Flow</button>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="space-y-8">
-                    <Card title="Simulation Engine">
-                        <div className="space-y-6">
-                            <p className="text-sm text-gray-400 leading-relaxed italic">
-                                "Execute high-fidelity simulations to predict the impact of capital re-allocation across the network nodes."
-                            </p>
-                            <button 
-                                onClick={handleSimulate}
-                                disabled={isSimulating}
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
-                            >
-                                {isSimulating ? <Loader2 className="animate-spin" /> : <Zap size={18} />}
-                                {isSimulating ? 'SIMULATING REALITY...' : 'RUN IMPACT STUDY'}
-                            </button>
-                            <div className="flex justify-between items-center text-[10px] font-bold text-gray-600 uppercase tracking-widest px-2">
-                                <span>Study Cost:</span>
-                                <span className="text-indigo-400 font-mono">1,000 SC</span>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card title="System Manifest">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4">
-                                <Cpu className="text-cyan-400" />
-                                <div className="flex-1">
-                                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Memory Allocation</p>
-                                    <div className="w-full bg-gray-800 h-1.5 rounded-full mt-1">
-                                        <div className="bg-cyan-500 h-full w-[45%]"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <History className="text-purple-400" />
-                                <div className="flex-1">
-                                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">History Buffer</p>
-                                    <div className="w-full bg-gray-800 h-1.5 rounded-full mt-1">
-                                        <div className="bg-purple-500 h-full w-[12%]"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
+                <div className="p-6 overflow-y-auto custom-scrollbar">
+                    {children}
                 </div>
             </div>
         </div>
     );
 };
 
-export default QuantumAssets;
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+    const colors: Record<string, string> = {
+        Success: 'bg-green-500/20 text-green-400 border-green-500/30',
+        Failed: 'bg-red-500/20 text-red-400 border-red-500/30',
+        Pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+        Warning: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+        Active: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+    };
+    const style = colors[status] || colors.Pending;
+    return (
+        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${style}`}>
+            {status}
+        </span>
+    );
+};
+
+// =================================================================================================
+// MAIN COMPONENT: QUANTUM ASSETS
+// =================================================================================================
+
+const QuantumAssets: React.FC = () => {
+    // --- CONTEXT & STATE ---
+    const { sovereignCredits, deductCredits, geminiApiKey, userProfile } = useContext(DataContext)!;
+    
+    // Core State
+    const [assets, setAssets] = useState<Asset[]>(generateMockAssets());
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([]);
+    const [chartData, setChartData] = useState(generateChartData(50));
+    
+    // UI State
+    const [isSimulating, setIsSimulating] = useState(false);
+    const [entanglementLevel, setEntanglementLevel] = useState(87.4);
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'assets' | 'security' | 'reports'>('dashboard');
+    const [showGuide, setShowGuide] = useState(false);
+    const [showAddAssetModal, setShowAddAssetModal] = useState(false);
+    
+    // AI Chat State
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+        { id: 'init', role: 'system', content: 'Quantum AI Core Online. Secure Channel Established.', timestamp: new Date() },
+        { id: 'welcome', role: 'ai', content: 'Welcome to Quantum Financial. I am your dedicated AI architect. How can I assist with your portfolio today?', timestamp: new Date() }
+    ]);
+    const [chatInput, setChatInput] = useState('');
+    const [isAiProcessing, setIsAiProcessing] = useState(false);
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // Refs
+    const chartInterval = useRef<NodeJS.Timeout | null>(null);
+
+    // --- INITIALIZATION & EFFECTS ---
+
+    useEffect(() => {
+        // Simulate live data feed
+        const interval = setInterval(() => {
+            setEntanglementLevel(prev => Math.min(100, Math.max(0, prev + (Math.random() - 0.5) * 2)));
+            
+            setChartData(prev => {
+                const last = prev[prev.length - 1];
+                const newValue = Math.max(0, last.value + (Math.random() - 0.48) * 20);
+                const newPoint = {
+                    time: new Date().toLocaleTimeString(),
+                    value: newValue,
+                    volume: Math.floor(Math.random() * 1000),
+                    prediction: newValue + (Math.random() - 0.5) * 15
+                };
+                return [...prev.slice(1), newPoint];
+            });
+
+            // Randomly update asset prices
+            setAssets(prev => prev.map(a => ({
+                ...a,
+                balance: a.balance * (1 + (Math.random() - 0.5) * 0.001),
+                rate: a.rate + (Math.random() - 0.5) * 0.1
+            })));
+
+        }, 2000);
+
+        // Initial Audit Log
+        addAuditLog('System', 'Initialization', 'Quantum Core modules loaded successfully.');
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [chatMessages]);
+
+    // --- CORE FUNCTIONS ---
+
+    const addAuditLog = (user: string, action: string, details: string, status: AuditLog['status'] = 'Success') => {
+        const newLog: AuditLog = {
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: new Date().toISOString(),
+            user,
+            action,
+            details,
+            status,
+            hash: '0x' + Math.random().toString(16).substr(2, 32) // Mock hash
+        };
+        setAuditLogs(prev => [newLog, ...prev].slice(0, 100));
+    };
+
+    const handleSimulate = () => {
+        if (!deductCredits(1000)) {
+            addAuditLog('User', 'Simulation', 'Insufficient credits for simulation.', 'Failed');
+            return;
+        }
+        setIsSimulating(true);
+        addAuditLog('User', 'Simulation', 'Started Monte Carlo simulation on portfolio assets.');
+        
+        setTimeout(() => {
+            setIsSimulating(false);
+            addAuditLog('System', 'Simulation', 'Simulation complete. Network resonance increased by 0.15%.');
+            setSecurityAlerts(prev => [{
+                id: Date.now().toString(),
+                severity: 'Low',
+                message: 'Simulation detected minor volatility in emerging markets.',
+                timestamp: new Date().toLocaleTimeString(),
+                active: true
+            }, ...prev]);
+        }, 3000);
+    };
+
+    // --- AI INTEGRATION ---
+
+    const processAiCommand = async (prompt: string) => {
+        setIsAiProcessing(true);
+        
+        // Add user message
+        const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() };
+        setChatMessages(prev => [...prev, userMsg]);
+        setChatInput('');
+
+        try {
+            let aiResponseText = '';
+            
+            if (geminiApiKey) {
+                // REAL AI MODE
+                const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-1.5-flash",
+                    systemInstruction: `
+                        You are the AI Core for "Quantum Financial" (formerly a demo for a major bank, but we don't say that name). 
+                        Your tone is Elite, Professional, Secure, and High-Performance.
+                        You are helping a user "Test Drive" this financial dashboard.
+                        You can "create" assets, "run" simulations, or "analyze" data by outputting JSON commands.
+                        
+                        If the user asks to create an asset, output a JSON block like:
+                        \`\`\`json
+                        { "action": "create_asset", "data": { "name": "Asset Name", "symbol": "SYM", "balance": 1000, "type": "Crypto" } }
+                        \`\`\`
+                        
+                        If the user asks to run a simulation, output:
+                        \`\`\`json
+                        { "action": "run_simulation" }
+                        \
