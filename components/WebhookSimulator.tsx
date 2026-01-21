@@ -15,7 +15,7 @@ import {
     Search, Filter, Download, Share2, Eye, EyeOff,
     Key, UserCheck, HardDrive, Radio, Gauge
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 /**
  * QUANTUM FINANCIAL - THE DEMO EXPERIENCE
