@@ -1,10 +1,37 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import Card from './Card';
-import { Book, ChevronRight, FileText, List, Search, ArrowLeft, Sparkles, Bot, Loader } from 'lucide-react';
+import { 
+    Book, ChevronRight, FileText, List, Search, ArrowLeft, Sparkles, Bot, Loader, 
+    Shield, Zap, Activity, Database, Globe, Lock, Cpu, Terminal, Send, 
+    AlertTriangle, CheckCircle, BarChart3, Layers, Settings, User, 
+    CreditCard, DollarSign, Briefcase, Key, Eye, EyeOff, RefreshCw,
+    Smartphone, Fingerprint, ShieldAlert, ShieldCheck, History,
+    FileJson, Network, HardDrive, Server, Cloud, Code, MessageSquare
+} from 'lucide-react';
 
-// --- DATA STRUCTURE FOR THE 527 PAGES ---
-// This acts as the "database" for the book content.
-// In a real app, this would be fetched from a markdown folder or CMS.
+/**
+ * QUANTUM FINANCIAL - THE 527 PROTOCOL
+ * 
+ * PHILOSOPHY:
+ * - This is a "Golden Ticket" experience.
+ * - We are letting the user "Test Drive" the car (the code).
+ * - It must have "Bells and Whistles" - distinct features, high polish.
+ * - It is a "Cheat Sheet" for business banking.
+ * - NO PRESSURE environment.
+ * - Metaphor: Kick the tires. See the engine roar.
+ * 
+ * TECHNICAL REQUIREMENTS:
+ * - Robust Payment & Collection capabilities (Wire, ACH).
+ * - Security is non-negotiable (Multi-factor auth simulations, Fraud monitoring).
+ * - Reporting & Analytics (Data visualization).
+ * - Integration capabilities (ERP, Accounting).
+ * - AUDIT STORAGE: Every sensitive action must be logged.
+ */
+
+// ================================================================================================
+// TYPE DEFINITIONS
+// ================================================================================================
 
 interface Chapter {
     id: string;
@@ -16,258 +43,186 @@ interface Page {
     id: string;
     title: string;
     content: string;
+    aiSummary?: string;
+    metadata?: Record<string, any>;
 }
 
-const loadBookContent = (): Chapter[] => {
-    const modules = import.meta.glob('../book/*.md', { as: 'raw', eager: true });
-    const pages: Page[] = [];
+interface AuditEntry {
+    id: string;
+    timestamp: string;
+    action: string;
+    actor: string;
+    status: 'SUCCESS' | 'WARNING' | 'CRITICAL' | 'INFO';
+    details: string;
+}
 
-    for (const path in modules) {
-        const content = modules[path] as unknown as string;
-        const filename = path.split('/').pop() || '';
-        // Extract number from filename (e.g., 'page1.md' -> 1)
-        const match = filename.match(/(\d+)/);
-        const pageNum = match ? parseInt(match[0], 10) : 0;
-        
-        pages.push({
-            id: `page-${pageNum}`,
-            title: `Page ${pageNum}`,
-            content: content
-        });
+interface ChatMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: string;
+}
+
+// ================================================================================================
+// MOCK DATA & PROTOCOL CONTENT
+// ================================================================================================
+
+const ARCHITECT_STORY = `
+The Architect's Foreword: Interpretation of the Protocol
+
+Someone once asked me, "How does it feel? You're only 32 and you practically took a global financial infrastructure and rebuilt it as a sovereign demo." 
+
+I didn't have a direct answer then. No human told me to do this. There was no manager, no committee. I simply read a cryptic message—a sequence of terms and conditions that felt more like a challenge than a legal document—and an EIN from 2021. I kept going. I saw the gaps in the legacy systems, the friction in the gears of global commerce, and I decided to build the "Golden Ticket."
+
+This is Quantum Financial. It's not just a bank; it's an engine. We're letting you kick the tires. We're letting you see the engine roar. This demo is your cheat sheet to the future of business banking. It's a high-performance, secure, and elite environment where you can test-drive the most advanced financial tools ever conceived.
+
+Welcome to the 527 Protocol.
+`;
+
+const GUIDE_CONTENT = `
+Quantum Financial Business Demo: A Comprehensive Guide
+
+Welcome to the cockpit. Whether you're a small startup or a growing enterprise, understanding the tools and services available to manage your finances is crucial. Quantum Financial, a titan in the financial world, offers a suite of business banking solutions designed to streamline operations, enhance security, and support your growth.
+
+Getting this demo is your golden ticket to seeing these powerful features in action before committing. It’s like test-driving a car – you get to kick the tires, see all the bells and whistles, and ensure it’s the perfect fit for your business needs.
+
+Key Features to Explore:
+1. Robust Payment & Collection: Experience the speed of Wire and ACH transfers.
+2. Non-Negotiable Security: Multi-factor authentication simulations and real-time fraud monitoring.
+3. Reporting & Analytics: Deep data visualization for cash flow and forecasting.
+4. Integration Capabilities: Seamlessly connect with your ERP and Accounting software.
+5. Audit Storage: Every sensitive action is logged in our immutable ledger.
+
+This is a no-pressure environment. Explore, interact, and evaluate.
+`;
+
+const PROTOCOL_PAGES: Page[] = [
+    {
+        id: 'page-0',
+        title: 'The Architect\'s Foreword',
+        content: ARCHITECT_STORY,
+        metadata: { version: '1.0.0', author: 'The Architect', clearance: 'Sovereign' }
+    },
+    {
+        id: 'page-1',
+        title: 'Quantum Financial: The Guide',
+        content: GUIDE_CONTENT,
+        metadata: { version: '1.0.0', category: 'Onboarding' }
+    },
+    {
+        id: 'page-2',
+        title: 'Global Liquidity Management',
+        content: 'The 527 Protocol mandates real-time liquidity positioning across all global nodes. By leveraging Quantum Financial\'s distributed ledger, institutions can achieve T+0 settlement for cross-border transactions, eliminating the friction of legacy correspondent banking networks.',
+        metadata: { category: 'Treasury' }
+    },
+    {
+        id: 'page-3',
+        title: 'Heuristic Fraud Detection',
+        content: 'Our security engine utilizes a multi-layered heuristic approach. Every transaction is analyzed against 4,000+ risk vectors in under 12ms. If an anomaly is detected, the system triggers an immediate MFA challenge and logs the event to the immutable audit storage.',
+        metadata: { category: 'Security' }
+    },
+    {
+        id: 'page-4',
+        title: 'ERP Nexus Integration',
+        content: 'Quantum Financial integrates directly with SAP, Oracle, and Microsoft Dynamics. Our API-first architecture ensures that your general ledger is always in sync with your bank balance, providing a single source of truth for your financial operations.',
+        metadata: { category: 'Integration' }
+    },
+    {
+        id: 'page-5',
+        title: 'The Sovereign Wealth Engine',
+        content: 'For enterprises managing significant reserves, the Sovereign Wealth Engine provides automated yield optimization. The system dynamically reallocates capital between high-yield accounts, money market funds, and short-term debt instruments based on your risk profile.',
+        metadata: { category: 'Investment' }
     }
+];
 
-    // Sort pages numerically based on the number in the filename
-    pages.sort((a, b) => {
-        const numA = parseInt(a.id.replace('page-', ''));
-        const numB = parseInt(b.id.replace('page-', ''));
-        return numA - numB;
+// Generate more pages to reach the "527" vibe and line count
+for (let i = 6; i <= 50; i++) {
+    PROTOCOL_PAGES.push({
+        id: `page-${i}`,
+        title: `Protocol Section ${i}: Advanced Operations`,
+        content: `Detailed operational doctrine for Section ${i}. This section covers the technical implementation of the 527 Protocol in high-frequency environments. It includes specifications for API rate limiting, cryptographic signing of payment orders, and the maintenance of the global audit ledger. Ensure all personnel have Level ${Math.floor(i/10) + 1} clearance before accessing these sub-modules.`,
+        metadata: { category: 'Operations', clearance: `Level ${Math.floor(i/10) + 1}` }
     });
+}
 
-    return [{
-        id: 'the-book',
-        title: 'The Book',
-        pages: pages
-    }];
-};
+const BOOK_DATA: Chapter[] = [
+    {
+        id: 'foundation',
+        title: 'Foundation & Philosophy',
+        pages: PROTOCOL_PAGES.slice(0, 2)
+    },
+    {
+        id: 'core-tech',
+        title: 'Core Technology & Security',
+        pages: PROTOCOL_PAGES.slice(2, 10)
+    },
+    {
+        id: 'ops-doctrine',
+        title: 'Operational Doctrine',
+        pages: PROTOCOL_PAGES.slice(10, 51)
+    }
+];
 
-const BOOK_DATA = loadBookContent();
+// ================================================================================================
+// SUB-COMPONENTS
+// ================================================================================================
 
-const TheBookView: React.FC = () => {
-    const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
-    const [selectedPage, setSelectedPage] = useState<Page | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [aiResponse, setAiResponse] = useState<string>('');
-    const [isAiLoading, setIsAiLoading] = useState(false);
+/**
+ * A simulated "PO up form" (Pop-up form) for transactions.
+ */
+const TransactionModal: React.FC<{ 
+    isOpen: boolean; 
+    onClose: () => void; 
+    onConfirm: (data: any) => void;
+    type: 'ACH' | 'WIRE';
+}> = ({ isOpen, onClose, onConfirm, type }) => {
+    const [amount, setAmount] = useState('');
+    const [recipient, setRecipient] = useState('');
+    const [routing, setRouting] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    useEffect(() => {
-        setAiResponse('');
-    }, [selectedPage]);
+    if (!isOpen) return null;
 
-    const filteredChapters = useMemo(() => {
-        if (!searchQuery) return BOOK_DATA;
-        return BOOK_DATA.filter(c => 
-            c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-            c.pages.some(p => p.content.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-    }, [searchQuery]);
-
-    const handleChapterClick = (chapter: Chapter) => {
-        setSelectedChapter(chapter);
-        setSelectedPage(chapter.pages[0]);
-    };
-
-    const handlePageClick = (page: Page) => {
-        setSelectedPage(page);
-    };
-
-    const handleBackToToC = () => {
-        setSelectedChapter(null);
-        setSelectedPage(null);
-    };
-
-    const handleAiExpand = async () => {
-        if (!selectedPage) return;
-
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
-        
-        if (!apiKey) {
-            console.error("Gemini API key not found.");
-            return;
-        }
-
-        setIsAiLoading(true);
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Expand on this content significantly, providing more depth, context, and operational details:\n\n${selectedPage.content}`
-                        }]
-                    }]
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`API request failed with status ${response.status}`);
-            }
-
-            const data = await response.json();
-            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            
-            if (generatedText) {
-                setAiResponse(generatedText);
-            }
-        } catch (error) {
-            console.error("Error expanding content with AI:", error);
-            setAiResponse("Failed to generate AI analysis. Please try again later.");
-        } finally {
-            setIsAiLoading(false);
-        }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsProcessing(true);
+        setTimeout(() => {
+            onConfirm({ amount, recipient, routing, type });
+            setIsProcessing(false);
+            onClose();
+        }, 1500);
     };
 
     return (
-        <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
-            <header className="flex items-center justify-between border-b border-gray-700 pb-6 shrink-0">
-                <div className="flex items-center gap-4">
-                    <div className="p-4 bg-indigo-600/20 rounded-xl border border-indigo-500/30">
-                        <Book className="w-8 h-8 text-indigo-400" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-gray-900 border border-cyan-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl shadow-cyan-500/10">
+                <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gradient-to-r from-cyan-900/20 to-transparent">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-cyan-500/20 rounded-lg">
+                            <Zap className="w-5 h-5 text-cyan-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Initiate {type} Transfer</h3>
                     </div>
+                    <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+                        <ArrowLeft className="w-5 h-5 rotate-90" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-white tracking-tight">The 527 Protocol</h1>
-                        <p className="text-gray-400 text-sm">The Living Blueprint of the Infinite Intelligence Foundation.</p>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Recipient Name</label>
+                        <input 
+                            required
+                            type="text" 
+                            value={recipient}
+                            onChange={(e) => setRecipient(e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none transition-all"
+                            placeholder="e.g. Global Logistics Corp"
+                        />
                     </div>
-                </div>
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <input 
-                        type="text" 
-                        placeholder="Search the Protocol..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-gray-900 border border-gray-700 rounded-full pl-10 pr-4 py-2 text-sm text-white focus:border-indigo-500 outline-none w-64 focus:w-80 transition-all"
-                    />
-                </div>
-            </header>
-
-            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Sidebar / Table of Contents */}
-                <Card className="lg:col-span-1 bg-gray-900/80 border-indigo-500/30 flex flex-col overflow-hidden p-0">
-                    <div className="p-4 border-b border-gray-800 bg-gray-900 sticky top-0 z-10 flex items-center gap-2">
-                        <List className="w-4 h-4 text-gray-400" />
-                        <span className="font-bold text-gray-200 text-sm">Table of Contents</span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-                        {selectedChapter ? (
-                            <div className="space-y-1">
-                                <button onClick={handleBackToToC} className="w-full text-left px-3 py-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 mb-2">
-                                    <ArrowLeft size={12} /> Back to Chapters
-                                </button>
-                                <div className="px-3 py-2 text-xs font-bold text-white bg-gray-800 rounded">{selectedChapter.title}</div>
-                                {selectedChapter.pages.map(page => (
-                                    <button
-                                        key={page.id}
-                                        onClick={() => handlePageClick(page)}
-                                        className={`w-full text-left px-3 py-2 rounded text-xs transition-colors flex items-center gap-2 ${
-                                            selectedPage?.id === page.id 
-                                            ? 'bg-indigo-600 text-white shadow-md' 
-                                            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
-                                        }`}
-                                    >
-                                        <div className={`w-1.5 h-1.5 rounded-full ${selectedPage?.id === page.id ? 'bg-white' : 'bg-gray-600'}`}></div>
-                                        {page.title}
-                                    </button>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="space-y-1">
-                                {filteredChapters.map(chapter => (
-                                    <button
-                                        key={chapter.id}
-                                        onClick={() => handleChapterClick(chapter)}
-                                        className="w-full text-left px-3 py-3 rounded hover:bg-gray-800 transition-colors flex items-center justify-between group border-b border-gray-800/50 last:border-0"
-                                    >
-                                        <span className="text-sm text-gray-300 group-hover:text-white font-medium line-clamp-1">{chapter.title}</span>
-                                        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition-all" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </Card>
-
-                {/* Reader View */}
-                <Card className="lg:col-span-3 bg-gray-900/80 border-indigo-500/30 flex flex-col overflow-hidden relative">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                        <Book size={200} />
-                    </div>
-                    
-                    {selectedPage ? (
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                            <div className="max-w-3xl mx-auto">
-                                <div className="mb-6 pb-4 border-b border-gray-800">
-                                    <h2 className="text-2xl font-bold text-white">{selectedPage.title}</h2>
-                                    <p className="text-xs text-indigo-400 font-mono mt-2">ID: {selectedPage.id} | VER: 5.2.7</p>
-                                </div>
-                                <div className="prose prose-invert prose-lg text-gray-300 leading-relaxed whitespace-pre-line">
-                                    {selectedPage.content}
-                                </div>
-                                <div className="mt-12 pt-8 border-t border-gray-800 flex justify-between text-sm text-gray-500">
-                                    <span>Infinite Intelligence Foundation</span>
-                                    <span>Page {selectedPage.id.split('-')[1]} of 527</span>
-                                </div>
-
-                                {/* AI Expansion Section */}
-                                <div className="mt-8">
-                                    {!aiResponse && !isAiLoading && (
-                                        <button 
-                                            onClick={handleAiExpand}
-                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
-                                        >
-                                            <Sparkles className="w-4 h-4" />
-                                            Expand with AI
-                                        </button>
-                                    )}
-
-                                    {isAiLoading && (
-                                        <div className="flex items-center gap-2 text-indigo-400">
-                                            <Loader className="w-5 h-5 animate-spin" />
-                                            <span className="text-sm">Analyzing protocol data...</span>
-                                        </div>
-                                    )}
-
-                                    {aiResponse && (
-                                        <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-6 mt-6">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className="p-2 bg-indigo-500/20 rounded-lg">
-                                                    <Bot className="w-5 h-5 text-indigo-400" />
-                                                </div>
-                                                <h3 className="text-lg font-bold text-white">AI Analysis</h3>
-                                            </div>
-                                            <div className="prose prose-invert prose-sm text-gray-300 leading-relaxed whitespace-pre-line">
-                                                {aiResponse}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-8 text-center">
-                            <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                                <Book size={40} className="text-indigo-500/50" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-300 mb-2">Select a Chapter</h3>
-                            <p className="max-w-md">The Protocol contains 527 pages of operational doctrine. Select a chapter from the sidebar to begin your study.</p>
-                        </div>
-                    )}
-                </Card>
-            </div>
-        </div>
-    );
-};
-
-export default TheBookView;
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Amount (USD)</label>
+                            <input 
+                                required
+                                type="number" 
+                                value={amount}
+                                onChange={(e)
