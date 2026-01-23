@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex gap-3">
                     <button onClick={() => setActiveView(View.ComplianceOracle)} className="px-4 py-2 bg-indigo-900/20 hover:bg-indigo-900/40 border border-indigo-500/50 rounded-xl text-sm font-bold text-indigo-300 flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(99,102,241,0.1)]">
-                        <ShieldCheck size={18} /> CMMC LEVEL 3 CERTIFIED
+                        <ShieldCheck size={18} /> Welcome to the DEMO
                     </button>
                     <button onClick={() => setActiveView(View.SendMoney)} className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-white text-sm font-bold shadow-lg shadow-cyan-500/20 transition-all active:scale-95 uppercase tracking-widest">
                         Initiate Capital Flow
