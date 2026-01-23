@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
-		"@vercel/node": "@5.5.26",
     "@auth0/auth0-react": "2.11.0",
     "@chakra-ui/react": "^2.8.0",
     "@datadog/browser-logs": "^5.33.0",
