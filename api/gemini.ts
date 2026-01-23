@@ -1,9 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI } from "@google/genai";
 
-// Server-side only Gemini client
-const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY!);
-
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -13,33 +10,23 @@ export default async function handler(
   }
 
   try {
-    const { prompt, mfaVerified, sessionId } = req.body;
+    const { prompt, sessionId } = req.body;
 
     if (!prompt || typeof prompt !== "string") {
       return res.status(400).json({ error: "Invalid prompt" });
     }
 
-    // Optional: enforce MFA-sensitive actions
-    if (!mfaVerified && /over\s+\$?\d+/i.test(prompt)) {
-      return res.status(200).json({
-        text: JSON.stringify({
-          response:
-            "This request requires identity verification before execution.",
-          update: null,
-          action: "MFA_TRIGGER",
-        }),
-        sessionId,
-      });
-    }
+    // Initialize Gemini client
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-    const model = genAI.getGenerativeModel({
+    // Generate content
+    const result = await ai.models.generateContent({
       model: "gemini-2.5-pro",
+      contents: prompt,
     });
 
-    const result = await model.generateContent(prompt);
-
     return res.status(200).json({
-      text: result.response.text(),
+      text: result.text,
       sessionId,
     });
   } catch (err) {
