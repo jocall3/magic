@@ -3,7 +3,8 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
+  // Load environment variables based on mode (development/production)
+  const env = loadEnv(mode, process.cwd(), '');
   const root = process.cwd();
 
   return {
@@ -17,8 +18,9 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
 
     define: {
-      // Only expose public keys and non-sensitive configuration to the client bundle.
-      // All secret keys (Stripe Secret, Plaid Secret, DB Creds) must remain server-side only.
+      // Client-safe public environment variables
+      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.STRIPE_PUBLISHABLE_KEY': JSON.stringify(env.STRIPE_PUBLISHABLE_KEY),
       'process.env.PLAID_CLIENT_ID': JSON.stringify(env.PLAID_CLIENT_ID),
       'process.env.PLAID_ENV': JSON.stringify(env.PLAID_ENV || 'sandbox'),
