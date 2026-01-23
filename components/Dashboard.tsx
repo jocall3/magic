@@ -24,30 +24,40 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 p-2 md:p-6 bg-gray-950 min-h-screen">
+
+            {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-800 pb-8">
+                {/* Left: Title + Status */}
                 <div>
-                    <div className="flex items-center gap-3 mb-2">
-                         <div className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 rounded text-[10px] text-green-400 font-black tracking-widest uppercase">Production Environment</div>
-                         <div className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[10px] text-cyan-400 font-black tracking-widest uppercase">Handshake Stable</div>
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <div className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 rounded text-[10px] text-green-400 font-black tracking-widest uppercase">
+                            Production Environment
+                        </div>
+                        <div className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[10px] text-cyan-400 font-black tracking-widest uppercase">
+                            Handshake Stable
+                        </div>
                     </div>
                     <h1 className="text-6xl font-black text-white tracking-tighter uppercase font-mono italic">Nexus OS</h1>
                     <p className="text-emerald-400 mt-1 flex items-center gap-2 font-mono text-sm tracking-widest uppercase">
                         <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-                        SIGNAL: {isProductionApproved ? 'PRODUCTION_ACTIVE' : 'INITIALIZING'} // 15/15 PROTOCOLS SYNCED
+                        SIGNAL: {isProductionApproved ? 'PRODUCTION_ACTIVE' : 'INITIALIZING'}
                     </p>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={() => setActiveView(View.ComplianceOracle)} className="px-4 py-2 bg-indigo-900/20 hover:bg-indigo-900/40 border border-indigo-500/50 rounded-xl text-sm font-bold text-indigo-300 flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(99,102,241,0.1)]">
+                {/* Right: Buttons */}
+                <div className="flex gap-3 flex-wrap">
+                    <button onClick={() => setActiveView(View.ComplianceOracle)} 
+                        className="px-4 py-2 bg-indigo-900/20 hover:bg-indigo-900/40 border border-indigo-500/50 rounded-xl text-sm font-bold text-indigo-300 flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(99,102,241,0.1)]">
                         <ShieldCheck size={18} /> Welcome to the DEMO
                     </button>
-                    <button onClick={() => setActiveView(View.SendMoney)} className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-white text-sm font-bold shadow-lg shadow-cyan-500/20 transition-all active:scale-95 uppercase tracking-widest">
+                    <button onClick={() => setActiveView(View.SendMoney)} 
+                        className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-white text-sm font-bold shadow-lg shadow-cyan-500/20 transition-all active:scale-95 uppercase tracking-widest">
                         Initiate Capital Flow
                     </button>
                 </div>
             </header>
 
-            {/* Production Metrics Deck */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {/* Metrics Deck */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                 <Card className="border-cyan-500/20 bg-cyan-950/5 text-center py-6 group hover:border-cyan-500/50 transition-all">
                     <Fingerprint className="w-8 h-8 mx-auto text-cyan-400 mb-2 group-hover:scale-110 transition-transform" />
                     <p className="text-3xl font-black text-white font-mono">{(creditScore.score/100).toFixed(2)}</p>
@@ -70,12 +80,16 @@ const Dashboard: React.FC = () => {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Visual Data Nexus */}
-                <div className="lg:col-span-8 space-y-8">
-                    <Card title="Sovereign Wealth Topology" className="h-[450px] relative overflow-hidden bg-black/40 border-indigo-900/50 p-0">
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
+
+                {/* Left Column */}
+                <div className="lg:col-span-8 flex flex-col gap-8">
+                    <Card title="Sovereign Wealth Topology" className="relative overflow-hidden bg-black/40 border-indigo-900/50 p-0">
                         <div className="absolute top-6 left-6 z-10">
-                            <span className="px-3 py-1.5 bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold font-mono rounded-lg backdrop-blur">MULTIVERSE_PROJECTION_V6</span>
+                            <span className="px-3 py-1.5 bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold font-mono rounded-lg backdrop-blur">
+                                MULTIVERSE_PROJECTION_V6
+                            </span>
                         </div>
                         <WealthTimeline />
                     </Card>
@@ -86,8 +100,8 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Tactical Sidebar */}
-                <div className="lg:col-span-4 space-y-8">
+                {/* Right Column */}
+                <div className="lg:col-span-4 flex flex-col gap-8">
                     <Card title="Production Authority" className="border-indigo-500/20 bg-indigo-950/5 p-6">
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 p-4 bg-black/40 rounded-2xl border border-indigo-500/20">
@@ -127,14 +141,19 @@ const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
-                            <button onClick={() => setActiveView(View.FinancialGoals)} className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] transition-all border border-gray-800">Review Full Protocol</button>
+                            <button onClick={() => setActiveView(View.FinancialGoals)} 
+                                className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] transition-all border border-gray-800">
+                                Review Full Protocol
+                            </button>
                         </div>
                     </Card>
                 </div>
 
+                {/* Full-width Recent Transactions */}
                 <div className="lg:col-span-12">
                     <RecentTransactions transactions={transactions.slice(0, 10)} setActiveView={setActiveView} />
                 </div>
+
             </div>
         </div>
     );
