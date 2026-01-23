@@ -35,7 +35,6 @@ import {
     View,
     Notification
 } from '../types';
-import { GoogleGenAI, SchemaType } from "@google/genai";
 
 // ================================================================================================
 // CONSTANTS & CONFIGURATION
@@ -43,7 +42,6 @@ import { GoogleGenAI, SchemaType } from "@google/genai";
 
 const INSTITUTION_NAME = "Quantum Financial";
 const SYSTEM_VERSION = "v4.0.0-ALPHA-SOVEREIGN";
-const GEMINI_MODEL = "gemini-3-flash-preview";
 
 // ================================================================================================
 // TYPES & INTERFACES (The Blueprint)
@@ -244,24 +242,20 @@ const TransactionsView: React.FC = () => {
         setIsAILoading(true);
 
         try {
-            // Using the provided GEMINI_API_KEY from secrets manager simulation
-            const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY || "");
-            const model = genAI.getGenerativeModel({ 
-                model: GEMINI_MODEL,
-                systemInstruction: `You are the Quantum Financial Sovereign AI. 
-                You help the user manage a global bank demo. 
-                You can draft payments, flag transactions, and provide insights.
-                Tone: Elite, Professional, High-Performance.
-                Context: The user is James, the Sovereign Architect.
-                Rules: 
-                1. Never use the name "Citibank". Use "Quantum Financial".
-                2. If the user wants to send money, respond with a JSON-like structure in your text that I can parse, but also explain it nicely.
-                3. You are part of a "Golden Ticket" experience. Make the user feel powerful.
-                4. Mention "Kicking the tires" or "Engine roaring" occasionally.`
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: input }),
             });
 
-            const result = await model.generateContent(input);
-            const responseText = result.response.text();
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const responseText = data.response;
 
             setChatHistory(prev => [...prev, { role: 'ai', content: responseText }]);
             
@@ -804,7 +798,7 @@ const TransactionsView: React.FC = () => {
             {/* FOOTER: THE VISION */}
             <footer className="mt-20 pt-10 border-t border-gray-900 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
                 <div className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
-                    © 2024 Quantum Financial Group // All Rights Reserved
+                    Â© 2024 Quantum Financial Group // All Rights Reserved
                 </div>
                 <div className="flex gap-8">
                     <button className="text-[10px] font-bold text-gray-600 hover:text-cyan-500 uppercase tracking-widest transition-colors">Terms of Sovereignty</button>
