@@ -2,7 +2,7 @@
 import React, { useState, useReducer, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import Card from './Card';
-import { DataContext } from '../contexts/DataContext';
+import { DataContext } from '../context/DataContext';
 
 // =================================================================================================
 // 1. QUANTUM FINANCIAL TYPE DEFINITIONS (HIGH-FREQUENCY / ELITE TIER)
