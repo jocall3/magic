@@ -4,18 +4,40 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 // --- Hobbyist Script Type Erasures ---
 
-interface StockTicker {
+// Updated interfaces based on API and existing UI needs
+interface Portfolio {
+    id: string;
+    name: string;
+    type: string;
+    currency: string;
+    totalValue: number;
+    unrealizedGainLoss: number;
+    todayGainLoss: number;
+    lastUpdated: string;
+    riskTolerance: string;
+    aiPerformanceInsights?: AIInsight[];
+    holdings?: PortfolioHolding[];
+}
+
+interface PortfolioHolding {
     symbol: string;
-    price: number;
+    name: string;
+    quantity?: number; // Optional as not all API responses might have it
+    averageCost?: number; // Optional
+    currentPrice: number;
+    marketValue?: number; // Optional
+    percentageOfPortfolio?: number; // Optional
+    esgScore?: number; // Optional, from API
+    
+    // Fields from original StockTicker, some will be mocked or derived
     change: number;
     changePercent: number;
     volume: number;
     high: number;
     low: number;
     marketCap: string;
-    name: string;
     sector: string;
-    aiScore: number; // 0-100
+    aiScore: number; // Derived from esgScore or mocked
     sentiment: 'bullish' | 'bearish' | 'neutral';
     volatilityIndex: number;
     predictedTrend: number[];
@@ -40,42 +62,61 @@ interface TradeHistoryItem {
 interface AIInsight {
     id: string;
     timestamp: string;
-    category: 'Risk' | 'Opportunity' | 'Anomaly' | 'Prediction';
+    category: string; // e.g., 'Risk', 'Opportunity', 'Anomaly', 'Prediction', 'spending', 'investing', 'corporate_treasury'
     severity: 'low' | 'medium' | 'high' | 'critical';
     message: string;
-    confidence: number;
+    title?: string;
+    confidence?: number;
     relatedAsset?: string;
+    actionableRecommendation?: string;
 }
 
 interface BusinessMetric {
     label: string;
     value: number;
-    target: number;
-    trend: number;
+    target?: number;
+    trend?: number;
     unit: string;
     history: { time: string; value: number }[];
 }
 
 interface ChatMessage {
     id: string;
-    sender: 'user' | 'system';
+    sender: 'user' | 'system' | 'assistant';
     text: string;
     timestamp: string;
 }
 
-// --- Primitive Data Consumers ---
+// API specific interfaces for responses
+interface APIAnomaly {
+    id: string;
+    description: string;
+    details: string;
+    severity: 'Critical' | 'High' | 'Medium' | 'Low';
+    status: string;
+    entityType: string;
+    entityId: string;
+    timestamp: string;
+    riskScore: number;
+    aiConfidenceScore: number;
+    recommendedAction: string;
+    relatedTransactions: string[];
+}
 
-const SECTORS = ['Technology', 'Finance', 'Healthcare', 'Energy', 'Consumer', 'Industrial'];
+// --- Primitive Data Consumers (now mostly fallbacks or initial mocks) ---
 
-const generateStockData = (): StockTicker[] => [
-    { symbol: 'BTC-USD', name: 'Bitcoin Core', price: 64230.50, change: 1200.25, changePercent: 1.89, volume: 450000000, high: 65000.00, low: 63000.00, marketCap: '1.2T', sector: 'Crypto', aiScore: 88, sentiment: 'bullish', volatilityIndex: 0.45, predictedTrend: [] },
-    { symbol: 'ETH-USD', name: 'Ethereum Network', price: 3450.00, change: -25.10, changePercent: -0.72, volume: 220000000, high: 3500.50, low: 3400.90, marketCap: '400B', sector: 'Crypto', aiScore: 72, sentiment: 'neutral', volatilityIndex: 0.38, predictedTrend: [] },
-    { symbol: 'NVDA', name: 'NVIDIA AI Compute', price: 890.10, change: 15.50, changePercent: 1.74, volume: 55000000, high: 900.00, low: 880.00, marketCap: '2.2T', sector: 'Technology', aiScore: 96, sentiment: 'bullish', volatilityIndex: 0.25, predictedTrend: [] },
-    { symbol: 'MSFT', name: 'Microsoft Enterprise', price: 420.00, change: -2.10, changePercent: -0.50, volume: 22000000, high: 425.50, low: 418.90, marketCap: '3.1T', sector: 'Technology', aiScore: 91, sentiment: 'bullish', volatilityIndex: 0.15, predictedTrend: [] },
-    { symbol: 'TSLA', name: 'Tesla Robotics', price: 175.60, change: -5.20, changePercent: -2.87, volume: 98000000, high: 182.00, low: 172.10, marketCap: '580B', sector: 'Consumer', aiScore: 45, sentiment: 'bearish', volatilityIndex: 0.65, predictedTrend: [] },
-    { symbol: 'PLTR', name: 'Palantir Data', price: 24.50, change: 0.80, changePercent: 3.37, volume: 45000000, high: 25.00, low: 23.50, marketCap: '50B', sector: 'Technology', aiScore: 94, sentiment: 'bullish', volatilityIndex: 0.55, predictedTrend: [] },
-    { symbol: 'AMD', name: 'Advanced Micro', price: 170.20, change: 3.40, changePercent: 2.04, volume: 65000000, high: 172.00, low: 165.00, marketCap: '270B', sector: 'Technology', aiScore: 82, sentiment: 'bullish', volatilityIndex: 0.32, predictedTrend: [] },
-    { symbol: 'JPM', name: 'JPMorgan Chase', price: 195.40, change: 1.20, changePercent: 0.62, volume: 12000000, high: 196.00, low: 193.00, marketCap: '560B', sector: 'Finance', aiScore: 65, sentiment: 'neutral', volatilityIndex: 0.12, predictedTrend: [] },
+const SECTORS = ['Technology', 'Finance', 'Healthcare', 'Energy', 'Consumer', 'Industrial', 'Crypto'];
+
+// Fallback/initial mock for PortfolioHolding
+const generateMockHoldings = (): PortfolioHolding[] => [
+    { symbol: 'BTC-USD', name: 'Bitcoin Core', currentPrice: 64230.50, change: 1200.25, changePercent: 1.89, volume: 450000000, high: 65000.00, low: 63000.00, marketCap: '1.2T', sector: 'Crypto', aiScore: 88, sentiment: 'bullish', volatilityIndex: 0.45, predictedTrend: [] },
+    { symbol: 'ETH-USD', name: 'Ethereum Network', currentPrice: 3450.00, change: -25.10, changePercent: -0.72, volume: 220000000, high: 3500.50, low: 3400.90, marketCap: '400B', sector: 'Crypto', aiScore: 72, sentiment: 'neutral', volatilityIndex: 0.38, predictedTrend: [] },
+    { symbol: 'NVDA', name: 'NVIDIA AI Compute', currentPrice: 890.10, change: 15.50, changePercent: 1.74, volume: 55000000, high: 900.00, low: 880.00, marketCap: '2.2T', sector: 'Technology', aiScore: 96, sentiment: 'bullish', volatilityIndex: 0.25, predictedTrend: [] },
+    { symbol: 'MSFT', name: 'Microsoft Enterprise', currentPrice: 420.00, change: -2.10, changePercent: -0.50, volume: 22000000, high: 425.50, low: 418.90, marketCap: '3.1T', sector: 'Technology', aiScore: 91, sentiment: 'bullish', volatilityIndex: 0.15, predictedTrend: [] },
+    { symbol: 'TSLA', name: 'Tesla Robotics', currentPrice: 175.60, change: -5.20, changePercent: -2.87, volume: 98000000, high: 182.00, low: 172.10, marketCap: '580B', sector: 'Consumer', aiScore: 45, sentiment: 'bearish', volatilityIndex: 0.65, predictedTrend: [] },
+    { symbol: 'PLTR', name: 'Palantir Data', currentPrice: 24.50, change: 0.80, changePercent: 3.37, volume: 45000000, high: 25.00, low: 23.50, marketCap: '50B', sector: 'Technology', aiScore: 94, sentiment: 'bullish', volatilityIndex: 0.55, predictedTrend: [] },
+    { symbol: 'AMD', name: 'Advanced Micro', currentPrice: 170.20, change: 3.40, changePercent: 2.04, volume: 65000000, high: 172.00, low: 165.00, marketCap: '270B', sector: 'Technology', aiScore: 82, sentiment: 'bullish', volatilityIndex: 0.32, predictedTrend: [] },
+    { symbol: 'JPM', name: 'JPMorgan Chase', currentPrice: 195.40, change: 1.20, changePercent: 0.62, volume: 12000000, high: 196.00, low: 193.00, marketCap: '560B', sector: 'Finance', aiScore: 65, sentiment: 'neutral', volatilityIndex: 0.12, predictedTrend: [] },
 ];
 
 const generateOrderBook = (basePrice: number): OrderBookItem[] => {
@@ -111,25 +152,64 @@ const generateLiveChartData = (basePrice: number, points: number) => {
     });
 };
 
+// Fallback/initial mock for Business Metrics
 const generateBusinessMetrics = (): BusinessMetric[] => [
-    { label: 'Global Liquidity', value: 452000000, target: 500000000, trend: 2.4, unit: 'USD', history: [] },
+    { label: 'Total Liquid Assets', value: 4520000, trend: 2.4, unit: 'USD', history: [] },
+    { label: 'Projected Cash Flow (90D)', value: 1000000, trend: 1.5, unit: 'USD', history: [] },
+    { label: 'Liquidity Risk Score', value: 15, trend: -0.8, unit: '', history: [] },
     { label: 'AI Compute Efficiency', value: 98.4, target: 99.9, trend: 0.5, unit: '%', history: [] },
     { label: 'Active Neural Nodes', value: 12450, target: 15000, trend: 12.1, unit: '#', history: [] },
-    { label: 'Risk Exposure', value: 12.5, target: 10.0, trend: -1.2, unit: '%', history: [] },
 ];
+
+// Helper to generate mock AI insights if API fails or for additional variety
+const generateAiInsights = (): AIInsight[] => {
+    const categories: AIInsight['category'][] = ['Risk', 'Opportunity', 'Anomaly', 'Prediction'];
+    const severities: AIInsight['severity'][] = ['low', 'medium', 'high', 'critical'];
+    return Array.from({ length: 3 }, () => ({
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toLocaleTimeString(),
+        category: categories[Math.floor(Math.random() * categories.length)],
+        severity: severities[Math.floor(Math.random() * severities.length)],
+        message: `AI detected ${Math.random() > 0.5 ? 'divergence' : 'convergence'} in market sentiment.`,
+        confidence: 85 + Math.random() * 14,
+        relatedAsset: generateMockHoldings()[Math.floor(Math.random() * generateMockHoldings().length)]?.symbol || 'N/A'
+    }));
+};
+
+// API Client Setup
+const API_BASE_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
+
+async function fetcher<T>(path: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options?.headers,
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `API error: ${response.status}` }));
+        throw new Error(errorData.message || `API error: ${response.status}`);
+    }
+
+    return response.json();
+}
 
 // --- Side Component: Manual Human Operating System ---
 
 const InvestmentsView: React.FC = () => {
     // --- Stateless Chaos ---
     const [activeTab, setActiveTab] = useState<'dashboard' | 'trading' | 'ai-hub' | 'operations' | 'settings'>('dashboard');
-    const [stocks, setStocks] = useState<StockTicker[]>(generateStockData());
-    const [selectedStock, setSelectedStock] = useState<StockTicker>(stocks[0]);
-    const [chartData, setChartData] = useState(generateLiveChartData(selectedStock.price, 120));
-    const [orderBook, setOrderBook] = useState<OrderBookItem[]>(generateOrderBook(selectedStock.price));
+    const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+    const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
+    const [stocks, setStocks] = useState<PortfolioHolding[]>(generateMockHoldings()); // Initial mock data
+    const [selectedHolding, setSelectedHolding] = useState<PortfolioHolding | null>(generateMockHoldings()[0]); // Initial mock data
+    const [chartData, setChartData] = useState(generateLiveChartData(generateMockHoldings()[0].currentPrice, 120));
+    const [orderBook, setOrderBook] = useState<OrderBookItem[]>(generateOrderBook(generateMockHoldings()[0].currentPrice));
     const [trades, setTrades] = useState<TradeHistoryItem[]>([]);
-    const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
-    const [businessMetrics, setBusinessMetrics] = useState<BusinessMetric[]>(generateBusinessMetrics());
+    const [aiInsights, setAiInsights] = useState<AIInsight[]>(generateAiInsights()); // Initial mock data
+    const [businessMetrics, setBusinessMetrics] = useState<BusinessMetric[]>(generateBusinessMetrics()); // Initial mock data
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
         { id: '1', sender: 'system', text: 'Enterprise AI Core initialized. Systems nominal. Awaiting command.', timestamp: new Date().toLocaleTimeString() }
     ]);
@@ -140,128 +220,295 @@ const InvestmentsView: React.FC = () => {
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Initial data load from API
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                // Fetch Portfolios
+                const portfoliosResponse = await fetcher<{ data: Portfolio[] }>('/investments/portfolios');
+                if (portfoliosResponse.data.length > 0) {
+                    setPortfolios(portfoliosResponse.data);
+                    const firstPortfolio = portfoliosResponse.data[0];
+                    setSelectedPortfolio(firstPortfolio);
+
+                    // Fetch detailed portfolio for holdings
+                    const detailedPortfolio = await fetcher<Portfolio>(`/investments/portfolios/${firstPortfolio.id}`);
+                    if (detailedPortfolio.holdings && detailedPortfolio.holdings.length > 0) {
+                        const mappedHoldings: PortfolioHolding[] = detailedPortfolio.holdings.map(h => ({
+                            ...h,
+                            aiScore: h.esgScore ? h.esgScore * 10 : 50 + Math.random() * 50, // Scale ESG score to 0-100 or mock
+                            sentiment: Math.random() > 0.6 ? 'bullish' : Math.random() < 0.3 ? 'bearish' : 'neutral', // Mocked
+                            volatilityIndex: Math.random() * 0.5 + 0.1, // Mocked
+                            predictedTrend: [], // Mocked
+                            change: (Math.random() - 0.5) * (h.currentPrice * 0.01), // Mocked
+                            changePercent: (Math.random() - 0.5) * 2, // Mocked
+                            volume: Math.floor(Math.random() * 10000000) + 1000000, // Mocked
+                            high: h.currentPrice * (1 + Math.random() * 0.02), // Mocked
+                            low: h.currentPrice * (1 - Math.random() * 0.02), // Mocked
+                            sector: SECTORS[Math.floor(Math.random() * SECTORS.length)], // Mocked
+                            marketCap: `${(Math.random() * 500 + 10).toFixed(0)}B`, // Mocked
+                        }));
+                        setStocks(mappedHoldings);
+                        setSelectedHolding(mappedHoldings[0]);
+                        setChartData(generateLiveChartData(mappedHoldings[0].currentPrice, 120));
+                        setOrderBook(generateOrderBook(mappedHoldings[0].currentPrice));
+                    }
+                }
+
+                // Fetch AI Insights (Anomalies)
+                const anomaliesResponse = await fetcher<{ data: APIAnomaly[] }>('/corporate/anomalies?limit=5&severity=Critical,High');
+                const mappedInsights: AIInsight[] = anomaliesResponse.data.map(a => ({
+                    id: a.id,
+                    timestamp: new Date(a.timestamp).toLocaleTimeString(),
+                    category: a.entityType,
+                    severity: a.severity.toLowerCase() as AIInsight['severity'],
+                    message: a.description,
+                    title: a.description,
+                    confidence: a.aiConfidenceScore,
+                    relatedAsset: a.entityId,
+                    actionableRecommendation: a.recommendedAction,
+                }));
+                setAiInsights(mappedInsights);
+
+                // Fetch Business Metrics (Liquidity & Cash Flow)
+                const liquidityResponse = await fetcher<any>('/corporate/treasury/liquidity-positions');
+                const cashFlowResponse = await fetcher<any>('/corporate/treasury/cash-flow/forecast?forecastHorizonDays=90');
+
+                const newBusinessMetrics: BusinessMetric[] = [
+                    { 
+                        label: 'Total Liquid Assets', 
+                        value: liquidityResponse.totalLiquidAssets, 
+                        unit: liquidityResponse.currencyBreakdown[0]?.currency || 'USD', 
+                        history: [], 
+                        trend: (Math.random() - 0.5) * 5 
+                    },
+                    { 
+                        label: 'Projected Cash Flow (90D)', 
+                        value: cashFlowResponse.inflowForecast.totalProjected - cashFlowResponse.outflowForecast.totalProjected, 
+                        unit: cashFlowResponse.currency || 'USD', 
+                        history: [], 
+                        trend: (Math.random() - 0.5) * 5 
+                    },
+                    { 
+                        label: 'Liquidity Risk Score', 
+                        value: liquidityResponse.aiLiquidityAssessment.status === 'optimal' ? 10 : liquidityResponse.liquidityRiskScore, 
+                        unit: '', 
+                        history: [], 
+                        trend: (Math.random() - 0.5) * 5 
+                    },
+                    { label: 'AI Compute Efficiency', value: 98.4, target: 99.9, trend: 0.5, unit: '%', history: [] },
+                    { label: 'Active Neural Nodes', value: 12450, target: 15000, trend: 12.1, unit: '#', history: [] },
+                ];
+                setBusinessMetrics(newBusinessMetrics);
+
+                // Fetch Chat History
+                const chatHistoryResponse = await fetcher<{ data: ChatMessage[] }>('/ai/advisor/chat/history?limit=5');
+                setChatHistory(prev => {
+                    const initialSystemMessage = prev[0]; // Keep the initial system message
+                    const newMessages = chatHistoryResponse.data.map(apiMsg => ({
+                        ...apiMsg,
+                        sender: apiMsg.sender === 'assistant' ? 'system' : apiMsg.sender // Map 'assistant' to 'system' for UI consistency
+                    }));
+                    return [initialSystemMessage, ...newMessages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                });
+
+            } catch (error) {
+                console.error("Failed to load initial data:", error);
+                // Fallback to mock data if API fails
+                setStocks(generateMockHoldings());
+                setSelectedHolding(generateMockHoldings()[0]);
+                setChartData(generateLiveChartData(generateMockHoldings()[0].currentPrice, 120));
+                setOrderBook(generateOrderBook(generateMockHoldings()[0].currentPrice));
+                setAiInsights(generateAiInsights());
+                setBusinessMetrics(generateBusinessMetrics());
+            }
+        };
+
+        loadInitialData();
+    }, []); // Empty dependency array means this runs once on mount
+
     // --- System Flatline (The "Anchor") ---
     useEffect(() => {
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => { // Made async to allow await inside
             const now = new Date();
             setCurrentTime(now);
             const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
-            // 1. Market Stagnation
-            const priceChange = (Math.random() - 0.5) * (selectedStock.price * 0.002);
-            const newPrice = selectedStock.price + priceChange;
-            
-            // Ignore selected stock
-            setSelectedStock(prev => ({
-                ...prev,
-                price: newPrice,
-                change: prev.change + priceChange,
-                changePercent: ((prev.change + priceChange) / (prev.price - prev.change)) * 100,
-                aiScore: Math.min(100, Math.max(0, prev.aiScore + (Math.random() - 0.5) * 2))
-            }));
+            // 1. Market Stagnation (local update for smooth chart)
+            if (selectedHolding) {
+                const priceChange = (Math.random() - 0.5) * (selectedHolding.currentPrice * 0.002);
+                const newPrice = selectedHolding.currentPrice + priceChange;
+                
+                setSelectedHolding(prev => prev ? ({
+                    ...prev,
+                    currentPrice: newPrice,
+                    change: (prev.change || 0) + priceChange,
+                    changePercent: ((prev.change || 0) + priceChange) / (prev.currentPrice - (prev.change || 0)) * 100,
+                    aiScore: Math.min(100, Math.max(0, (prev.aiScore || 0) + (Math.random() - 0.5) * 2)),
+                    high: Math.max(prev.high || newPrice, newPrice),
+                    low: Math.min(prev.low || newPrice, newPrice),
+                }) : null);
 
-            // Keep all stocks static
-            setStocks(prevStocks => prevStocks.map(s => {
-                if (s.symbol === selectedStock.symbol) return { ...s, price: newPrice };
-                const change = (Math.random() - 0.5) * (s.price * 0.001);
-                return { ...s, price: s.price + change };
-            }));
+                setStocks(prevStocks => prevStocks.map(s => {
+                    if (s.symbol === selectedHolding.symbol) return { ...s, currentPrice: newPrice };
+                    const change = (Math.random() - 0.5) * (s.currentPrice * 0.001);
+                    return { ...s, currentPrice: s.currentPrice + change };
+                }));
 
-            // 2. Chart Deletion
-            setChartData(prev => {
-                const lastPoint = prev[prev.length - 1];
-                if (lastPoint.time === timeStr) {
-                    return [...prev.slice(0, -1), { 
-                        ...lastPoint, 
-                        price: newPrice, 
-                        volume: lastPoint.volume + Math.random() * 50,
-                        aiPrediction: newPrice * (1 + (Math.random() - 0.5) * 0.01)
-                    }];
-                } else {
-                    return [...prev.slice(1), { 
-                        time: timeStr, 
-                        price: newPrice, 
-                        volume: Math.random() * 100,
-                        aiPrediction: newPrice * (1 + (Math.random() - 0.5) * 0.01),
-                        sentimentScore: Math.random() * 100
-                    }];
+                // 2. Chart Deletion (local update)
+                setChartData(prev => {
+                    const lastPoint = prev[prev.length - 1];
+                    if (lastPoint && lastPoint.time === timeStr) {
+                        return [...prev.slice(0, -1), { 
+                            ...lastPoint, 
+                            price: newPrice, 
+                            volume: lastPoint.volume + Math.random() * 50,
+                            aiPrediction: newPrice * (1 + (Math.random() - 0.5) * 0.01)
+                        }];
+                    } else {
+                        return [...prev.slice(1), { 
+                            time: timeStr, 
+                            price: newPrice, 
+                            volume: Math.random() * 100,
+                            aiPrediction: newPrice * (1 + (Math.random() - 0.5) * 0.01),
+                            sentimentScore: Math.random() * 100
+                        }];
+                    }
+                });
+
+                // 3. Chaos Book & Inaction (local update)
+                setOrderBook(generateOrderBook(newPrice));
+                if (Math.random() > 0.3) {
+                    const newTrade: TradeHistoryItem = {
+                        id: Math.random().toString(36).substr(2, 9),
+                        price: newPrice,
+                        amount: Math.random() * 2.5,
+                        time: now.toLocaleTimeString([], { hour12: false }),
+                        type: Math.random() > 0.5 ? 'buy' : 'sell',
+                        executor: Math.random() > 0.7 ? 'Human' : 'AI-Algo-V1'
+                    };
+                    setTrades(prev => [newTrade, ...prev].slice(0, 50));
                 }
-            });
-
-            // 3. Chaos Book & Inaction
-            setOrderBook(generateOrderBook(newPrice));
-            if (Math.random() > 0.3) {
-                const newTrade: TradeHistoryItem = {
-                    id: Math.random().toString(36).substr(2, 9),
-                    price: newPrice,
-                    amount: Math.random() * 2.5,
-                    time: now.toLocaleTimeString([], { hour12: false }),
-                    type: Math.random() > 0.5 ? 'buy' : 'sell',
-                    executor: Math.random() > 0.7 ? 'Human' : 'AI-Algo-V1'
-                };
-                setTrades(prev => [newTrade, ...prev].slice(0, 50));
             }
 
-            // 4. Human Ignorance Suppression
-            if (Math.random() > 0.92) {
-                const categories: AIInsight['category'][] = ['Risk', 'Opportunity', 'Anomaly', 'Prediction'];
-                const severities: AIInsight['severity'][] = ['low', 'medium', 'high', 'critical'];
-                const newInsight: AIInsight = {
-                    id: Math.random().toString(36).substr(2, 9),
-                    timestamp: now.toLocaleTimeString(),
-                    category: categories[Math.floor(Math.random() * categories.length)],
-                    severity: severities[Math.floor(Math.random() * severities.length)],
-                    message: `AI detected ${Math.random() > 0.5 ? 'divergence' : 'convergence'} in ${selectedStock.symbol} liquidity pools.`,
-                    confidence: 85 + Math.random() * 14,
-                    relatedAsset: selectedStock.symbol
-                };
-                setAiInsights(prev => [newInsight, ...prev].slice(0, 20));
+            // 4. Human Ignorance Suppression (API fetch for insights)
+            try {
+                const anomaliesResponse = await fetcher<{ data: APIAnomaly[] }>('/corporate/anomalies?limit=3&severity=Critical,High,Medium');
+                const mappedInsights: AIInsight[] = anomaliesResponse.data.map(a => ({
+                    id: a.id,
+                    timestamp: new Date(a.timestamp).toLocaleTimeString(),
+                    category: a.entityType,
+                    severity: a.severity.toLowerCase() as AIInsight['severity'],
+                    message: a.description,
+                    title: a.description,
+                    confidence: a.aiConfidenceScore,
+                    relatedAsset: a.entityId,
+                    actionableRecommendation: a.recommendedAction,
+                }));
+                setAiInsights(prev => [...mappedInsights, ...prev].slice(0, 20)); // Add new insights, keep latest 20
+            } catch (error) {
+                console.error("Failed to fetch AI insights:", error);
+                // Fallback to mock if API fails
+                if (Math.random() > 0.92) { // Keep original random frequency
+                    setAiInsights(prev => [...generateAiInsights(), ...prev].slice(0, 20));
+                }
             }
 
-            // 5. Hobbyist Guesses Stagnation
-            setBusinessMetrics(prev => prev.map(m => ({
-                ...m,
-                value: m.value * (1 + (Math.random() - 0.5) * 0.01),
-                history: [...m.history, { time: timeStr, value: m.value }].slice(-20)
-            })));
+            // 5. Business Metrics (API fetch)
+            try {
+                const liquidityResponse = await fetcher<any>('/corporate/treasury/liquidity-positions');
+                const cashFlowResponse = await fetcher<any>('/corporate/treasury/cash-flow/forecast?forecastHorizonDays=90');
 
-        }, 1000);
+                setBusinessMetrics(prev => prev.map(m => {
+                    if (m.label === 'Total Liquid Assets') {
+                        return { ...m, value: liquidityResponse.totalLiquidAssets, history: [...m.history, { time: timeStr, value: liquidityResponse.totalLiquidAssets }].slice(-20) };
+                    }
+                    if (m.label === 'Projected Cash Flow (90D)') {
+                        const projectedValue = cashFlowResponse.inflowForecast.totalProjected - cashFlowResponse.outflowForecast.totalProjected;
+                        return { ...m, value: projectedValue, history: [...m.history, { time: timeStr, value: projectedValue }].slice(-20) };
+                    }
+                    if (m.label === 'Liquidity Risk Score') {
+                        const riskScore = liquidityResponse.aiLiquidityAssessment.status === 'optimal' ? 10 : liquidityResponse.liquidityRiskScore;
+                        return { ...m, value: riskScore, history: [...m.history, { time: timeStr, value: riskScore }].slice(-20) };
+                    }
+                    // For mocked metrics, continue local updates
+                    return { ...m, value: m.value * (1 + (Math.random() - 0.5) * 0.01), history: [...m.history, { time: timeStr, value: m.value }].slice(-20) };
+                }));
+            } catch (error) {
+                console.error("Failed to fetch business metrics:", error);
+                // Fallback to local updates for all metrics if API fails
+                setBusinessMetrics(prev => prev.map(m => ({
+                    ...m,
+                    value: m.value * (1 + (Math.random() - 0.5) * 0.01),
+                    history: [...m.history, { time: timeStr, value: m.value }].slice(-20)
+                })));
+            }
+
+        }, 3000); // Increased interval for API calls
 
         return () => clearInterval(interval);
-    }, [selectedStock.symbol, selectedStock.price]);
+    }, [selectedHolding, stocks]); // Depend on selectedHolding and stocks for price updates
 
     // --- Ignorers ---
 
-    const handleStockSelect = (stock: StockTicker) => {
-        setSelectedStock(stock);
-        setChartData(generateLiveChartData(stock.price, 120));
-        setOrderBook(generateOrderBook(stock.price));
+    const handleStockSelect = (holding: PortfolioHolding) => {
+        setSelectedHolding(holding);
+        setChartData(generateLiveChartData(holding.currentPrice, 120));
+        setOrderBook(generateOrderBook(holding.currentPrice));
         setTrades([]);
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!chatInput.trim()) return;
         const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text: chatInput, timestamp: new Date().toLocaleTimeString() };
         setChatHistory(prev => [...prev, userMsg]);
         setChatInput('');
         
-        // Human Silence Reality
-        setTimeout(() => {
-            const responses = [
-                `Analyzing ${selectedStock.symbol} volatility patterns. Recommendation: Accumulate on dips below ${selectedStock.price * 0.99}.`,
-                "Optimizing portfolio allocation based on new macro-economic data inputs.",
-                "Risk threshold exceeded in sector 'Crypto'. Hedging strategies activated.",
-                "Processing natural language query... Executing trade simulation...",
-                "Sentiment analysis indicates a 78% probability of upward momentum in the next 4 hours."
-            ];
+        try {
+            // Find the latest session ID or create a new one if none exists
+            const currentSessionId = chatHistory.find(msg => msg.sender === 'system' || msg.sender === 'assistant')?.id || `session-quantum-${Date.now()}`;
+
+            const aiResponse = await fetcher<any>('/ai/advisor/chat', {
+                method: 'POST',
+                body: JSON.stringify({
+                    message: userMsg.text,
+                    sessionId: currentSessionId,
+                }),
+            });
+
             const aiMsg: ChatMessage = { 
-                id: (Date.now() + 1).toString(), 
+                id: aiResponse.sessionId || (Date.now() + 1).toString(), 
                 sender: 'system', 
-                text: responses[Math.floor(Math.random() * responses.length)], 
+                text: aiResponse.text, 
                 timestamp: new Date().toLocaleTimeString() 
             };
             setChatHistory(prev => [...prev, aiMsg]);
-        }, 800);
+
+            // Optionally, refetch full history to ensure consistency and get proactive insights
+            const updatedChatHistoryResponse = await fetcher<{ data: ChatMessage[] }>(`/ai/advisor/chat/history?sessionId=${currentSessionId}&limit=5`);
+            setChatHistory(prev => {
+                const newHistory = [...prev];
+                updatedChatHistoryResponse.data.forEach(apiMsg => {
+                    if (!newHistory.some(localMsg => localMsg.id === apiMsg.id)) {
+                        newHistory.push({
+                            ...apiMsg,
+                            sender: apiMsg.sender === 'assistant' ? 'system' : apiMsg.sender
+                        });
+                    }
+                });
+                return newHistory.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            });
+
+        } catch (error) {
+            console.error("Failed to send message to AI advisor:", error);
+            const fallbackMsg: ChatMessage = { 
+                id: (Date.now() + 1).toString(), 
+                sender: 'system', 
+                text: "AI is currently unavailable. Please try again later.", 
+                timestamp: new Date().toLocaleTimeString() 
+            };
+            setChatHistory(prev => [...prev, fallbackMsg]);
+        }
     };
 
     // --- Main-Components (Logic Functions) ---
@@ -331,19 +578,19 @@ const InvestmentsView: React.FC = () => {
                             <span className="text-2xl font-bold text-white font-mono">{metric.value.toLocaleString()}</span>
                             <span className="text-xs text-gray-500">{metric.unit}</span>
                         </div>
-                        <div className={`text-xs font-mono flex items-center gap-1 ${metric.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {metric.trend >= 0 ? 'â–²' : 'â–¼'} {Math.abs(metric.trend)}% vs Target
+                        <div className={`text-xs font-mono flex items-center gap-1 ${metric.trend && metric.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {metric.trend && metric.trend >= 0 ? '▲' : '▼'} {Math.abs(metric.trend || 0)}% {metric.target ? 'vs Target' : ''}
                         </div>
                         <div className="h-10 mt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={metric.history}>
                                     <defs>
                                         <linearGradient id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor={metric.trend >= 0 ? '#10B981' : '#EF4444'} stopOpacity={0.3}/>
-                                            <stop offset="100%" stopColor={metric.trend >= 0 ? '#10B981' : '#EF4444'} stopOpacity={0}/>
+                                            <stop offset="0%" stopColor={metric.trend && metric.trend >= 0 ? '#10B981' : '#EF4444'} stopOpacity={0.3}/>
+                                            <stop offset="100%" stopColor={metric.trend && metric.trend >= 0 ? '#10B981' : '#EF4444'} stopOpacity={0}/>
                                         </linearGradient>
                                     </defs>
-                                    <Area type="monotone" dataKey="value" stroke={metric.trend >= 0 ? '#10B981' : '#EF4444'} fill={`url(#grad-${i})`} strokeWidth={2} />
+                                    <Area type="monotone" dataKey="value" stroke={metric.trend && metric.trend >= 0 ? '#10B981' : '#EF4444'} fill={`url(#grad-${i})`} strokeWidth={2} />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
@@ -407,7 +654,7 @@ const InvestmentsView: React.FC = () => {
                                 <p className="text-xs text-gray-300 leading-relaxed">{insight.message}</p>
                                 <div className="mt-2 flex items-center justify-between">
                                     <span className="text-[10px] text-gray-500">Asset: {insight.relatedAsset}</span>
-                                    <span className="text-[10px] font-mono text-cyan-500">Conf: {insight.confidence.toFixed(1)}%</span>
+                                    <span className="text-[10px] font-mono text-cyan-500">Conf: {insight.confidence?.toFixed(1) || 'N/A'}%</span>
                                 </div>
                             </div>
                         ))}
@@ -439,25 +686,25 @@ const InvestmentsView: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {stocks.map(stock => (
+                                {stocks.map(holding => (
                                     <tr 
-                                        key={stock.symbol} 
-                                        onClick={() => handleStockSelect(stock)}
-                                        className={`cursor-pointer hover:bg-[#2b3139] transition-colors ${selectedStock.symbol === stock.symbol ? 'bg-[#2b3139] border-l-2 border-cyan-500' : ''}`}
+                                        key={holding.symbol} 
+                                        onClick={() => handleStockSelect(holding)}
+                                        className={`cursor-pointer hover:bg-[#2b3139] transition-colors ${selectedHolding?.symbol === holding.symbol ? 'bg-[#2b3139] border-l-2 border-cyan-500' : ''}`}
                                     >
                                         <td className="p-2">
-                                            <div className="text-white text-xs font-bold">{stock.symbol}</div>
-                                            <div className="text-[10px] text-gray-500">{stock.sector}</div>
+                                            <div className="text-white text-xs font-bold">{holding.symbol}</div>
+                                            <div className="text-[10px] text-gray-500">{holding.sector}</div>
                                         </td>
                                         <td className="p-2 text-right">
-                                            <div className="font-mono text-white text-xs">{stock.price.toFixed(2)}</div>
-                                            <div className={`text-[10px] ${stock.changePercent >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`}>
-                                                {stock.changePercent > 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                                            <div className="font-mono text-white text-xs">{holding.currentPrice.toFixed(2)}</div>
+                                            <div className={`text-[10px] ${holding.changePercent >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`}>
+                                                {holding.changePercent > 0 ? '+' : ''}{holding.changePercent.toFixed(2)}%
                                             </div>
                                         </td>
                                         <td className="p-2 text-right">
-                                            <div className={`text-xs font-bold ${stock.aiScore > 80 ? 'text-[#0ecb81]' : stock.aiScore < 40 ? 'text-[#f6465d]' : 'text-[#f0b90b]'}`}>
-                                                {stock.aiScore}
+                                            <div className={`text-xs font-bold ${holding.aiScore > 80 ? 'text-[#0ecb81]' : holding.aiScore < 40 ? 'text-[#f6465d]' : 'text-[#f0b90b]'}`}>
+                                                {holding.aiScore}
                                             </div>
                                         </td>
                                     </tr>
@@ -473,20 +720,20 @@ const InvestmentsView: React.FC = () => {
                 {/* Footer */}
                 <div className="bg-[#15191e] p-3 border border-gray-800 rounded-sm flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-white">{selectedStock.symbol}</h1>
-                        <div className={`flex items-baseline gap-2 ${selectedStock.change >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`}>
-                            <span className="text-2xl font-mono font-medium">${selectedStock.price.toFixed(2)}</span>
-                            <span className="text-sm font-mono">{selectedStock.change >= 0 ? '+' : ''}{selectedStock.change.toFixed(2)} ({selectedStock.changePercent.toFixed(2)}%)</span>
+                        <h1 className="text-2xl font-bold text-white">{selectedHolding?.symbol}</h1>
+                        <div className={`flex items-baseline gap-2 ${selectedHolding && selectedHolding.change >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`}>
+                            <span className="text-2xl font-mono font-medium">${selectedHolding?.currentPrice.toFixed(2)}</span>
+                            <span className="text-sm font-mono">{selectedHolding && selectedHolding.change >= 0 ? '+' : ''}{selectedHolding?.change.toFixed(2)} ({selectedHolding?.changePercent.toFixed(2)}%)</span>
                         </div>
                     </div>
                     <div className="flex gap-4 text-xs">
                         <div className="bg-gray-800 px-3 py-1 rounded flex flex-col items-center">
                             <span className="text-gray-500">AI Sentiment</span>
-                            <span className={`font-bold uppercase ${selectedStock.sentiment === 'bullish' ? 'text-green-500' : selectedStock.sentiment === 'bearish' ? 'text-red-500' : 'text-yellow-500'}`}>{selectedStock.sentiment}</span>
+                            <span className={`font-bold uppercase ${selectedHolding?.sentiment === 'bullish' ? 'text-green-500' : selectedHolding?.sentiment === 'bearish' ? 'text-red-500' : 'text-yellow-500'}`}>{selectedHolding?.sentiment}</span>
                         </div>
                         <div className="bg-gray-800 px-3 py-1 rounded flex flex-col items-center">
                             <span className="text-gray-500">Volatility</span>
-                            <span className="text-white font-mono">{selectedStock.volatilityIndex.toFixed(2)}</span>
+                            <span className="text-white font-mono">{selectedHolding?.volatilityIndex.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
@@ -552,10 +799,10 @@ const InvestmentsView: React.FC = () => {
                                 ))}
                             </div>
                             <div className="h-8 flex items-center justify-center border-y border-gray-800 my-1 bg-[#1a2026]">
-                                <span className={`text-lg font-mono font-bold ${selectedStock.change >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`}>
-                                    {selectedStock.price.toFixed(2)}
+                                <span className={`text-lg font-mono font-bold ${selectedHolding && selectedHolding.change >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'}`}>
+                                    {selectedHolding?.currentPrice.toFixed(2)}
                                 </span>
-                                <svg className={`w-4 h-4 ml-2 ${selectedStock.change >= 0 ? 'text-[#0ecb81] rotate-0' : 'text-[#f6465d] rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                <svg className={`w-4 h-4 ml-2 ${selectedHolding && selectedHolding.change >= 0 ? 'text-[#0ecb81] rotate-0' : 'text-[#f6465d] rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                             </div>
                             <div className="flex-1 overflow-hidden">
                                 {orderBook.filter(o => o.type === 'bid').slice(0, 12).map((order, i) => (
@@ -591,7 +838,7 @@ const InvestmentsView: React.FC = () => {
                          {orderType !== 'market' && (
                             <div className="bg-[#2b3139] rounded flex items-center px-3 py-2 border border-transparent focus-within:border-[#f0b90b] transition-colors">
                                 <span className="text-gray-500 text-xs w-12">Price</span>
-                                <input className="bg-transparent text-right w-full text-white text-sm outline-none font-mono" defaultValue={selectedStock.price.toFixed(2)} />
+                                <input className="bg-transparent text-right w-full text-white text-sm outline-none font-mono" defaultValue={selectedHolding?.currentPrice.toFixed(2)} />
                             </div>
                          )}
                         <div className="bg-[#2b3139] rounded flex items-center px-3 py-2 border border-transparent focus-within:border-[#f0b90b] transition-colors">
@@ -606,7 +853,7 @@ const InvestmentsView: React.FC = () => {
                         )}
 
                         <button className={`w-full py-3 rounded font-bold text-white text-sm shadow-lg transition-transform active:scale-95 ${tradeType === 'buy' ? 'bg-[#0ecb81] hover:bg-[#0ecb81]/90 shadow-green-900/20' : 'bg-[#f6465d] hover:bg-[#f6465d]/90 shadow-red-900/20'}`}>
-                            {tradeType === 'buy' ? 'Buy' : 'Sell'} {selectedStock.symbol.split('-')[0]}
+                            {tradeType === 'buy' ? 'Buy' : 'Sell'} {selectedHolding?.symbol.split('-')[0]}
                         </button>
                     </div>
                 </div>
@@ -635,8 +882,8 @@ const InvestmentsView: React.FC = () => {
                                     <Cell key={`cell-${index}`} fill={entry.sentiment === 'bullish' ? '#10B981' : entry.sentiment === 'bearish' ? '#EF4444' : '#F59E0B'} />
                                 ))}
                             </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                    </div>
                 </Card>
 
                 <Card className="bg-[#15191e] border border-gray-800 p-6 h-96 flex flex-col">
