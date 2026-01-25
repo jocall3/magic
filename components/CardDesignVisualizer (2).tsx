@@ -227,10 +227,10 @@ const CardDesignVisualizer: React.FC<CardDesignVisualizerProps> = ({ design, car
       }}>
           <p style={{ margin: 0, fontWeight: 'bold', marginBottom: '10px' }}>Carrier Text Configuration:</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div><strong>Header Title:</strong> {design.carrier_text.header_title || 'â€”'}</div>
-              <div><strong>Footer Title:</strong> {design.carrier_text.footer_title || 'â€”'}</div>
-              <div><strong>Header Body:</strong> {design.carrier_text.header_body || 'â€”'}</div>
-              <div><strong>Footer Body:</strong> {design.carrier_text.footer_body || 'â€”'}</div>
+              <div><strong>Header Title:</strong> {design.carrier_text.header_title || '—'}</div>
+              <div><strong>Footer Title:</strong> {design.carrier_text.footer_title || '—'}</div>
+              <div><strong>Header Body:</strong> {design.carrier_text.header_body || '—'}</div>
+              <div><strong>Footer Body:</strong> {design.carrier_text.footer_body || '—'}</div>
           </div>
           <p style={{ margin: '10px 0 0 0', fontWeight: 'bold' }}>Rejection Reasons:</p>
           <p style={{ margin: '5px 0 0 0', color: design.status === 'rejected' ? 'red' : 'green' }}>
