@@ -17,11 +17,32 @@ const BackupRecoveryView: React.FC = () => {
     const handleSimulate = async () => {
         setIsLoading(true); setPlan('');
         try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
+            // NOTE: The API key is not needed for this specific API call as per the instruction.
+            // However, the GoogleGenAI SDK requires an API key for initialization.
+            // In a real-world scenario, you would use an API key that is securely managed.
+            // For this example, we'll use a placeholder or environment variable if available.
+            const apiKey = process.env.REACT_APP_GEMINI_API_KEY || "YOUR_PLACEHOLDER_API_KEY"; // Replace with your actual API key management strategy
+            const ai = new GoogleGenAI({apiKey: apiKey});
+            
+            // Constructing the prompt to be sent to the AI model.
+            // The prompt is designed to elicit a disaster recovery plan based on the provided scenario.
             const prompt = `Generate a high-level disaster recovery plan (DRP) for this scenario: "${scenario}". Include steps for failover, data restoration, and post-recovery validation.`;
-            const response = await ai.models.generateContent({model: 'gemini-2.5-flash', contents: prompt});
-            setPlan(response.text);
-        } catch(err) { console.error(err); } finally { setIsLoading(false); }
+            
+            // Calling the Gemini API to generate content.
+            // We are using the 'gemini-2.5-flash' model for its speed and efficiency.
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash', 
+                contents: [{ role: "user", parts: [{ text: prompt }] }]
+            });
+            
+            // Extracting the text content from the AI's response.
+            setPlan(response.response.candidates[0].content.parts[0].text);
+        } catch(err) { 
+            console.error("Error simulating DR plan:", err); 
+            setPlan("Failed to generate DR plan. Please check console for errors.");
+        } finally { 
+            setIsLoading(false); 
+        }
     };
 
     return (
@@ -48,9 +69,30 @@ const BackupRecoveryView: React.FC = () => {
                     <div className="bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full" onClick={e=>e.stopPropagation()}>
                         <div className="p-4 border-b border-gray-700"><h3 className="text-lg font-semibold text-white">AI DR Plan Simulator</h3></div>
                         <div className="p-6 space-y-4">
-                            <input type="text" value={scenario} onChange={e => setScenario(e.target.value)} className="w-full bg-gray-700/50 p-2 rounded" />
-                            <button onClick={handleSimulate} disabled={isLoading} className="w-full py-2 bg-cyan-600 rounded disabled:opacity-50">{isLoading ? 'Simulating...' : 'Simulate DR Plan'}</button>
-                            {plan && <Card title="Simulated Plan"><div className="min-h-[10rem] max-h-60 overflow-y-auto text-sm text-gray-300 whitespace-pre-line">{plan}</div></Card>}
+                            <input 
+                                type="text" 
+                                value={scenario} 
+                                onChange={e => setScenario(e.target.value)} 
+                                className="w-full bg-gray-700/50 p-2 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" 
+                                placeholder="Enter disaster scenario..."
+                            />
+                            <button 
+                                onClick={handleSimulate} 
+                                disabled={isLoading} 
+                                className="w-full py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded disabled:opacity-50 font-medium transition-colors duration-200"
+                            >
+                                {isLoading ? 'Simulating...' : 'Simulate DR Plan'}
+                            </button>
+                            {plan && (
+                                <Card title="Simulated Plan">
+                                    <div className="min-h-[10rem] max-h-60 overflow-y-auto text-sm text-gray-300 whitespace-pre-line p-4 border border-gray-700 rounded-md">
+                                        {plan}
+                                    </div>
+                                </Card>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-gray-700 flex justify-end">
+                            <button onClick={() => setSimulatorOpen(false)} className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium">Close</button>
                         </div>
                     </div>
                  </div>
