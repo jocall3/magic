@@ -11,9 +11,9 @@ export const BillingDetails: React.FC<{ details: any }> = ({ details }) => {
       <DetailItem title="Phone" value={details.phone || 'N/A'} />
       {details.address && (
         <div className="mt-2 text-sm text-gray-400">
-          <p>{details.address.line1}</p>
+          <p>{details.address.street}</p>
           {details.address.line2 && <p>{details.address.line2}</p>}
-          <p>{details.address.city}, {details.address.state} {details.address.postal_code}</p>
+          <p>{details.address.city}, {details.address.state} {details.address.zip}</p>
           <p>{details.address.country}</p>
         </div>
       )}
