@@ -20,14 +20,53 @@ const DebateAdversaryView: React.FC = () => {
     setHistory(prev => [...prev, userTurn]);
     setUserInput('');
 
-    // MOCK API
-    const aiResponse: DebateTurn = await new Promise(res => setTimeout(() => res({
-      speaker: 'AI',
-      text: 'While your premise is emotionally appealing, you have not provided empirical evidence to support it. Your conclusion relies on an anecdotal fallacy.',
-      fallacyDetected: 'Anecdotal Fallacy'
-    }), 2000));
-    setHistory(prev => [...prev, aiResponse]);
-    setIsLoading(false);
+    // MOCK API CALL TO THE NEW API ENDPOINT
+    const apiEndpoint = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/advisor/chat';
+    
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // NOTE: The instruction states "this api that doesn't need no apikey", so we omit Authorization header.
+        },
+        body: JSON.stringify({
+          message: userInput,
+          sessionId: history.length === 0 ? 'initial-session' : 'continued-session', // Mock session ID logic
+          // We are mocking the response structure based on the provided OpenAPI spec for /ai/advisor/chat
+        }),
+      });
+
+      let aiResponseData: any;
+      if (response.ok) {
+        aiResponseData = await response.json();
+      } else {
+        // Handle API errors (e.g., 503 Service Unavailable)
+        aiResponseData = {
+          text: `Error: AI service returned status ${response.status}. Cannot generate response.`,
+          fallacyDetected: 'Service Error'
+        };
+      }
+
+      const aiTurn: DebateTurn = {
+        speaker: 'AI',
+        text: aiResponseData.text || aiResponseData.message || 'No response text received from AI.',
+        fallacyDetected: aiResponseData.proactiveInsights?.[0]?.title || aiResponseData.fallacyDetected // Using title from insight as a proxy for fallacy detection if available
+      };
+      
+      setHistory(prev => [...prev, aiTurn]);
+
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      const errorTurn: DebateTurn = {
+        speaker: 'AI',
+        text: `Network or processing error occurred: ${error instanceof Error ? error.message : String(error)}.`,
+        fallacyDetected: 'Network Error'
+      };
+      setHistory(prev => [...prev, errorTurn]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,7 +85,7 @@ const DebateAdversaryView: React.FC = () => {
         ))}
       </div>
       <textarea value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="Your argument..." disabled={isLoading || !topic} className="w-full p-2 bg-gray-700 rounded mb-2" rows={3}/>
-      <button onClick={handleSendArgument} disabled={isLoading || !userInput} className="w-full p-2 bg-cyan-600 rounded disabled:opacity-50">Submit Argument</button>
+      <button onClick={handleSendArgument} disabled={isLoading || !userInput || !topic} className="w-full p-2 bg-cyan-600 rounded disabled:opacity-50">Submit Argument</button>
     </div>
   );
 };
