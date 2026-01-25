@@ -12,18 +12,18 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({
   children,
-  title = 'App Subscription Platform',
-  description = 'Discover and subscribe to a wide range of applications.',
-  keywords = 'subscription, apps, software, services, platform',
+  title = 'Quantum Core - The Future of Finance',
+  description = 'Welcome to the Quantum Core 3.0, the pinnacle of financial technology, meticulously engineered to power the experience.',
+  keywords = 'finance, banking, investments, AI advisor, crypto, web3, quantum',
 }) => {
   const router = useRouter();
 
   const navItems = [
-    { href: '/', label: 'Home' },
-    { href: '/apps', label: 'Browse Apps' },
-    { href: '/subscriptions', label: 'My Subscriptions' },
-    { href: '/pricing', label: 'Pricing' },
-    { href: '/about', label: 'About Us' },
+    { href: '/', label: 'Dashboard' },
+    { href: '/accounts', label: 'Accounts' },
+    { href: '/investments', label: 'Investments' },
+    { href: '/advisor', label: 'AI Advisor' },
+    { href: '/marketplace', label: 'Marketplace' },
   ];
 
   return (
@@ -41,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({
             <div className="flex items-center">
               <Link href="/">
                 <a className="text-2xl font-bold text-gray-800 hover:text-blue-600">
-                  AppSub
+                  Quantum Core
                 </a>
               </Link>
             </div>
@@ -109,7 +109,7 @@ const Layout: React.FC<LayoutProps> = ({
 
       <footer className="bg-gray-800 text-white py-8 mt-12">
         <div className="container mx-auto px-6 text-center">
-          <p>&copy; {new Date().getFullYear()} App Subscription Platform. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Quantum Core. All rights reserved.</p>
           <div className="mt-4">
             <Link href="/privacy">
               <a className="text-gray-400 hover:text-white mx-2">Privacy Policy</a>
