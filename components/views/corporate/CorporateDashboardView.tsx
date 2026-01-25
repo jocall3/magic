@@ -42,12 +42,13 @@ const CorporateDashboardView: React.FC<CorporateDashboardViewProps> = ({ setActi
         const generateInsight = async () => {
             setIsInsightLoading(true);
             try {
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+                // Removed API key usage as per instruction.
+                // const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
                 const dataSummary = `Pending Approvals: ${summaryStats.pendingApprovals}, Overdue Invoices: ${summaryStats.overdueInvoices}, Open Compliance Cases: ${summaryStats.openCases}, New Anomalies: ${summaryStats.newAnomalies}. Recent spending is focused on: ${chartData.map(d=>d.name).join(', ')}.`;
                 const prompt = `You are a corporate finance AI controller. Based on the following summary, provide a single, concise (1-2 sentences) strategic recommendation or observation for the finance manager. Summary:\n${dataSummary}`;
                 
-                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-                setAiInsight(response.text);
+                // Placeholder for AI response generation without API key
+                setAiInsight(`Based on your current financial overview, focus on resolving overdue invoices and reviewing new anomalies to maintain strong financial health.`);
             } catch (error) {
                 setAiInsight("An error occurred while analyzing corporate data.");
             } finally { setIsInsightLoading(false); }
