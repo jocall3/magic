@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Type definitions based on the Modern Treasury OpenAPI spec
@@ -196,7 +195,7 @@ const ExternalAccountsTable: React.FC<ExternalAccountsTableProps> = ({
                             <td style={styles.td}>{account.name || '—'}</td>
                             <td style={styles.td}>
                                 {account.account_details?.[0]
-                                    ? `•••• ${account.account_details[0].account_number_safe}`
+                                    ? `••• • ${account.account_details[0].account_number_safe.slice(-4)}`
                                     : 'N/A'}
                             </td>
                             <td style={styles.td}>
