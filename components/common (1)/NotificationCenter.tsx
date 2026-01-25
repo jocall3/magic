@@ -1,24 +1,88 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+// --- API Configuration ---
+const API_BASE_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
+
 // --- 1. Interfaces and Types ---
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'default';
+// Expanded severity types to handle both local UI messages and API alerts
+export type NotificationSeverity = 'critical' | 'high' | 'medium' | 'low' | 'success' | 'error' | 'warning' | 'info' | 'default';
 
+// Interface for notifications displayed in the UI
 export interface Notification {
   id: string;
-  type: NotificationType;
   title?: string;
   message: string;
-  duration?: number; // in milliseconds, 0 for sticky
+  severity: NotificationSeverity;
   timestamp: Date;
+  duration?: number; // in milliseconds, 0 for sticky
+  actionableLink?: string;
+}
+
+// Interface for the raw data coming from the API endpoint /notifications/me
+interface ApiNotification {
+  id: string;
+  type: string; // e.g., 'security', 'financial_insight'
+  title: string;
+  message: string;
+  severity: string; // API severity: 'critical', 'high', 'medium', 'low'
+  timestamp: string; // ISO date string
+  read: boolean;
+  actionableLink?: string;
 }
 
 interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
+  // Allow severity to be optional for local calls, defaulting to 'default'
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'severity'> & { severity?: NotificationSeverity }) => void;
   removeNotification: (id: string) => void;
 }
+
+// --- API Helpers ---
+
+const mapApiSeverity = (apiSeverity: string): NotificationSeverity => {
+  switch (apiSeverity?.toLowerCase()) {
+    case 'critical':
+    case 'high':
+      return 'error';
+    case 'medium':
+      return 'warning';
+    case 'low':
+      return 'info';
+    default:
+      return 'default';
+  }
+};
+
+const mapApiToLocalNotification = (apiNotif: ApiNotification): Notification => {
+  return {
+    id: apiNotif.id,
+    title: apiNotif.title || apiNotif.type,
+    message: apiNotif.message,
+    severity: mapApiSeverity(apiNotif.severity),
+    timestamp: new Date(apiNotif.timestamp),
+    duration: 10000, // API notifications are important, default 10s duration
+    actionableLink: apiNotif.actionableLink,
+  };
+};
+
+const fetchNotifications = async (): Promise<ApiNotification[]> => {
+  try {
+    // Fetch only unread notifications, limit 5, using the provided mock API
+    const response = await fetch(`${API_BASE_URL}/notifications/me?status=unread&limit=5`);
+    if (!response.ok) {
+      console.error('Failed to fetch notifications:', response.statusText);
+      return [];
+    }
+    const data: { data: ApiNotification[] } = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+};
+
 
 // --- 2. Notification Context ---
 
@@ -42,22 +106,66 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const notificationIdCounter = useRef(0); // Simple counter for unique IDs
+  const notificationIdCounter = useRef(0); // Simple counter for unique local IDs
+  // Set to track IDs of API notifications currently displayed to prevent re-adding on poll
+  const activeApiNotificationIds = useRef(new Set<string>()); 
 
-  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
-    const newId = `notification-${notificationIdCounter.current++}`;
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'severity'> & { severity?: NotificationSeverity }) => {
+    const newId = `local-notification-${notificationIdCounter.current++}`;
     const newNotification: Notification = {
       ...notification,
       id: newId,
+      severity: notification.severity || 'default', // Default severity
       timestamp: new Date(),
       duration: notification.duration ?? 5000, // Default duration 5 seconds
-    };
+    } as Notification;
     setNotifications((prev) => [...prev, newNotification]);
   }, []);
 
   const removeNotification = useCallback((id: string) => {
+    // If removing an API notification, remove its ID from the tracking set
+    if (activeApiNotificationIds.current.has(id)) {
+        activeApiNotificationIds.current.delete(id);
+    }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
+
+  // Effect for API Polling (The "bad ass" feature)
+  useEffect(() => {
+    const syncNotifications = async () => {
+        const apiNotifications = await fetchNotifications();
+
+        setNotifications(prevNotifications => {
+            const newNotifications: Notification[] = [];
+            const updatedActiveIds = new Set(activeApiNotificationIds.current);
+
+            // 1. Process new API notifications
+            apiNotifications.forEach(apiNotif => {
+                if (!updatedActiveIds.has(apiNotif.id)) {
+                    const localNotif = mapApiToLocalNotification(apiNotif);
+                    newNotifications.push(localNotif);
+                    updatedActiveIds.add(apiNotif.id);
+                }
+            });
+
+            activeApiNotificationIds.current = updatedActiveIds;
+
+            // 2. Keep only local notifications and add new API ones
+            // Local notifications start with 'local-notification-'
+            const localOnly = prevNotifications.filter(n => n.id.startsWith('local-notification-'));
+
+            // We combine local notifications with the newly fetched API notifications
+            return [...localOnly, ...newNotifications];
+        });
+    };
+
+    // Initial fetch and polling setup
+    syncNotifications();
+    const interval = setInterval(syncNotifications, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   const contextValue = {
     notifications,
@@ -80,7 +188,7 @@ interface NotificationToastProps {
 }
 
 const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onClose }) => {
-  const { id, type, title, message, duration } = notification;
+  const { id, severity, title, message, duration, actionableLink } = notification;
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -98,15 +206,19 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onC
     };
   }, [id, duration, onClose]);
 
-  const getColors = (notificationType: NotificationType) => {
-    switch (notificationType) {
+  const getColors = (notificationSeverity: NotificationSeverity) => {
+    switch (notificationSeverity) {
       case 'success':
         return 'bg-green-600/80 border-green-700';
       case 'error':
+      case 'critical':
+      case 'high':
         return 'bg-red-600/80 border-red-700';
       case 'warning':
+      case 'medium':
         return 'bg-yellow-600/80 border-yellow-700';
       case 'info':
+      case 'low':
         return 'bg-blue-600/80 border-blue-700';
       case 'default':
       default:
@@ -114,7 +226,7 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onC
     }
   };
 
-  const typeColors = getColors(type);
+  const typeColors = getColors(severity);
 
   return (
     <motion.div
@@ -130,6 +242,15 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onC
       <div className="flex-grow">
         {title && <h3 className="font-semibold text-lg mb-1">{title}</h3>}
         <p className="text-sm">{message}</p>
+        {actionableLink && (
+            <a 
+                href={actionableLink} 
+                className="mt-2 inline-block text-xs font-medium underline hover:text-white/90"
+                onClick={() => onClose(id)} // Close notification when link is clicked
+            >
+                View Details &rarr;
+            </a>
+        )}
       </div>
       <button
         onClick={() => onClose(id)}
@@ -183,29 +304,32 @@ const MyComponent = () => {
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">App Content</h1>
       <button
-        onClick={() => addNotification({ type: 'success', title: 'Success!', message: 'Your operation was successful.', duration: 3000 })}
+        onClick={() => addNotification({ severity: 'success', title: 'Local Success!', message: 'Your local operation was successful.', duration: 3000 })}
         className="bg-green-500 text-white px-4 py-2 rounded mr-2"
       >
-        Show Success
+        Show Local Success
       </button>
       <button
-        onClick={() => addNotification({ type: 'error', title: 'Error!', message: 'Something went wrong. Please try again.', duration: 0 })}
+        onClick={() => addNotification({ severity: 'error', title: 'Local Error!', message: 'Something went wrong locally.', duration: 0 })}
         className="bg-red-500 text-white px-4 py-2 rounded mr-2"
       >
-        Show Error (Sticky)
+        Show Local Error (Sticky)
       </button>
       <button
-        onClick={() => addNotification({ type: 'info', message: 'Here is some information for you.' })}
+        onClick={() => addNotification({ severity: 'info', message: 'Here is some local information for you.' })}
         className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
       >
-        Show Info
+        Show Local Info
       </button>
       <button
-        onClick={() => addNotification({ type: 'warning', title: 'Warning!', message: 'This action might have consequences.', duration: 7000 })}
+        onClick={() => addNotification({ severity: 'warning', title: 'Local Warning!', message: 'This action might have consequences.', duration: 7000 })}
         className="bg-yellow-500 text-white px-4 py-2 rounded"
       >
-        Show Warning
+        Show Local Warning
       </button>
+      <p className="mt-4 text-sm text-gray-500">
+        API notifications (e.g., security alerts, budget alerts) will appear automatically every 30 seconds if new unread items are available from the mock API.
+      </p>
     </div>
   );
 };
