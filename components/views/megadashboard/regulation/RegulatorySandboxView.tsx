@@ -17,11 +17,31 @@ const RegulatorySandboxView: React.FC = () => {
     const handlePlan = async () => {
         setIsLoading(true); setPlan('');
         try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
-            const fullPrompt = `You are a compliance AI. Create a high-level test plan for a regulatory sandbox experiment. Experiment: "${prompt}". Include objectives, scope, and key success metrics.`;
-            const response = await ai.models.generateContent({model: 'gemini-2.5-flash', contents: fullPrompt});
-            setPlan(response.text);
-        } catch(err) { console.error(err); } finally { setIsLoading(false); }
+            // Using the OpenAPI spec's server URL directly for the API call
+            const response = await fetch('https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/oracle/simulate/advanced', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: `You are a compliance AI. Create a high-level test plan for a regulatory sandbox experiment. Experiment: "${prompt}". Include objectives, scope, and key success metrics.`,
+                    scenarios: [], // No specific scenarios provided in the prompt
+                    parameters: {} // No specific parameters provided in the prompt
+                }),
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API call failed with status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            // Assuming the relevant part of the response is in 'narrativeSummary' or similar
+            // Adjust this based on the actual response structure from the OpenAPI spec
+            setPlan(data.narrativeSummary || data.overallSummary || JSON.stringify(data, null, 2));
+        } catch(err) { 
+            console.error(err); 
+            setPlan(`Error generating plan: ${err.message}`);
+        } finally { setIsLoading(false); }
     };
 
     return (
