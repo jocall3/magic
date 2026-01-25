@@ -5,12 +5,12 @@ import { Eye } from 'lucide-react'; // Conceptual icon
 
 const HeuristicAPIStatus: React.FC = () => {
     const messages = [
-        "Citibankdemobusinessinc.intelligence.core: Actively analyzing portfolio...",
-        "Citibankdemobusinessinc.intelligence.core: Monitoring market data...",
-        "Citibankdemobusinessinc.intelligence.core: Identified 2 potential opportunities...",
-        "Citibankdemobusinessinc.intelligence.core: All systems nominal.",
-        "Citibankdemobusinessinc.intelligence.core: Cross-referencing patterns...",
-        "Citibankdemobusinessinc.intelligence.core: Compiling weekly insights..."
+        "Quantum Core 3.0: Actively analyzing market data...",
+        "Quantum Core 3.0: Monitoring global financial trends...",
+        "Quantum Core 3.0: Identified 3 potential investment opportunities...",
+        "Quantum Core 3.0: All systems nominal.",
+        "Quantum Core 3.0: Cross-referencing economic indicators...",
+        "Quantum Core 3.0: Compiling AI-driven financial insights..."
     ];
 
     const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
@@ -68,12 +68,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </button>
 
                 {/* Logo */}
-                <img src="https://citibankdemobusiness.dev/wp-content/uploads/2025/08/ll-1.png" alt="Citibank Demo Business Inc Logo" className="h-10 w-auto" />
+                <img src="https://citibankdemobusiness.dev/wp-content/uploads/2025/08/ll-1.png" alt="Quantum Core 3.0 Logo" className="h-10 w-auto" />
 
                 {/* Title */}
                 <h1 className="text-lg sm:text-xl font-semibold text-white tracking-wider uppercase flex items-center gap-2">
                     <Eye className="w-5 h-5 text-cyan-400" />
-                    Citibankdemobusinessinc.orchestration.core
+                    Quantum Core 3.0
                 </h1>
             </div>
 
@@ -113,7 +113,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center border-2 border-cyan-400">
                             <span className="font-bold text-white">II</span>
                         </div>
-                        <span className="hidden sm:block font-medium text-white">The Caretaker</span>
+                        <span className="hidden sm:block font-medium text-white">Jamesburvelcallaghaniii</span>
                     </button>
 
                     {isProfileOpen && (
