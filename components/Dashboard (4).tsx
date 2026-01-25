@@ -1,4 +1,3 @@
-```typescript
 import React, { useContext, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import BalanceSummary from './BalanceSummary';
 import RecentTransactions from './RecentTransactions';
@@ -14,7 +13,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { Bot, Camera, Eye, MessageSquare, X, Send, RefreshCw, Maximize2, Minimize2, ScanEye } from 'lucide-react';
 
 // ================================================================================================
-// THE JAMES BURVEL O’CALLAGHAN III CODE - CORE ARCHITECTURE & SYSTEM DEFINITIONS
+// THE JAMES BURVEL Oâ€™CALLAGHAN III CODE - CORE ARCHITECTURE & SYSTEM DEFINITIONS
 // ================================================================================================
 
 // Company Entity A.001 - "Apex Financial Architects" - Core Data Structures and Types
@@ -546,4 +545,827 @@ namespace FinancialDataIntegrations {
             const initializePlaid = async () => {
                 if (typeof window === 'undefined') return;
                 try {
-                    const { PlaidLink
+                    const { PlaidLink } = await import('react-plaid-link');
+                    setPlaidLink(() => PlaidLink);
+                } catch (error) {
+                    ApexFinancialArchitects.ErrorHandling.logError("Failed to load Plaid Link", error);
+                }
+            };
+            initializePlaid();
+        }, []);
+
+        const handleOpenPlaid = useCallback(() => {
+            if (plaidLink && !disabled) {
+                setLoading(true);
+                const handler = new (window as any).PlaidLink({
+                    clientName: "Quantum Core 3.0",
+                    env: "sandbox", // Use 'sandbox' for testing, 'development', or 'production'
+                    key: "YOUR_PLAID_CLIENT_ID", // Replace with your actual Plaid Client ID
+                    product: ["auth", "transactions", "identity"],
+                    onSuccess: async (publicToken: string, metadata: any) => {
+                        onSuccess(publicToken, metadata);
+                        setLoading(false);
+                    },
+                    onExit: () => {
+                        setLoading(false);
+                    },
+                });
+                handler.open();
+            }
+        }, [plaidLink, onSuccess, disabled]);
+
+        return (
+            <QuantixUISolutions.ButtonComponent
+                onClick={handleOpenPlaid}
+                disabled={disabled || loading || !plaidLink}
+                variant="primary"
+                className="w-full"
+            >
+                {loading ? "Loading..." : "Link Bank Account"}
+            </QuantixUISolutions.ButtonComponent>
+        );
+    };
+
+    // A.004.002 - API Client Configuration (Centralized and Secure)
+    export const APIClient = {
+        // A.004.002.001 - Base URL for API Calls
+        baseURL: 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io', // A.004.002.001.001 - Mock API Endpoint
+
+        // A.004.002.002 - Default Headers (Including Authorization)
+        getDefaultHeaders: (apiKey?: string): Record<string, string> => {
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            };
+            if (apiKey) {
+                headers['Authorization'] = `Bearer ${apiKey}`; // A.004.002.002.001 - Bearer Token Authentication
+            }
+            return headers;
+        },
+
+        // A.004.002.003 - Make GET Request
+        get: async <T>(endpoint: string, apiKey?: string): Promise<ApexFinancialArchitects.ApiResponse<T>> => {
+            try {
+                const response = await fetch(`${APIClient.baseURL}${endpoint}`, {
+                    method: 'GET',
+                    headers: APIClient.getDefaultHeaders(apiKey),
+                });
+                const data = await response.json();
+                return data as ApexFinancialArchitects.ApiResponse<T>;
+            } catch (error: any) {
+                ApexFinancialArchitects.ErrorHandling.logError(`GET Request Failed: ${endpoint}`, error);
+                return { statusCode: 500, message: 'An unexpected error occurred.', data: null, error: error.message };
+            }
+        },
+
+        // A.004.002.004 - Make POST Request
+        post: async <T, U>(endpoint: string, body: U, apiKey?: string): Promise<ApexFinancialArchitects.ApiResponse<T>> => {
+            try {
+                const response = await fetch(`${APIClient.baseURL}${endpoint}`, {
+                    method: 'POST',
+                    headers: APIClient.getDefaultHeaders(apiKey),
+                    body: JSON.stringify(body),
+                });
+                const data = await response.json();
+                return data as ApexFinancialArchitects.ApiResponse<T>;
+            } catch (error: any) {
+                ApexFinancialArchitects.ErrorHandling.logError(`POST Request Failed: ${endpoint}`, error);
+                return { statusCode: 500, message: 'An unexpected error occurred.', data: null, error: error.message };
+            }
+        },
+
+        // A.004.002.005 - Make PUT Request
+        put: async <T, U>(endpoint: string, body: U, apiKey?: string): Promise<ApexFinancialArchitects.ApiResponse<T>> => {
+            try {
+                const response = await fetch(`${APIClient.baseURL}${endpoint}`, {
+                    method: 'PUT',
+                    headers: APIClient.getDefaultHeaders(apiKey),
+                    body: JSON.stringify(body),
+                });
+                const data = await response.json();
+                return data as ApexFinancialArchitects.ApiResponse<T>;
+            } catch (error: any) {
+                ApexFinancialArchitects.ErrorHandling.logError(`PUT Request Failed: ${endpoint}`, error);
+                return { statusCode: 500, message: 'An unexpected error occurred.', data: null, error: error.message };
+            }
+        },
+
+        // A.004.002.006 - Make DELETE Request
+        delete: async <T>(endpoint: string, apiKey?: string): Promise<ApexFinancialArchitects.ApiResponse<T>> => {
+            try {
+                const response = await fetch(`${APIClient.baseURL}${endpoint}`, {
+                    method: 'DELETE',
+                    headers: APIClient.getDefaultHeaders(apiKey),
+                });
+                // Handle potential 204 No Content response
+                if (response.status === 204) {
+                    return { statusCode: 204, message: 'Resource deleted successfully.', data: null };
+                }
+                const data = await response.json();
+                return data as ApexFinancialArchitects.ApiResponse<T>;
+            } catch (error: any) {
+                ApexFinancialArchitects.ErrorHandling.logError(`DELETE Request Failed: ${endpoint}`, error);
+                return { statusCode: 500, message: 'An unexpected error occurred.', data: null, error: error.message };
+            }
+        },
+    };
+}
+
+// ================================================================================================
+// DASHBOARD COMPONENT IMPLEMENTATION
+// ================================================================================================
+
+const Dashboard: React.FC = () => {
+    const { user, setUser, accounts, setAccounts, transactions, setTransactions, budgets, setBudgets, savingsGoals, setSavingsGoals, marketMovers, setMarketMovers, aiInsights, setAiInsights, gamificationData, setGamificationData, rewardPoints, setRewardPoints, creditScore, setCreditScore, subscriptions, setSubscriptions, upcomingBills, setUpcomingBills, impactData, setImpactData, apiKey, setApiKey } = useContext(DataContext);
+    const [isModalOpen, setIsModalOpen] = useState(false); // A.003.001.002.001 - Modal State
+    const [selectedInsight, setSelectedInsight] = useState<ApexFinancialArchitects.AIInsight | null>(null); // A.003.001.002.002 - Selected Insight for Modal
+    const [loadingData, setLoadingData] = useState(true); // A.003.001.002.003 - Loading State for Data Fetching
+
+    // A.001.003.003 - Fetch User Data (Comprehensive)
+    const fetchUserData = useCallback(async () => {
+        if (!apiKey) {
+            setLoadingData(false);
+            return;
+        }
+        setLoadingData(true);
+        try {
+            const [userResponse, accountsResponse, transactionsResponse, budgetsResponse, goalsResponse, marketResponse, insightsResponse, gamificationResponse, rewardsResponse, creditScoreResponse, subscriptionsResponse, billsResponse, impactResponse] = await Promise.all([
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.SovereignUser>('/users/me', apiKey),
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<Account[]>>('/accounts/me', apiKey),
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<Transaction[]>>('/transactions', apiKey),
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<BudgetCategory[]>>('/budgets', apiKey), // Assuming a /budgets endpoint exists
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<SavingsGoal[]>>('/goals', apiKey), // Assuming a /goals endpoint exists
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<MarketMover[]>>('/market/movers', apiKey), // Assuming a /market/movers endpoint exists
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<ApexFinancialArchitects.AIInsight[]>>('/ai/insights', apiKey), // Assuming an /ai/insights endpoint exists
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<GamificationState>>('/users/me/gamification', apiKey), // Assuming a gamification endpoint
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<RewardPoints>>('/users/me/rewards', apiKey), // Assuming a rewards endpoint
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<CreditScore>>('/users/me/credit-score', apiKey), // Assuming a credit score endpoint
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<Subscription[]>>('/users/me/subscriptions', apiKey), // Assuming a subscriptions endpoint
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<UpcomingBill[]>>('/bills/upcoming', apiKey), // Assuming an upcoming bills endpoint
+                FinancialDataIntegrations.APIClient.get<ApexFinancialArchitects.ApiResponse<ApexFinancialArchitects.ImpactData>>('/sustainability/carbon-footprint', apiKey), // Assuming an impact data endpoint
+            ]);
+
+            if (userResponse.statusCode === 200 && userResponse.data) {
+                setUser(userResponse.data);
+                setApiKey(userResponse.data.apiKey); // Set the API key from user data
+            }
+            if (accountsResponse.statusCode === 200 && accountsResponse.data) {
+                setAccounts(accountsResponse.data.data || []);
+            }
+            if (transactionsResponse.statusCode === 200 && transactionsResponse.data) {
+                setTransactions(transactionsResponse.data.data || []);
+            }
+            if (budgetsResponse.statusCode === 200 && budgetsResponse.data) {
+                setBudgets(budgetsResponse.data.data || []);
+            }
+            if (goalsResponse.statusCode === 200 && goalsResponse.data) {
+                setSavingsGoals(goalsResponse.data.data || []);
+            }
+            if (marketResponse.statusCode === 200 && marketResponse.data) {
+                setMarketMovers(marketResponse.data.data || []);
+            }
+            if (insightsResponse.statusCode === 200 && insightsResponse.data) {
+                setAiInsights(insightsResponse.data.data || []);
+            }
+            if (gamificationResponse.statusCode === 200 && gamificationResponse.data) {
+                setGamificationData(gamificationResponse.data.data || {});
+            }
+            if (rewardsResponse.statusCode === 200 && rewardsResponse.data) {
+                setRewardPoints(rewardsResponse.data.data || { currentPoints: 0, lifetimePoints: 0 });
+            }
+            if (creditScoreResponse.statusCode === 200 && creditScoreResponse.data) {
+                setCreditScore(creditScoreResponse.data.data || { score: 0, source: '', lastUpdated: '' });
+            }
+            if (subscriptionsResponse.statusCode === 200 && subscriptionsResponse.data) {
+                setSubscriptions(subscriptionsResponse.data.data || []);
+            }
+            if (billsResponse.statusCode === 200 && billsResponse.data) {
+                setUpcomingBills(billsResponse.data.data || []);
+            }
+            if (impactResponse.statusCode === 200 && impactResponse.data) {
+                setImpactData(impactResponse.data.data || { treesPlanted: 0, carbonOffset: 0, progressToNextTree: 0 });
+            }
+
+        } catch (error) {
+            ApexFinancialArchitects.ErrorHandling.logError("Failed to fetch user data", error);
+        } finally {
+            setLoadingData(false);
+        }
+    }, [apiKey, setUser, setAccounts, setTransactions, setBudgets, setSavingsGoals, setMarketMovers, setAiInsights, setGamificationData, setRewardPoints, setCreditScore, setSubscriptions, setUpcomingBills, setImpactData, setApiKey]);
+
+    useEffect(() => {
+        fetchUserData();
+    }, [fetchUserData]);
+
+    // A.001.003.001 - Format Currency for Display
+    const formatCurrency = ApexFinancialArchitects.Utils.formatCurrency;
+
+    // A.001.003.005 - Calculate Total Balance
+    const totalBalance = useMemo(() => {
+        return accounts.reduce((sum, account) => sum + (account.currentBalance || 0), 0);
+    }, [accounts]);
+
+    // A.001.003.006 - Calculate Total Savings Goal Progress
+    const totalSavingsGoalProgress = useMemo(() => {
+        if (!savingsGoals || savingsGoals.length === 0) return 0;
+        const totalProgress = savingsGoals.reduce((sum, goal) => sum + goal.progressPercentage, 0);
+        return ApexFinancialArchitects.Utils.calculatePercentage(totalProgress, savingsGoals.length);
+    }, [savingsGoals]);
+
+    // A.001.003.007 - Prepare Data for Charts
+    const chartData = useMemo(() => {
+        const budgetCategories = budgets.map(b => ({ name: b.name, value: b.allocated - (b.spent || 0) }));
+        const transactionCategories = transactions.reduce((acc, tx) => {
+            const existing = acc.find(item => item.name === tx.category);
+            if (existing) {
+                existing.value += tx.amount;
+            } else {
+                acc.push({ name: tx.category, value: tx.amount });
+            }
+            return acc;
+        }, [] as { name: string; value: number }[]);
+        return { budgetCategories, transactionCategories };
+    }, [budgets, transactions]);
+
+    // A.001.003.008 - Handle Insight Click
+    const handleInsightClick = (insight: ApexFinancialArchitects.AIInsight) => {
+        setSelectedInsight(insight);
+        setIsModalOpen(true);
+    };
+
+    // A.001.003.009 - Close Modal
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedInsight(null);
+    };
+
+    // A.001.003.010 - Render AI Insights
+    const renderAIInsights = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="AI Insights" />;
+        if (!aiInsights || aiInsights.length === 0) return <QuantixUISolutions.CardComponent title="AI Insights">No insights available.</QuantixUISolutions.CardComponent>;
+
+        return (
+            <QuantixUISolutions.CardComponent title="AI Insights">
+                <div className="space-y-3">
+                    {aiInsights.slice(0, 3).map((insight) => (
+                        <div key={insight.insightId} className="bg-gray-700 p-3 rounded-md cursor-pointer hover:bg-gray-600 transition-colors" onClick={() => handleInsightClick(insight)}>
+                            <h4 className="text-sm font-semibold text-white">{insight.title}</h4>
+                            <p className="text-xs text-gray-300 truncate">{insight.description}</p>
+                        </div>
+                    ))}
+                    {aiInsights.length > 3 && (
+                        <QuantixUISolutions.ButtonComponent onClick={() => { /* Navigate to insights page */ }} variant="outline" size="sm">
+                            View All Insights
+                        </QuantixUISolutions.ButtonComponent>
+                    )}
+                </div>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.011 - Render Gamification and Rewards
+    const renderGamificationAndRewards = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Your Progress" />;
+        return (
+            <QuantixUISolutions.CardComponent title="Your Progress">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-300">Gamification Level</h4>
+                        <p className="text-lg font-bold text-cyan-400">{gamificationData?.level || 0}</p>
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-300">Reward Points</h4>
+                        <p className="text-lg font-bold text-cyan-400">{rewardPoints?.currentPoints || 0}</p>
+                    </div>
+                </div>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.012 - Render Credit Score
+    const renderCreditScore = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Credit Score" />;
+        return (
+            <QuantixUISolutions.CardComponent title="Credit Score">
+                <div className="flex flex-col items-center justify-center">
+                    <h3 className={`text-5xl font-extrabold ${creditScore?.score && creditScore.score >= 700 ? 'text-green-400' : creditScore?.score && creditScore.score >= 600 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {creditScore?.score || 'N/A'}
+                    </h3>
+                    <p className="text-sm text-gray-400 mt-1">Source: {creditScore?.source || 'Unknown'}</p>
+                    <p className="text-xs text-gray-500">Last Updated: {creditScore?.lastUpdated ? new Date(creditScore.lastUpdated).toLocaleDateString() : 'N/A'}</p>
+                </div>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.013 - Render Savings Goals Overview
+    const renderSavingsGoalsOverview = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Savings Goals" />;
+        if (!savingsGoals || savingsGoals.length === 0) return <QuantixUISolutions.CardComponent title="Savings Goals">No savings goals set.</QuantixUISolutions.CardComponent>;
+
+        return (
+            <QuantixUISolutions.CardComponent title="Savings Goals">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h4 className="text-lg font-bold text-white">{savingsGoals[0].name}</h4>
+                        <p className="text-sm text-gray-300">{formatCurrency(savingsGoals[0].currentAmount)} / {formatCurrency(savingsGoals[0].targetAmount)}</p>
+                    </div>
+                    <div className="relative w-24 h-24">
+                        <QuantixUISolutions.UIUtils.customScrollbarStyles
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={[{ value: savingsGoals[0].progressPercentage, name: 'Progress' }]}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={40}
+                                        outerRadius={50}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        startAngle={90}
+                                        endAngle={450}
+                                    >
+                                        <Cell key="progress" fill="#4ade80" /> {/* Green for progress */}
+                                    </Pie>
+                                    <Pie
+                                        data={[{ value: 100 - savingsGoals[0].progressPercentage, name: 'Remaining' }]}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={40}
+                                        outerRadius={50}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        startAngle={90}
+                                        endAngle={450}
+                                    >
+                                        <Cell key="remaining" fill="#6b7280" /> {/* Gray for remaining */}
+                                    </Pie>
+                                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+                            {savingsGoals[0].progressPercentage}%
+                        </div>
+                    </div>
+                </div>
+                {savingsGoals.length > 1 && (
+                    <QuantixUISolutions.ButtonComponent onClick={() => { /* Navigate to goals page */ }} variant="outline" size="sm">
+                        View All Goals
+                    </QuantixUISolutions.ButtonComponent>
+                )}
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.014 - Render Upcoming Bills
+    const renderUpcomingBills = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Upcoming Bills" />;
+        if (!upcomingBills || upcomingBills.length === 0) return <QuantixUISolutions.CardComponent title="Upcoming Bills">No upcoming bills.</QuantixUISolutions.CardComponent>;
+
+        return (
+            <QuantixUISolutions.CardComponent title="Upcoming Bills">
+                <div className="space-y-3">
+                    {upcomingBills.slice(0, 3).map((bill) => (
+                        <div key={bill.id} className="flex justify-between items-center text-white">
+                            <div>
+                                <h4 className="text-sm font-semibold">{bill.description}</h4>
+                                <p className="text-xs text-gray-300">{bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : 'No due date'}</p>
+                            </div>
+                            <p className="font-bold text-cyan-400">{formatCurrency(bill.amount)}</p>
+                        </div>
+                    ))}
+                    {upcomingBills.length > 3 && (
+                        <QuantixUISolutions.ButtonComponent onClick={() => { /* Navigate to bills page */ }} variant="outline" size="sm">
+                            View All Bills
+                        </QuantixUISolutions.ButtonComponent>
+                    )}
+                </div>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.015 - Render Market Movers
+    const renderMarketMovers = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Market Movers" />;
+        if (!marketMovers || marketMovers.length === 0) return <QuantixUISolutions.CardComponent title="Market Movers">Market data unavailable.</QuantixUISolutions.CardComponent>;
+
+        return (
+            <QuantixUISolutions.CardComponent title="Market Movers">
+                <div className="space-y-3">
+                    {marketMovers.slice(0, 3).map((mover) => (
+                        <div key={mover.symbol} className="flex justify-between items-center text-white">
+                            <div>
+                                <h4 className="text-sm font-semibold">{mover.symbol}</h4>
+                                <p className="text-xs text-gray-300">{mover.name}</p>
+                            </div>
+                            <div className="flex items-center">
+                                <span className={`mr-2 ${mover.changePercent > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {mover.changePercent.toFixed(2)}%
+                                </span>
+                                {QuantixUISolutions.IconLibrary.renderIcon(mover.changePercent > 0 ? 'trendingUp' : 'trendingDown', `h-4 w-4 ${mover.changePercent > 0 ? 'text-green-400' : 'text-red-400'}`)}
+                            </div>
+                        </div>
+                    ))}
+                    {marketMovers.length > 3 && (
+                        <QuantixUISolutions.ButtonComponent onClick={() => { /* Navigate to market page */ }} variant="outline" size="sm">
+                            View Market Data
+                        </QuantixUISolutions.ButtonComponent>
+                    )}
+                </div>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.016 - Render Impact Tracker
+    const renderImpactTracker = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Your Impact" />;
+        return (
+            <QuantixUISolutions.CardComponent title="Your Impact">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-300">Trees Planted</h4>
+                        <p className="text-lg font-bold text-green-400">{impactData?.treesPlanted || 0}</p>
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-300">Carbon Offset</h4>
+                        <p className="text-lg font-bold text-green-400">{impactData?.carbonOffset.toFixed(2) || 0} kg CO2e</p>
+                    </div>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div
+                        className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
+                        style={{ width: `${impactData?.progressToNextTree || 0}%` }}
+                    ></div>
+                </div>
+                <p className="text-xs text-gray-400 mt-1 text-center">{impactData?.progressToNextTree || 0}% towards next tree</p>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.017 - Render Balance Summary Chart
+    const renderBalanceSummaryChart = () => {
+        const balanceData = accounts.map(account => ({
+            name: account.name,
+            balance: account.currentBalance || 0,
+        }));
+
+        return (
+            <QuantixUISolutions.CardComponent title="Account Balances">
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={balanceData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <XAxis type="number" stroke="#9ca3af" />
+                        <YAxis type="category" dataKey="name" stroke="#9ca3af" />
+                        <Tooltip formatter={(value, name) => [formatCurrency(value as number), name as string]} />
+                        <Legend wrapperStyle={{ color: '#9ca3af' }} />
+                        <Bar dataKey="balance" fill="#3b82f6" barSize={15}>
+                            {balanceData.map((entry, index) => (
+                                <QuantixUISolutions.UIUtils.customScrollbarStyles
+                                    <Cell key={`cell-${index}`} fill={entry.balance >= 0 ? '#3b82f6' : '#f87171'} />
+                                    {/* A.003.003.004 - Custom Scrollbar Styles */}
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.018 - Render Transaction Breakdown Chart
+    const renderTransactionBreakdownChart = () => {
+        const transactionData = chartData.transactionCategories.map(cat => ({
+            name: cat.name,
+            value: Math.abs(cat.value), // Use absolute value for chart
+        }));
+
+        const COLORS = ['#4ade80', '#facc15', '#fb923c', '#60a5fa', '#a78bfa', '#ec4899', '#84cc17', '#06b6d4'];
+
+        return (
+            <QuantixUISolutions.CardComponent title="Spending Breakdown">
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                        <Pie
+                            data={transactionData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {transactionData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip formatter={(value, name) => [`${formatCurrency(value as number)}`, name as string]} />
+                        <Legend layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ color: '#9ca3af' }} />
+                    </PieChart>
+                </ResponsiveContainer>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.019 - Render Budget vs. Actuals Chart
+    const renderBudgetVsActualsChart = () => {
+        const budgetVsActualData = chartData.budgetCategories.map(b => ({
+            name: b.name,
+            allocated: b.allocated,
+            spent: b.spent || 0,
+        }));
+
+        return (
+            <QuantixUISolutions.CardComponent title="Budget vs. Actual Spending">
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={budgetVsActualData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <XAxis type="number" stroke="#9ca3af" />
+                        <YAxis type="category" dataKey="name" stroke="#9ca3af" />
+                        <Tooltip formatter={(value, name) => [formatCurrency(value as number), name as string]} />
+                        <Legend wrapperStyle={{ color: '#9ca3af' }} />
+                        <Bar dataKey="allocated" fill="#60a5fa" barSize={10} name="Allocated" />
+                        <Bar dataKey="spent" fill="#f87171" barSize={10} name="Spent" />
+                    </BarChart>
+                </ResponsiveContainer>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.020 - Render Wealth Timeline
+    const renderWealthTimeline = () => {
+        // Placeholder for WealthTimeline component data
+        const wealthData = [
+            { year: '2022', value: 300000 },
+            { year: '2023', value: 350000 },
+            { year: '2024', value: 400000 },
+        ];
+        return (
+            <QuantixUISolutions.CardComponent title="Wealth Over Time">
+                <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={wealthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <XAxis dataKey="year" stroke="#9ca3af" />
+                        <YAxis stroke="#9ca3af" />
+                        <Tooltip formatter={(value, name) => [formatCurrency(value as number), name as string]} />
+                        <Area type="monotone" dataKey="value" stroke="#8884d8" fillOpacity={1} fill="url(#colorUv)" />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.021 - Render Recent Transactions
+    const renderRecentTransactions = () => {
+        if (loadingData) return <QuantixUISolutions.CardComponent isLoading={true} title="Recent Transactions" />;
+        if (!transactions || transactions.length === 0) return <QuantixUISolutions.CardComponent title="Recent Transactions">No recent transactions.</QuantixUISolutions.CardComponent>;
+
+        return (
+            <QuantixUISolutions.CardComponent title="Recent Transactions">
+                <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                    {transactions.slice(0, 5).map((tx) => (
+                        <div key={tx.id} className="flex justify-between items-center text-white">
+                            <div className="flex items-center">
+                                {QuantixUISolutions.IconLibrary.renderIcon(tx.icon || 'transaction', 'h-5 w-5 mr-3 text-cyan-400')}
+                                <div>
+                                    <h4 className="text-sm font-semibold">{tx.description}</h4>
+                                    <p className="text-xs text-gray-300">{tx.category}</p>
+                                </div>
+                            </div>
+                            <p className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount)}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+                {transactions.length > 5 && (
+                    <QuantixUISolutions.ButtonComponent onClick={() => { /* Navigate to transactions page */ }} variant="outline" size="sm" className="mt-3">
+                        View All Transactions
+                    </QuantixUISolutions.ButtonComponent>
+                )}
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.022 - Render AI Chat Interface
+    const renderAIChatInterface = () => {
+        const [chatInput, setChatInput] = useState('');
+        const [chatHistory, setChatHistory] = useState<Array<{ role: string; content: string }>>([]);
+        const [sessionId, setSessionId] = useState<string | null>(null);
+        const [isChatLoading, setIsChatLoading] = useState(false);
+        const chatContainerRef = useRef<HTMLDivElement>(null);
+
+        const handleSendMessage = async () => {
+            if (!chatInput.trim() || !apiKey) return;
+
+            const newUserMessage = { role: 'user', content: chatInput };
+            setChatHistory(prev => [...prev, newUserMessage]);
+            setChatInput('');
+            setIsChatLoading(true);
+
+            try {
+                const ai = new GoogleGenAI({ apiKey });
+                const model = ai.getGenerativeModel({ model: ApexFinancialArchitects.SovereignUser.AIModels.gemini.modelName });
+
+                let currentSessionId = sessionId;
+                if (!currentSessionId) {
+                    const result = await model.startChat({ history: [] });
+                    setSessionId(result.startChat.chatId);
+                    currentSessionId = result.startChat.chatId;
+                }
+
+                const chatResult = await model.sendMessage(chatInput, { chatId: currentSessionId! });
+                const response = chatResult.response;
+                const text = response.text();
+
+                setChatHistory(prev => [...prev, { role: 'assistant', content: text }]);
+            } catch (error: any) {
+                ApexFinancialArchitects.ErrorHandling.logError("Error sending message to AI", error);
+                setChatHistory(prev => [...prev, { role: 'assistant', content: "Sorry, I encountered an error. Please try again." }]);
+            } finally {
+                setIsChatLoading(false);
+            }
+        };
+
+        useEffect(() => {
+            // Scroll to bottom of chat history
+            if (chatContainerRef.current) {
+                chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            }
+        }, [chatHistory]);
+
+        return (
+            <QuantixUISolutions.CardComponent title="Quantum AI Advisor">
+                <div className="flex flex-col h-96">
+                    <div ref={chatContainerRef} className="flex-1 overflow-y-auto mb-4 space-y-3 p-3 border border-gray-700 rounded-md bg-gray-850 custom-scrollbar">
+                        {chatHistory.map((msg, index) => (
+                            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start`}>
+                                <div className={`max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg ${msg.role === 'user' ? 'bg-cyan-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
+                                    {msg.content}
+                                </div>
+                            </div>
+                        ))}
+                        {isChatLoading && (
+                            <div className="flex justify-start items-start">
+                                <div className="animate-pulse bg-gray-700 p-3 rounded-lg text-gray-200 max-w-xs md:max-w-md lg:max-w-lg">
+                                    Quantum AI is thinking...
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <QuantixUISolutions.InputComponent
+                            type="text"
+                            placeholder="Ask Quantum AI anything..."
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            className="flex-1"
+                        />
+                        <QuantixUISolutions.ButtonComponent onClick={handleSendMessage} disabled={!chatInput.trim() || isChatLoading || !apiKey}>
+                            {QuantixUISolutions.IconLibrary.renderIcon('send', 'h-5 w-5')}
+                        </QuantixUISolutions.ButtonComponent>
+                        <QuantixUISolutions.ButtonComponent onClick={() => { /* Implement refresh/new chat */ }} variant="secondary" size="md">
+                            {QuantixUISolutions.IconLibrary.renderIcon('refreshCw', 'h-5 w-5')}
+                        </QuantixUISolutions.ButtonComponent>
+                    </div>
+                </div>
+            </QuantixUISolutions.CardComponent>
+        );
+    };
+
+    // A.001.003.023 - Render Plaid Link Button
+    const renderPlaidLinkButton = () => {
+        return (
+            <div className="w-full">
+                <FinancialDataIntegrations.PlaidIntegration onSuccess={(publicToken, metadata) => {
+                    console.log("Plaid Success:", publicToken, metadata);
+                    // Here you would typically exchange the public token for an access token
+                    // and then fetch account data using the access token.
+                    // For this example, we'll just refetch user data which might include updated accounts.
+                    fetchUserData();
+                }} />
+            </div>
+        );
+    };
+
+    return (
+        <div className="dashboard-container p-4 md:p-8 bg-gray-900 min-h-screen text-white">
+            <h1 className="text-3xl font-bold mb-6 text-cyan-400">Welcome, {user?.username || 'User'}!</h1>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Column 1: Financial Overview */}
+                <div className="lg:col-span-1 space-y-6">
+                    {renderCreditScore()}
+                    {renderGamificationAndRewards()}
+                    {renderSavingsGoalsOverview()}
+                </div>
+
+                {/* Column 2: Financial Health & Insights */}
+                <div className="lg:col-span-2 space-y-6">
+                    <QuantixUISolutions.CardComponent title="Financial Snapshot">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="flex flex-col items-center">
+                                <h4 className="text-sm font-semibold text-gray-300">Total Balance</h4>
+                                <p className="text-2xl font-bold text-cyan-400">{formatCurrency(totalBalance)}</p>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <h4 className="text-sm font-semibold text-gray-300">Savings Progress</h4>
+                                <p className="text-2xl font-bold text-green-400">{totalSavingsGoalProgress.toFixed(1)}%</p>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <h4 className="text-sm font-semibold text-gray-300">AI Risk Score</h4>
+                                <p className={`text-2xl font-bold ${SovereignAILabs.DataProcessing.calculateRiskScore(transactions) > 70 ? 'text-red-400' : 'text-green-400'}`}>
+                                    {SovereignAILabs.DataProcessing.calculateRiskScore(transactions)}
+                                </p>
+                            </div>
+                        </div>
+                    </QuantixUISolutions.CardComponent>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {renderMarketMovers()}
+                        {renderUpcomingBills()}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Column 3: Visualizations */}
+                <div className="lg:col-span-2 space-y-6">
+                    {renderBalanceSummaryChart()}
+                    {renderBudgetVsActualsChart()}
+                </div>
+
+                {/* Column 4: AI & Impact */}
+                <div className="lg:col-span-1 space-y-6">
+                    {renderAIInsights()}
+                    {renderImpactTracker()}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Column 5: Transactions & Goals */}
+                <div className="lg:col-span-1">
+                    {renderRecentTransactions()}
+                </div>
+                <div className="lg:col-span-1">
+                    {renderWealthTimeline()}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Column 6: AI Chat & Plaid */}
+                <div className="lg:col-span-1">
+                    {renderAIChatInterface()}
+                </div>
+                <div className="lg:col-span-1 flex flex-col justify-between">
+                    {!accounts || accounts.length === 0 ? (
+                        <QuantixUISolutions.CardComponent title="Link Your Financial Accounts">
+                            <p className="text-gray-300 mb-4">Connect your bank accounts to get a full financial overview.</p>
+                            {renderPlaidLinkButton()}
+                        </QuantixUISolutions.CardComponent>
+                    ) : (
+                        <BalanceSummary accounts={accounts} />
+                    )}
+                    {/* Placeholder for another component or feature */}
+                    <QuantixUISolutions.CardComponent title="Future Feature Placeholder">
+                        <p className="text-gray-400">More powerful financial tools coming soon!</p>
+                    </QuantixUISolutions.CardComponent>
+                </div>
+            </div>
+
+            {/* AI Insight Modal */}
+            <QuantixUISolutions.ModalComponent
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                title={selectedInsight?.title || "AI Insight"}
+                size="lg"
+            >
+                {selectedInsight ? (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-bold text-cyan-400">{selectedInsight.title}</h3>
+                        <p className="text-gray-200">{selectedInsight.description}</p>
+                        {selectedInsight.recommendations && selectedInsight.recommendations.length > 0 && (
+                            <div>
+                                <h4 className="text-lg font-semibold text-white mb-2">Recommendations:</h4>
+                                <ul className="list-disc list-inside text-gray-300 space-y-1">
+                                    {selectedInsight.recommendations.map((rec, i) => (
+                                        <li key={i}>{rec}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        <p className="text-sm text-gray-400">Confidence: {selectedInsight.confidenceScore.toFixed(2)} | Actionable: {selectedInsight.actionable ? 'Yes' : 'No'}</p>
+                        <QuantixUISolutions.ButtonComponent onClick={handleCloseModal} variant="secondary">
+                            Close
+                        </QuantixUISolutions.ButtonComponent>
+                    </div>
+                ) : (
+                    <p>Loading insight details...</p>
+                )}
+            </QuantixUISolutions.ModalComponent>
+        </div>
+    );
+};
+
+export default Dashboard;
