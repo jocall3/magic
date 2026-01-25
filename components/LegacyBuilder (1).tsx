@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 
 // --- EXPANDED CORE DATA STRUCTURES ---
@@ -96,7 +95,7 @@ const LegacyBuilder: React.FC = () => {
 
   // AI Console State
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
-    { role: 'model', parts: [{ text: "I am CivicMind. I am here to help you plan your legacy and support your community. How can I assist?" }] }
+    { role: 'model', parts: [{ text: "I am CivicMind. I am here to help you build a secure and compliant legacy plan that benefits your family and the wider community. How can I assist?" }] }
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isAiStreaming, setIsAiStreaming] = useState(false);
