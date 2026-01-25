@@ -13,16 +13,23 @@ const BalanceSummary: React.FC = () => {
             return { chartData: [], totalBalance: 0, change30d: 0 };
         }
 
-        const sortedTx = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
+        // Assuming transactions are already sorted by date or can be sorted
+        // If not, uncomment the following line:
+        // const sortedTx = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedTx = transactions; // Use transactions directly if already sorted
+
         let runningBalance = 0;
         const balanceHistory: { date: Date, balance: number }[] = [];
 
         for (const tx of sortedTx) {
+            // Ensure amount is treated as a number
+            const amount = typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount;
+            if (isNaN(amount)) continue; // Skip if amount is not a valid number
+
             if (tx.type === 'income') {
-                runningBalance += tx.amount;
+                runningBalance += amount;
             } else {
-                runningBalance -= tx.amount;
+                runningBalance -= amount;
             }
             balanceHistory.push({ date: new Date(tx.date), balance: runningBalance });
         }
@@ -51,7 +58,7 @@ const BalanceSummary: React.FC = () => {
           .reverse()
           .find(h => h.date < thirtyDaysAgo)?.balance;
 
-        const balance30dAgo = lastKnownBalanceBefore30d || 0;
+        const balance30dAgo = lastKnownBalanceBefore30d !== undefined ? lastKnownBalanceBefore30d : 0;
         const change30d = totalBalance - balance30dAgo;
 
         return { chartData, totalBalance, change30d };
