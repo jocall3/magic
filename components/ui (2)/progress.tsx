@@ -32,6 +32,7 @@ interface MvpConfigState {
   OPENAI_API_KEY: string;     // AI
   PLAID_CLIENT_ID: string;    // Banking Aggregation
   PLAID_SECRET: string;       // Banking Aggregation
+  AUTH0_CLIENT_ID: string;    // Core Auth
   // ... other critical keys identified for MVP ...
 }
 
@@ -61,7 +62,7 @@ const ApiSettingsPage: React.FC = () => {
     PLAID_CLIENT_ID: '',
     PLAID_SECRET: '',
     AUTH0_CLIENT_ID: ''
-  } as MvpConfigState;
+  };
 
   const [keys, setKeys] = useState<MvpConfigState>(initialMvpState);
   const [statusMessage, setStatusMessage] = useState<string>('');
