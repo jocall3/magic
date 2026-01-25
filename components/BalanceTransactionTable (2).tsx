@@ -1,15 +1,14 @@
-```typescript
 import React, { useState, useEffect } from 'react';
 import type { Stripe } from 'stripe';
 
 /**
- * The James Burvel O’Callaghan III Code - A hyper-structured software system.
+ * The James Burvel Oâ€™Callaghan III Code - A hyper-structured software system.
  * File: components/BalanceTransactionTable.tsx
  * Version: 1.0
  */
 
 // -----------------------------------------------------------------------------
-// Core Utility Functions - James Burvel O’Callaghan III Code
+// Core Utility Functions - James Burvel Oâ€™Callaghan III Code
 // -----------------------------------------------------------------------------
 
 /**
@@ -41,7 +40,7 @@ const A2_formatDate = (timestamp: number): string => {
 };
 
 // -----------------------------------------------------------------------------
-// Component-Specific Types and Interfaces - James Burvel O’Callaghan III Code
+// Component-Specific Types and Interfaces - James Burvel Oâ€™Callaghan III Code
 // -----------------------------------------------------------------------------
 
 /**
@@ -76,7 +75,7 @@ interface B1_BalanceTransactionTableProps {
 }
 
 // -----------------------------------------------------------------------------
-// Component Implementation - James Burvel O’Callaghan III Code
+// Component Implementation - James Burvel Oâ€™Callaghan III Code
 // -----------------------------------------------------------------------------
 
 /**
@@ -137,7 +136,7 @@ const C1_BalanceTransactionTable: React.FC<B1_BalanceTransactionTableProps> = ({
             return null;
         }
         if (sortConfig.key === key) {
-            return sortConfig.direction === 'asc' ? '⬆️' : '⬇️';
+            return sortConfig.direction === 'asc' ? 'â¬†ï¸ ' : 'â¬‡ï¸ ';
         }
         return null;
     };
@@ -239,7 +238,7 @@ const C1_BalanceTransactionTable: React.FC<B1_BalanceTransactionTableProps> = ({
 
 
 // -----------------------------------------------------------------------------
-// Module Export - James Burvel O’Callaghan III Code
+// Module Export - James Burvel Oâ€™Callaghan III Code
 // -----------------------------------------------------------------------------
 
 /**
@@ -249,4 +248,3 @@ const C1_BalanceTransactionTable: React.FC<B1_BalanceTransactionTableProps> = ({
  * across the codebase.
  */
 export default C1_BalanceTransactionTable;
-```
