@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -66,7 +65,7 @@ const GlobalPositionMap: React.FC = () => {
                             className="absolute top-2 right-2 text-gray-400 hover:text-white"
                             onClick={() => setSelectedMarker(null)}
                         >
-                            ✕
+                            âœ•
                         </button>
                     </div>
                 )}
