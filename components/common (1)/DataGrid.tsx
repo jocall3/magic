@@ -192,8 +192,8 @@ export function DataGrid<TData extends object>({
                           header.getContext()
                         )}
                         {{
-                          asc: ' 🔼',
-                          desc: ' 🔽',
+                          asc: ' ðŸ”¼',
+                          desc: ' ðŸ”½',
                         }[header.column.getIsSorted() as string] ?? null}
                       </>
                     )}
