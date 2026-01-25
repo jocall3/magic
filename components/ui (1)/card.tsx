@@ -55,7 +55,7 @@ CardHeader.displayName = "CardHeader";
  * Provides styling for a prominent, eye-catching heading.
  */
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
+  HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => {
   return (
