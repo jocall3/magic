@@ -1,7 +1,6 @@
 // components/views/megadashboard/analytics/DataLakesView.tsx
 import React, { useState, useContext } from 'react';
 import Card from '../../../Card';
-import { GoogleGenAI, Type } from "@google/genai";
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { DataContext } from '../../../../context/DataContext';
 
@@ -19,12 +18,51 @@ const DataLakesView: React.FC = () => {
         setIsLoading(true);
         setGeneratedSchema(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            const promptText = `You are a data architect AI. Design a simple, effective table schema for a new data source described as: "${prompt}". Provide column names and appropriate data types.`;
-            const schema = { type: Type.OBJECT, properties: { tableName: { type: Type.STRING }, columns: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, type: { type: Type.STRING } } } } } };
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: promptText, config: { responseMimeType: "application/json", responseSchema: schema } });
-            setGeneratedSchema(JSON.parse(response.text));
-        } catch (err) { console.error(err); } finally { setIsLoading(false); }
+            // Using the provided API endpoint directly for schema generation
+            const response = await fetch('https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/oracle/simulate/advanced', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: `You are a data architect AI. Design a simple, effective table schema for a new data source described as: "${prompt}". Provide column names and appropriate data types.`,
+                    scenarios: [
+                        {
+                            name: "Schema Generation",
+                            events: [],
+                            durationYears: 0,
+                            sensitivityAnalysisParams: []
+                        }
+                    ],
+                    globalEconomicFactors: {},
+                    personalAssumptions: {}
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            // Assuming the API returns the schema in a predictable format within the response
+            // This part might need adjustment based on the actual API response structure
+            if (result.scenarioResults && result.scenarioResults.length > 0 && result.scenarioResults[0].narrativeSummary) {
+                // Attempt to parse the narrative summary as JSON, assuming it contains the schema
+                try {
+                    setGeneratedSchema(JSON.parse(result.scenarioResults[0].narrativeSummary));
+                } catch (parseError) {
+                    console.error("Failed to parse schema from API response:", parseError);
+                    setGeneratedSchema({ error: "Could not parse schema from response.", rawResponse: result.scenarioResults[0].narrativeSummary });
+                }
+            } else {
+                setGeneratedSchema({ error: "No schema found in API response.", rawResponse: result });
+            }
+        } catch (err) {
+            console.error("Error generating schema:", err);
+            setGeneratedSchema({ error: "An error occurred while generating the schema.", details: (err as Error).message });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -42,7 +80,11 @@ const DataLakesView: React.FC = () => {
                         <p className="text-sm text-gray-400 mb-4">Describe a new data source to ingest.</p>
                         <textarea value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full h-24 bg-gray-700/50 p-2 rounded text-white" />
                         <button onClick={generateSchema} disabled={isLoading} className="w-full mt-2 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg disabled:opacity-50">{isLoading ? 'Generating...' : 'Suggest Schema'}</button>
-                        {generatedSchema && <pre className="text-xs mt-4 bg-gray-900/50 p-2 rounded max-h-48 overflow-auto">{JSON.stringify(generatedSchema, null, 2)}</pre>}
+                        {generatedSchema && (
+                            <pre className="text-xs mt-4 bg-gray-900/50 p-2 rounded max-h-48 overflow-auto">
+                                {JSON.stringify(generatedSchema, null, 2)}
+                            </pre>
+                        )}
                     </Card>
                 </div>
                 <div className="lg:col-span-3">
