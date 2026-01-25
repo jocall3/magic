@@ -1,5 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 
+const API_BASE_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
+
 interface SubscriptionCancellationFeedbackProps {
   onFeedbackSubmit: (feedback: string) => void;
   onCancel: () => void;
@@ -16,16 +18,43 @@ const SubscriptionCancellationFeedback: React.FC<SubscriptionCancellationFeedbac
     setFeedback(event.target.value);
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (feedback.trim()) {
+    const trimmedFeedback = feedback.trim();
+
+    if (trimmedFeedback) {
       setIsSubmitting(true);
-      // In a real application, you would send this feedback to your backend
-      // For now, we'll simulate a delay and then call the submit handler
-      setTimeout(() => {
-        onFeedbackSubmit(feedback);
+
+      // Frame the cancellation feedback as a message to the Quantum AI Advisor for analysis
+      const message = `Subscription Cancellation Feedback: The user is cancelling because: ${trimmedFeedback}. Please log this reason and analyze potential retention strategies using the Quantum Core 3.0 AI Advisor.`;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/ai/advisor/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: message,
+            // Use a unique session ID for this specific feedback submission
+            sessionId: `cancellation-feedback-${Date.now()}`,
+          }),
+        });
+
+        // Log status if not OK, but proceed with local flow since the user completed their action
+        if (!response.ok) {
+            console.warn(`AI Advisor feedback submission failed (Status: ${response.status}). Proceeding locally.`);
+        }
+        
+        onFeedbackSubmit(trimmedFeedback);
+
+      } catch (error) {
+        console.error('Network error during AI Advisor feedback submission:', error);
+        // Proceed to ensure the user flow isn't blocked by a network issue
+        onFeedbackSubmit(trimmedFeedback);
+      } finally {
         setIsSubmitting(false);
-      }, 1000);
+      }
     }
   };
 
@@ -65,7 +94,7 @@ const SubscriptionCancellationFeedback: React.FC<SubscriptionCancellationFeedbac
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
               disabled={isSubmitting || !feedback.trim()}
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+              {isSubmitting ? 'Submitting to Quantum AI...' : 'Submit Feedback'}
             </button>
           </div>
         </form>
