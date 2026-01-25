@@ -522,6 +522,7 @@ const FinancialOperationsDashboard: React.FC<{ modernTreasuryApiKey: string | nu
                                         <XAxis dataKey="name" stroke="#9ca3af" />
                                         <YAxis stroke="#9ca3af" />
                                         <RechartsTooltip contentStyle={{ backgroundColor: 'rgba(31, 41, 55, 0.9)', borderColor: '#4b5563', borderRadius: '8px' }} />
+                                        <Legend />
                                         <Bar dataKey="value" fill="#06b6d4" />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -543,7 +544,7 @@ const FinancialOperationsDashboard: React.FC<{ modernTreasuryApiKey: string | nu
                 );
             case 'forecasting':
                 const forecastData = Array.from({ length: 12 }, (_, i) => ({
-                    month: `Month ${i + 1}`,
+                    month: `M${i + 1}`,
                     projected: 100000 + Math.random() * 50000,
                     actual: i < 6 ? (100000 + Math.random() * 50000) : null,
                 }));
