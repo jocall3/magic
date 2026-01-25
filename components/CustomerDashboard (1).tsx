@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 // --- Type Definitions (based on OpenAPI schema) ---
@@ -223,9 +222,17 @@ const CustomerDashboard: React.FC = () => {
     }, [currentPage, limit, debouncedSearch, customerType]);
 
     useEffect(() => {
+        fetchCustomers();
+    }, [fetchCustomers]);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setCurrentPage(1); // Reset to first page on search input change
+    };
+
+    useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(searchQuery);
-            setCurrentPage(1); // Reset to first page on search
         }, 300);
 
         return () => {
@@ -233,9 +240,10 @@ const CustomerDashboard: React.FC = () => {
         };
     }, [searchQuery]);
 
-    useEffect(() => {
-        fetchCustomers();
-    }, [fetchCustomers]);
+    const handleTypeChange = (newType: '' | 'active' | 'testing') => {
+        setCustomerType(newType);
+        setCurrentPage(1); // Reset to first page on type change
+    };
 
     const handleFormSubmit = async (data: NewCustomer | CustomerUpdate, type: 'active' | 'testing' = 'active') => {
         setIsSubmitting(true);
@@ -304,15 +312,12 @@ const CustomerDashboard: React.FC = () => {
                             type="text"
                             placeholder="Search by username or name..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={handleSearchChange}
                             className="col-span-1 md:col-span-2 shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring"
                         />
                         <select
                             value={customerType}
-                            onChange={(e) => {
-                                setCustomerType(e.target.value as '' | 'active' | 'testing');
-                                setCurrentPage(1);
-                            }}
+                            onChange={(e) => handleTypeChange(e.target.value as '' | 'active' | 'testing')}
                             className="col-span-1 shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring"
                         >
                             <option value="">All Types</option>
