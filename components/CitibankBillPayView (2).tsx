@@ -1,4 +1,3 @@
-```typescript
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   useMoneyMovement,
@@ -153,4 +152,3 @@ const A_CitibankdemobusinessincBillPayView: React.FC = () => {
 };
 
 export default A_CitibankdemobusinessincBillPayView;
-```
