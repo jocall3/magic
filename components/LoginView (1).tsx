@@ -1,8 +1,7 @@
-
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Scan, Shield, Lock, ArrowRight, Fingerprint, Globe, Building2, Infinity, Terminal, Loader2 } from 'lucide-react';
+import { Scan, Shield, Lock, ArrowRight, Fingerprint, Building2, Infinity, Terminal, Loader2 } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
     const { loginWithCredentials, loginWithBiometrics, loginWithSSO, isAuthenticated, isLoading } = useContext(AuthContext)!;
@@ -15,7 +14,7 @@ export const LoginView: React.FC = () => {
     const handshakeMessages = [
         "Initializing secure tunnel...",
         "Validating RS256 signature chain...",
-        "Synchronizing with citibankdemobusinessinc.us.auth0.com...",
+        "Synchronizing with ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io...",
         "Identity verified. Encrypting session token...",
         "Handshake finalized. Decrypting persona data..."
     ];
@@ -59,7 +58,7 @@ export const LoginView: React.FC = () => {
                         <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-6 group cursor-pointer">
                             <Infinity className="w-8 h-8 text-white transition-transform group-hover:rotate-180 duration-1000" />
                         </div>
-                        <h1 className="text-3xl font-extrabold text-white tracking-tighter">Infinite Intelligence</h1>
+                        <h1 className="text-3xl font-extrabold text-white tracking-tighter">JAMESBURVELOCALLAGHANIII</h1>
                         <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 font-mono">Access Terminal Alpha-1</p>
                     </div>
 
