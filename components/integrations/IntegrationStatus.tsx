@@ -4,12 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 interface Integration {
   id: string;
   name: string;
-  provider: string; // e.g., 'Google', 'Microsoft', 'Amazon', 'Apple', 'Meta'
+  provider: string; // e.g., 'Google', 'Microsoft', 'Amazon', 'Apple', 'Meta', 'Developer API', 'Webhook Service'
   status: 'connected' | 'disconnected' | 'error' | 'pending';
   lastChecked: string; // ISO string or formatted date
   healthScore?: number; // 0-100, higher is better
   message?: string; // e.g., "Authentication token expired", "API rate limit exceeded"
-  configUrl?: string; // URL to configure this integration
+  configUrl?: string; // URL to configure this integration (local path or external)
 }
 
 // Helper function to get status color classes for Tailwind CSS
@@ -38,11 +38,13 @@ const getStatusIcon = (status: Integration['status']) => {
     case 'error':
       return '❌';
     case 'pending':
-      return '⏳';
+      return '🕒';
     default:
       return '❓';
   }
 };
+
+const API_BASE_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
 
 const IntegrationStatus: React.FC = () => {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -53,72 +55,58 @@ const IntegrationStatus: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const [apiKeysResponse, webhooksResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/developers/api-keys`),
+        fetch(`${API_BASE_URL}/developers/webhooks`),
+      ]);
 
-      // Mock data representing various integration statuses
-      const mockData: Integration[] = [
-        {
-          id: 'google-workspace',
-          name: 'Google Workspace',
-          provider: 'Google',
-          status: 'connected',
-          lastChecked: new Date().toISOString(),
-          healthScore: 95,
-          message: 'All services operational.',
-          configUrl: '/settings/integrations/google',
-        },
-        {
-          id: 'microsoft-365',
-          name: 'Microsoft 365',
-          provider: 'Microsoft',
-          status: 'connected',
-          lastChecked: new Date(Date.now() - 3600 * 1000).toISOString(), // 1 hour ago
-          healthScore: 80,
-          message: 'Some calendar sync warnings, but core services connected.',
-          configUrl: '/settings/integrations/microsoft',
-        },
-        {
-          id: 'amazon-aws',
-          name: 'Amazon AWS',
-          provider: 'Amazon',
-          status: 'disconnected',
-          lastChecked: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), // 1 day ago
-          message: 'Authentication token expired. Please re-authenticate.',
-          configUrl: '/settings/integrations/aws',
-        },
-        {
-          id: 'apple-services',
-          name: 'Apple Services',
-          provider: 'Apple',
-          status: 'error',
-          lastChecked: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours ago
-          message: 'API key invalid or revoked. Check configuration.',
-          configUrl: '/settings/integrations/apple',
-        },
-        {
-          id: 'meta-business',
-          name: 'Meta Business',
-          provider: 'Meta',
-          status: 'pending',
-          lastChecked: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10 minutes ago
-          message: 'Awaiting user authorization for page access.',
-          configUrl: '/settings/integrations/meta',
-        },
-        {
-          id: 'slack',
-          name: 'Slack',
-          provider: 'Slack',
-          status: 'connected',
-          lastChecked: new Date().toISOString(),
-          healthScore: 99,
-          message: 'Real-time notifications active.',
-          configUrl: '/settings/integrations/slack',
-        },
-      ];
-      setIntegrations(mockData);
-    } catch (err) {
-      setError('Failed to fetch integration statuses. Please try again.');
+      if (!apiKeysResponse.ok) {
+        throw new Error(`Failed to fetch API keys: ${apiKeysResponse.statusText}`);
+      }
+      if (!webhooksResponse.ok) {
+        throw new Error(`Failed to fetch webhooks: ${webhooksResponse.statusText}`);
+      }
+
+      const apiKeysData = await apiKeysResponse.json();
+      const webhooksData = await webhooksResponse.json();
+
+      const transformedIntegrations: Integration[] = [];
+
+      // Transform API Keys data
+      if (apiKeysData && Array.isArray(apiKeysData.data)) {
+        apiKeysData.data.forEach((key: any) => {
+          transformedIntegrations.push({
+            id: key.id,
+            name: `API Key: ${key.id}`,
+            provider: 'Developer API',
+            status: key.status === 'active' ? 'connected' : 'disconnected', // Assuming 'active' is connected
+            lastChecked: key.lastUsed || key.createdAt,
+            message: `Status: ${key.status}. Scopes: ${key.scopes.join(', ')}.`,
+            configUrl: `/developers/api-keys/${key.id}`, // Local path for configuration
+          });
+        });
+      }
+
+      // Transform Webhooks data
+      if (webhooksData && Array.isArray(webhooksData.data)) {
+        webhooksData.data.forEach((webhook: any) => {
+          const healthScore = Math.max(0, 100 - (webhook.failureCount * 10)); // Simple health score calculation
+          transformedIntegrations.push({
+            id: webhook.id,
+            name: `Webhook: ${webhook.id}`,
+            provider: 'Webhook Service',
+            status: webhook.status === 'active' ? 'connected' : (webhook.status === 'paused' ? 'disconnected' : 'error'), // Map 'paused' to 'disconnected'
+            lastChecked: webhook.lastTriggered || webhook.createdAt,
+            healthScore: healthScore,
+            message: webhook.failureCount > 0 ? `Recent failures detected (${webhook.failureCount}).` : 'Operational.',
+            configUrl: `/developers/webhooks/${webhook.id}`, // Local path for configuration
+          });
+        });
+      }
+
+      setIntegrations(transformedIntegrations);
+    } catch (err: any) {
+      setError(`Failed to fetch integration statuses: ${err.message || 'Unknown error'}`);
       console.error('Error fetching integration statuses:', err);
     } finally {
       setLoading(false);
