@@ -1,5 +1,3 @@
-
-
 export interface Merchant {
   merchantName: string;
   merchantNumber: string;
@@ -85,14 +83,17 @@ export class MoneyMovementAPI {
     constructor(private baseUrl: string, private clientId: string) {}
 
     async retrieveMerchantList(accessToken: string, uuid: string, category?: string): Promise<MerchantListResponse> {
+        // Mock implementation for demonstration purposes
         return { merchantInformation: [{ merchants: [{ merchantName: 'Mock Merchant', merchantNumber: '123', billTypeCode: 'UTIL' }] }] };
     }
 
     async retrieveMerchantDetails(accessToken: string, uuid: string, merchantId: string): Promise<MerchantDetailsResponse> {
+        // Mock implementation for demonstration purposes
         return { merchantDetails: [{ merchantCustomerRelationshipType: 'Customer', merchantCustomerRelationshipTypeCode: 'CUST' }] };
     }
 
     async retrieveDestinationSourceAccountBillPay(accessToken: string, uuid: string): Promise<BillPaymentAccountPayeeEligibilityResponse> {
+        // Mock implementation for demonstration purposes
         return {
             sourceAccounts: [{ sourceAccountId: 'src_1', productName: 'Checking', displaySourceAccountNumber: '1234', sourceAccountCurrencyCode: 'USD', availableBalance: 1000 }],
             payeeSourceAccountCombinations: [{ payeeId: 'payee_1', payeeNickName: 'Electric Co', displayPayeeAccountNumber: '5678', payeeAccountCurrencyCode: 'USD', paymentMethods: [{ paymentMethod: 'BILL_PAY' }] }]
@@ -100,60 +101,74 @@ export class MoneyMovementAPI {
     }
 
     async createBillPaymentPreprocess(accessToken: string, uuid: string, request: BillPaymentsPreprocessRequest): Promise<BillPaymentsPreprocessResponse> {
+        // Mock implementation for demonstration purposes
         return { controlFlowId: 'flow_123', debitDetails: { transactionDebitAmount: request.transactionAmount, currencyCode: 'USD' }, creditDetails: { transactionCreditAmount: request.transactionAmount, currencyCode: 'USD' } };
     }
 
     async confirmBillPayment(accessToken: string, uuid: string, request: BillPaymentsRequest): Promise<BillPaymentsResponse> {
+        // Mock implementation for demonstration purposes
         return { transactionReferenceId: 'ref_123', sourceAccount: { displaySourceAccountNumber: '1234', sourceAccountAvailableBalance: 900, sourceCurrencyCode: 'USD' } };
     }
     
     // Added missing methods
     async retrievePayeeList(accessToken: string, uuid: string): Promise<PayeeListResponse> {
+        // Mock implementation for demonstration purposes
         return { payeeList: [] };
     }
 
     async retrievePayeeDetailsById(accessToken: string, uuid: string, payeeId: string): Promise<PayeeDetailsResponse> {
+        // Mock implementation for demonstration purposes
         return {};
     }
     
     async retrievePaymentInitiationTransactionRepeatingPayments(accessToken: string, uuid: string): Promise<RetrievePaymentInitiationTransactionRepeatingPaymentsResponse> {
+        // Mock implementation for demonstration purposes
         return { standingInstructions: [] };
     }
 
     async retrieveUnmaskedAccountData(accessToken: string, uuid: string, request: RetrieveUnmaskedAccountDataRequest): Promise<RetrieveUnmaskedAccountDataResponse> {
+        // Mock implementation for demonstration purposes
         return { accounts: [] };
     }
 
     async createCrossBorderTransferPreprocess(accessToken: string, uuid: string, request: any): Promise<CrossBorderWireTransfersPreprocessResponse> {
+        // Mock implementation for demonstration purposes
         return { controlFlowId: 'mock_flow', debitDetails: {}, creditDetails: {}, foreignExchangeRate: 0, transactionFee: 0, feeCurrencyCode: 'USD' };
     }
 
     async confirmCrossBorderTransfer(accessToken: string, uuid: string, request: any): Promise<CrossBorderWireTransfersResponse> {
+        // Mock implementation for demonstration purposes
         return { transactionReferenceId: 'mock_ref', sourceAccountDetails: {} };
     }
 
     async retrieveDestinationSourceAccountCrossBorderTransfer(accessToken: string, uuid: string): Promise<any> {
+        // Mock implementation for demonstration purposes
         return { sourceAccounts: [], payeeSourceAccountCombinations: [] };
     }
     
     async accountProxyTransfersSourceAccountEligibility(accessToken: string, uuid: string, paymentType: string): Promise<any> {
+        // Mock implementation for demonstration purposes
         return { sourceAccounts: [] };
     }
     
     async createAccountProxyTransfersPreprocess(accessToken: string, uuid: string, request: any): Promise<AccountProxyTransfersPreprocessResponse> {
+        // Mock implementation for demonstration purposes
         return { controlFlowId: 'mock' };
     }
 
     async adhocAccountProxyTransfersPreprocessWithAddPayee(accessToken: string, uuid: string, request: any): Promise<AdhocAccountProxyTransfersPreprocessWithAddPayeeResponse> {
+         // Mock implementation for demonstration purposes
          return { controlFlowId: 'mock' };
     }
 
     async executeAccountProxyTransfers(accessToken: string, uuid: string, request: any): Promise<AccountProxyTransfersResponse> {
+        // Mock implementation for demonstration purposes
         return { transactionReferenceId: 'mock' };
     }
 }
 
 export const useMoneyMovement = () => {
+    // Mock implementation for demonstration purposes
     return {
         api: new MoneyMovementAPI('https://mock.api', 'client_id'),
         accessToken: 'mock_token',
