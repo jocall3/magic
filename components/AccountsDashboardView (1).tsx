@@ -256,7 +256,7 @@ const apiClient = {
       
       // Basic filtering for the mock, a real API would handle this server-side
       if (params?.balance_report_type) {
-        reports = reports.filter(report => report.balance_report_type === params.balance_report_type);
+        reports = reports.filter(report => report.balance_type === params.balance_report_type);
       }
       if (params?.per_page) {
         reports = reports.slice(0, params.per_page);
@@ -297,7 +297,7 @@ const AccountsDashboardView: React.FC = () => {
         const balancesMap: Record<string, BalanceReport> = {};
         const fetchBalancePromises = accounts.map(async (account) => {
           try {
-            // Request the latest real-time balance report
+            // Fetch the latest real-time balance report
             const balanceReportsResponse = await apiClient.listBalanceReports(account.id, {
               per_page: 1,
               balance_report_type: 'real_time',
