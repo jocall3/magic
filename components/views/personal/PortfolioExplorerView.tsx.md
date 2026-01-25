@@ -1,4 +1,3 @@
-
 # The Atlas of Assets
 
 This is the observatory's detailed star chart. It is not just a list of your holdings, but a multi-dimensional, interactive map of your entire investment cosmos. Its purpose is to allow you to explore the composition of your power, filtering by asset class or region, to gain a deeper strategic understanding of your arsenal of growth.
