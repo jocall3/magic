@@ -54,11 +54,16 @@ const CaseDetailModal: React.FC<{ caseData: KycAmlCase | null; onClose: () => vo
         setIsLoading(true);
         setAiSummary('');
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            // NOTE: The API key is sensitive and should ideally be managed securely (e.g., via environment variables or a secrets manager).
+            // For demonstration purposes, we're accessing it directly here.
+            const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY as string });
+            const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
             const prompt = `You are a senior compliance analyst AI. Review the following case summary and generate a brief, actionable "Next Steps" recommendation in 2-3 bullet points. Case Summary: "${caseData.summary}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            setAiSummary(response.text.replace(/•/g, '\n•'));
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            setAiSummary(response.text.replace(/â€¢/g, '\n•')); // Corrected bullet point character
         } catch (err) {
+            console.error("Error generating AI summary:", err);
             setAiSummary("Error generating AI recommendations.");
         } finally {
             setIsLoading(false);
@@ -143,7 +148,7 @@ const KycAmlView: React.FC = () => {
         newCases: cases.filter(c => c.status === 'New').length,
         underReview: cases.filter(c => c.status === 'Under Review').length,
         escalated: cases.filter(c => c.status === 'Escalated').length,
-        avgResolutionTime: '48h',
+        avgResolutionTime: '48h', // This would typically be calculated dynamically
     }), [cases]);
 
     return (
