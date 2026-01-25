@@ -57,7 +57,7 @@ const inputVariants = cva(
   }
 );
 
-// --- The "Unbelievably Expansive" Input Props Interface ---
+// --- The "Bad Ass Quantum Core 3.0" Input Props Interface ---
 
 export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
@@ -114,109 +114,37 @@ export interface InputProps
    */
   containerClassName?: string;
 
-  // --- Gemini 2.5 Enhanced Features ---
-  // The following 100 properties are added to enable unprecedented levels of
-  // interaction and data layering, as per advanced model requirements.
-  feature1?: any;
-  feature2?: any;
-  feature3?: any;
-  feature4?: any;
-  feature5?: any;
-  feature6?: any;
-  feature7?: any;
-  feature8?: any;
-  feature9?: any;
-  feature10?: any;
-  feature11?: any;
-  feature12?: any;
-  feature13?: any;
-  feature14?: any;
-  feature15?: any;
-  feature16?: any;
-  feature17?: any;
-  feature18?: any;
-  feature19?: any;
-  feature20?: any;
-  feature21?: any;
-  feature22?: any;
-  feature23?: any;
-  feature24?: any;
-  feature25?: any;
-  feature26?: any;
-  feature27?: any;
-  feature28?: any;
-  feature29?: any;
-  feature30?: any;
-  feature31?: any;
-  feature32?: any;
-  feature33?: any;
-  feature34?: any;
-  feature35?: any;
-  feature36?: any;
-  feature37?: any;
-  feature38?: any;
-  feature39?: any;
-  feature40?: any;
-  feature41?: any;
-  feature42?: any;
-  feature43?: any;
-  feature44?: any;
-  feature45?: any;
-  feature46?: any;
-  feature47?: any;
-  feature48?: any;
-  feature49?: any;
-  feature50?: any;
-  feature51?: any;
-  feature52?: any;
-  feature53?: any;
-  feature54?: any;
-  feature55?: any;
-  feature56?: any;
-  feature57?: any;
-  feature58?: any;
-  feature59?: any;
-  feature60?: any;
-  feature61?: any;
-  feature62?: any;
-  feature63?: any;
-  feature64?: any;
-  feature65?: any;
-  feature66?: any;
-  feature67?: any;
-  feature68?: any;
-  feature69?: any;
-  feature70?: any;
-  feature71?: any;
-  feature72?: any;
-  feature73?: any;
-  feature74?: any;
-  feature75?: any;
-  feature76?: any;
-  feature77?: any;
-  feature78?: any;
-  feature79?: any;
-  feature80?: any;
-  feature81?: any;
-  feature82?: any;
-  feature83?: any;
-  feature84?: any;
-  feature85?: any;
-  feature86?: any;
-  feature87?: any;
-  feature88?: any;
-  feature89?: any;
-  feature90?: any;
-  feature91?: any;
-  feature92?: any;
-  feature93?: any;
-  feature94?: any;
-  feature95?: any;
-  feature96?: any;
-  feature97?: any;
-  feature98?: any;
-  feature99?: any;
-  feature100?: any;
+  // --- Quantum Core 3.0 AI/Financial Integration Features ---
+  /**
+   * If true, enables real-time AI data enrichment based on the input value.
+   * Simulates calling a Quantum Core 3.0 endpoint (e.g., transaction lookup, user identity check).
+   */
+  aiEnrichmentEnabled?: boolean;
+  /**
+   * Mock endpoint identifier for AI enrichment (e.g., 'user_lookup', 'transaction_categorize', 'sanction_screening').
+   */
+  aiEnrichmentEndpoint?: 'user_lookup' | 'transaction_categorize' | 'sanction_screening' | string;
+  /**
+   * Callback triggered when AI enrichment completes, providing the simulated data.
+   */
+  onAiEnrichmentComplete?: (data: any) => void;
+  /**
+   * If true, applies corporate/treasury styling and behavior (e.g., higher security focus).
+   */
+  isCorporateMode?: boolean;
+  /**
+   * The minimum risk score (0-100) required to trigger a critical security alert style.
+   * Only active if aiEnrichmentEndpoint is 'sanction_screening'.
+   */
+  minRiskScoreForCritical?: number;
+  /**
+   * Simulated AI enrichment data to display as contextual feedback.
+   */
+  aiEnrichmentData?: {
+    status: 'clear' | 'flagged' | 'critical';
+    riskScore?: number;
+    message: string;
+  };
 }
 
 // --- The Core Input Component Implementation ---
@@ -237,19 +165,67 @@ const BaseInput = React.forwardRef<HTMLInputElement, InputProps>(
       isError = false,
       errorMessage,
       isLoading = false,
-      debounceTimeout = 0,
+      debounceTimeout = 300,
       onValueChange,
       onChange,
-      highPerformance, // Consumed by the wrapper, not used here
+      highPerformance,
+      
+      // New AI/Financial Props
+      aiEnrichmentEnabled = false,
+      aiEnrichmentEndpoint,
+      onAiEnrichmentComplete,
+      isCorporateMode = false,
+      minRiskScoreForCritical = 80,
+      aiEnrichmentData,
+      
       ...props
     },
     ref
   ) => {
     const [internalValue, setInternalValue] = useState(props.value ?? props.defaultValue ?? '');
-
-    // Debounce logic for high-frequency updates
+    const [isAiLoading, setIsAiLoading] = useState(false);
+    
+    // --- Mock AI Enrichment Logic (The "Bad Ass" Feature) ---
     useEffect(() => {
-      // If the component is controlled, sync internal state
+      if (!aiEnrichmentEnabled || !onAiEnrichmentComplete || !internalValue) {
+        setIsAiLoading(false);
+        return;
+      }
+
+      setIsAiLoading(true);
+
+      const mockApiCall = setTimeout(() => {
+        // Simulate complex AI processing based on input length/content
+        let status: 'clear' | 'flagged' | 'critical' = 'clear';
+        let riskScore = 0;
+        let message = `Input validated against ${aiEnrichmentEndpoint || 'Quantum Core'}.`;
+
+        if (aiEnrichmentEndpoint === 'sanction_screening' && internalValue.toLowerCase().includes('jamesburvelocallaghaniii')) {
+          status = 'critical';
+          riskScore = 100;
+          message = `CRITICAL: High risk score (${riskScore}) detected. Potential sanction match: JAMESBURVELOCALLAGHANIII.`;
+        } else if (internalValue.length > 10 && internalValue.includes('fraud')) {
+          status = 'critical';
+          riskScore = 99;
+          message = `CRITICAL: High risk score (${riskScore}) detected. Potential ${aiEnrichmentEndpoint} anomaly.`;
+        } else if (internalValue.length > 5 && internalValue.includes('transfer')) {
+          status = 'flagged';
+          riskScore = 55;
+          message = `Flagged: Transaction intent detected. Risk score ${riskScore}.`;
+        }
+        
+        const result = { status, riskScore, message };
+        onAiEnrichmentComplete(result);
+        setIsAiLoading(false);
+      }, debounceTimeout + 100); // Ensure AI processing takes slightly longer than standard debounce
+
+      return () => clearTimeout(mockApiCall);
+    }, [internalValue, aiEnrichmentEnabled, aiEnrichmentEndpoint, onAiEnrichmentComplete, debounceTimeout]);
+    // --- End Mock AI Enrichment Logic ---
+
+
+    // Debounce logic for high-frequency updates (standard)
+    useEffect(() => {
       if (props.value !== undefined && props.value !== internalValue) {
         setInternalValue(props.value);
       }
@@ -270,9 +246,14 @@ const BaseInput = React.forwardRef<HTMLInputElement, InputProps>(
       onChange?.(e);
     }, [onChange]);
 
+    // Determine overall error/risk state
+    const isCriticalRisk = aiEnrichmentData && aiEnrichmentData.riskScore && aiEnrichmentData.riskScore >= minRiskScoreForCritical;
+    const finalIsError = isError || isCriticalRisk;
+    const finalIsLoading = isLoading || isAiLoading;
+
     // Memoize parts of the component for high performance mode
     const hasLeftIcon = useMemo(() => !!leftIcon, [leftIcon]);
-    const hasRightIcon = useMemo(() => !!rightIcon || isLoading, [rightIcon, isLoading]);
+    const hasRightIcon = useMemo(() => !!rightIcon || finalIsLoading, [rightIcon, finalIsLoading]);
 
     const inputPaddingClasses = useMemo(() => ({
       'pl-10': hasLeftIcon,
@@ -282,15 +263,24 @@ const BaseInput = React.forwardRef<HTMLInputElement, InputProps>(
     const finalInputClassName = cn(
       inputVariants({ variant, inputSize }),
       inputPaddingClasses,
-      { 'border-red-500 focus-visible:ring-red-500': isError },
+      { 
+        'border-red-500 focus-visible:ring-red-500': finalIsError,
+        'border-yellow-500 focus-visible:ring-yellow-500': isCorporateMode && aiEnrichmentData?.status === 'flagged' && !finalIsError,
+        'border-cyan-500 focus-visible:ring-cyan-500': isCorporateMode && !finalIsError && aiEnrichmentEnabled,
+      },
       className
     );
+    
+    const finalHelperText = finalIsError 
+      ? (errorMessage || (isCriticalRisk ? aiEnrichmentData?.message : helperText))
+      : (aiEnrichmentData?.message || helperText);
 
     return (
       <div className={cn("w-full space-y-1.5", containerClassName)}>
         {label && (
-          <label htmlFor={id} className={cn("text-sm font-medium text-gray-300", { 'text-red-400': isError })}>
+          <label htmlFor={id} className={cn("text-sm font-medium text-gray-300", { 'text-red-400': finalIsError, 'text-cyan-400': isCorporateMode && aiEnrichmentEnabled && !finalIsError })}>
             {label}
+            {isCorporateMode && aiEnrichmentEnabled && <span className="ml-2 text-xs text-cyan-600">| Quantum AI Active</span>}
           </label>
         )}
         <div className="relative w-full">
@@ -306,18 +296,18 @@ const BaseInput = React.forwardRef<HTMLInputElement, InputProps>(
             onChange={handleInputChange}
             {...props}
           />
-          {(rightIcon || isLoading) && (
+          {(rightIcon || finalIsLoading) && (
             <InputIcon className="right-3">
-              {isLoading ? <InputLoader /> : rightIcon}
+              {finalIsLoading ? <InputLoader /> : rightIcon}
             </InputIcon>
           )}
         </div>
-        {(helperText || (isError && errorMessage)) && (
+        {(finalHelperText) && (
           <p className={cn(
             "text-xs",
-            isError ? "text-red-400" : "text-gray-400"
+            finalIsError ? "text-red-400" : (aiEnrichmentData?.status === 'flagged' ? "text-yellow-400" : "text-gray-400")
           )}>
-            {isError ? errorMessage : helperText}
+            {finalHelperText}
           </p>
         )}
       </div>
