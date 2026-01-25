@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface DownloadLinkProps {
@@ -15,7 +14,7 @@ export const DownloadLink: React.FC<DownloadLinkProps> = ({ url, filename }) => 
       target="_blank"
       rel="noopener noreferrer"
     >
-      Download {filename}
+      {filename}
     </a>
   );
 };
