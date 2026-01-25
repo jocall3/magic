@@ -25,6 +25,8 @@ import {
   Cog6ToothIcon,
   CheckCircleIcon,
   ArrowPathIcon,
+  ExclamationCircleIcon,
+  TriangleExclamationIcon,
 } from '@heroicons/react/24/outline';
 
 // -----------------------------------------------------------------------------
@@ -288,18 +290,13 @@ const ScatterChartWrapper = React.memo(({ data }: { data: any[] }) => (
     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
     <XAxis type="number" dataKey="x" name="Region Index" stroke={THEME.textMuted} tick={false} label={{ value: 'Geographic Distribution', position: 'bottom', fill: THEME.textMuted }} />
     <YAxis type="number" dataKey="y" name="Price" stroke={THEME.textMuted} label={{ value: 'Asset Price', angle: -90, position: 'left', fill: THEME.textMuted }} />
-    <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
-      if (active && payload && payload.length) {
-        const d = payload[0].payload;
-        return (
-          <div className="bg-slate-900 border border-yellow-500 p-2 rounded shadow-xl text-xs">
-            <p className="font-bold text-yellow-400">{d.name}</p>
-            <p className="text-white">Region: {d.region}</p>
-            <p className="text-white">Cap: ${d.z.toFixed(1)}B</p>
-          </div>
-        );
-      }
-      return null;
+    <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: THEME.surface, borderColor: THEME.border, color: THEME.textMain }} formatter={(value: number, name: string, props: any) => {
+        if (props.payload) {
+            const d = props.payload;
+            if (name === 'Price') return [`$${value.toFixed(2)}`, name];
+            if (name === 'Market Cap') return [`$${d.z.toFixed(1)}B`, name];
+        }
+        return value;
     }} />
     <Scatter name="Companies" data={data} fill={THEME.secondary}>
       {data.map((entry, index) => (
@@ -316,7 +313,7 @@ const LineChartWrapper = React.memo(({ data }: { data: MarketEntity[] }) => (
       <XAxis dataKey="history.time" type="number" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={(timeStr) => new Date(timeStr).toLocaleTimeString()} stroke={THEME.textMuted} tick={{fontSize: 10}} />
       <YAxis stroke={THEME.textMuted} tick={{fontSize: 10}} />
       <Tooltip contentStyle={{ backgroundColor: THEME.surface, borderColor: THEME.border }} />
-      <Line type="monotone" dataKey="history.value" stroke={THEME.primary} strokeWidth={2} dot={false} name="Price" />
+      <Line type="monotone" dataKey="price" stroke={THEME.primary} strokeWidth={2} dot={false} name="Price" />
       {/* Assuming sentimentScore is also part of the history, or needs aggregation */}
       <Line type="monotone" dataKey="sentimentScore" stroke={THEME.secondary} strokeWidth={1} dot={false} name="Sentiment" />
     </ComposedChart>
@@ -336,7 +333,7 @@ const GlobalMarketMap: React.FC = () => {
   const [systemTime, setSystemTime] = useState(Date.now());
   const [activeView, setActiveView] = useState<'DASHBOARD' | 'MARKET_MAP' | 'AI_NEXUS' | 'RISK_CONTROL' | 'PROFILE'>('DASHBOARD');
   const [chatInput, setChatInput] = useState('');
-  const [aiStatus, setAiStatus] = useState<'IDLE' | 'PROCESSING' | 'ANALYZING'>('IDLE');
+  const [aiStatus, setAiStatus] = useState<'IDLE' | 'PROCESSING' | 'ANALYZING' | 'LOCKED'>('IDLE');
 
   // --- Data State (Mimicking what a global store or React Query would manage) ---
   const [marketData, setMarketData] = useState<MarketEntity[]>([]);
@@ -538,11 +535,18 @@ const GlobalMarketMap: React.FC = () => {
                 <Tooltip
                   contentStyle={{ backgroundColor: THEME.surface, borderColor: THEME.border, color: THEME.textMain }}
                   itemStyle={{ color: THEME.primary }}
-                  formatter={(value: number, name: string) => [`${name === 'marketCap' ? formatCurrency(value) + 'B' : formatCurrency(value)}`, name === 'marketCap' ? 'Market Cap' : 'Price']}
+                  formatter={(value: number, name: string, props: any) => {
+                    if (props.payload) {
+                        const d = props.payload;
+                        if (name === 'price') return [`$${value.toFixed(2)}`, 'Price'];
+                        if (name === 'marketCap') return [`$${d.marketCap.toFixed(1)}B`, 'Market Cap'];
+                    }
+                    return value;
+                  }}
                   labelFormatter={(label) => `Ticker: ${label}`}
                 />
                 <Bar dataKey="marketCap" fill={THEME.secondary} opacity={0.3} barSize={20} />
-                <Line type="monotone" dataKey="price" stroke={THEME.primary} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="price" stroke={THEME.primary} strokeWidth={2} dot={false} name="Price" />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>
@@ -780,7 +784,7 @@ const GlobalMarketMap: React.FC = () => {
                 <label htmlFor="theme-select" className="text-xs text-slate-500 uppercase font-bold">Interface Theme</label>
                 <select id="theme-select" className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-500">
                   <option>Midnight Protocol (Dark)</option>
-                  <option>Daylight Operations (Light)</option>
+                  <option selected={userProfile.preferences.theme === 'LIGHT'}>Daylight Operations (Light)</option>
                 </select>
               </div>
               <div className="space-y-2">
