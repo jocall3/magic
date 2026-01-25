@@ -232,7 +232,7 @@ const QuantumChat: React.FC<{ onAction: (action: string, data: any) => void }> =
                                 placeholder="Command the system..."
                                 className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
                             />
-                            <button onClick={handleSend} className="bg-cyan-600 p-2 rounded-lg hover:bg-cyan-500 transition-colors">
+                            <button onClick={handleSend} className="bg-cyan-600 p-2 rounded-lg hover:bg-cyan-500">
                                 <BoltIcon />
                             </button>
                         </div>
@@ -292,7 +292,7 @@ const StripeCheckoutModal: React.FC<{ amount: number; recipient: string; onClose
                                 <div className="p-4 border border-gray-200 rounded-xl flex items-center gap-4">
                                     <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center font-bold text-[10px]">VISA</div>
                                     <div className="flex-1">
-                                        <div className="text-sm font-medium">•••• •••• •••• 4242</div>
+                                        <div className="text-sm font-medium">•••• 4242</div>
                                         <div className="text-xs text-gray-400">Expires 12/26</div>
                                     </div>
                                 </div>
