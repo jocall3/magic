@@ -1,28 +1,52 @@
-import React from 'react';
-import { ArrowRightIcon, LightbulbIcon, DollarSignIcon, BookOpenIcon, TrendingUpIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ArrowRightIcon, LightbulbIcon, DollarSignIcon, BookOpenIcon, TrendingUpIcon, AlertCircleIcon } from 'lucide-react';
 
 // Define the shape of a single recommendation
 export interface Recommendation {
   id: string;
-  type: 'financial_action' | 'learning_path' | 'investment_opportunity' | 'general';
+  type: 'financial_action' | 'learning_path' | 'investment_opportunity' | 'general'; // Derived or default
   title: string;
   description: string;
   actionLabel?: string; // e.g., "Invest Now", "Start Course", "View Details"
   actionLink?: string; // URL for the action, if applicable
   icon?: React.ElementType; // Optional icon component (e.g., from lucide-react)
   severity?: 'low' | 'medium' | 'high' | 'critical'; // For financial actions
-  progress?: number; // For learning paths (0-100)
-  roiEstimate?: string; // For investment opportunities
+  progress?: number; // For learning paths (0-100) - not directly from this API
+  roiEstimate?: string; // For investment opportunities - not directly from this API
   tags?: string[]; // Optional tags for filtering or categorization
+}
+
+// API response structure for a single AI Insight
+interface ApiInsight {
+  id: string;
+  title: string;
+  description: string;
+  category: string; // e.g., "spending", "budget", "saving"
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  actionableRecommendation: string;
+  timestamp: string;
+}
+
+// API response structure for the spending trends endpoint
+interface SpendingTrendsResponse {
+  period: string;
+  overallTrend: string;
+  percentageChange: number;
+  topCategoriesByChange: Array<{
+    category: string;
+    percentageChange: number;
+    absoluteChange: number;
+  }>;
+  aiInsights: ApiInsight[];
+  forecastNextMonth: number;
 }
 
 // Props for the AIRecommendationEngine component
 interface AIRecommendationEngineProps {
-  recommendations: Recommendation[];
   title?: string;
-  isLoading?: boolean;
-  onActionClick?: (recommendation: Recommendation) => void;
   emptyStateMessage?: string;
+  // onActionClick is still useful if a parent wants to handle clicks
+  onActionClick?: (recommendation: Recommendation) => void;
 }
 
 // Helper function to get a default icon based on recommendation type
@@ -40,13 +64,55 @@ const getDefaultIcon = (type: Recommendation['type']) => {
   }
 };
 
+// Base URL for the API from the provided OpenAPI spec
+const API_BASE_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
+
 const AIRecommendationEngine: React.FC<AIRecommendationEngineProps> = ({
-  recommendations,
   title = 'AI-Powered Recommendations',
-  isLoading = false,
   onActionClick,
-  emptyStateMessage = "No recommendations available at the moment. Check back later!",
+  emptyStateMessage = "No recommendations available at the moment. Our AI is constantly learning and will provide new insights soon!",
 }) => {
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRecommendations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Fetch AI-driven spending trends insights
+      const response = await fetch(`${API_BASE_URL}/transactions/insights/spending-trends`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: SpendingTrendsResponse = await response.json();
+
+      // Map API insights to the Recommendation interface
+      const mappedRecommendations: Recommendation[] = data.aiInsights.map(insight => ({
+        id: insight.id,
+        title: insight.title,
+        description: insight.description,
+        // Defaulting type to 'financial_action' for insights from this endpoint
+        type: 'financial_action',
+        actionLabel: insight.actionableRecommendation,
+        // Example: Dynamically generate actionLink based on recommendation category
+        actionLink: insight.category === 'spending' ? '/budgets' : undefined, // Link to a hypothetical budgets page
+        severity: insight.severity,
+        tags: [insight.category],
+      }));
+      setRecommendations(mappedRecommendations);
+    } catch (e) {
+      console.error("Failed to fetch AI recommendations:", e);
+      setError("Failed to load recommendations. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]); // Re-fetch if the fetch function itself changes (unlikely with useCallback)
+
   const renderRecommendationCard = (rec: Recommendation) => {
     const IconComponent = rec.icon || getDefaultIcon(rec.type);
 
@@ -60,11 +126,11 @@ const AIRecommendationEngine: React.FC<AIRecommendationEngineProps> = ({
 
     const getSeverityColor = (severity?: Recommendation['severity']) => {
       switch (severity) {
-        case 'critical': return 'bg-red-100 text-red-800';
-        case 'high': return 'bg-orange-100 text-orange-800';
-        case 'medium': return 'bg-yellow-100 text-yellow-800';
-        case 'low': return 'bg-blue-100 text-blue-800';
-        default: return 'bg-gray-100 text-gray-800';
+        case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+        case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+        case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+        case 'low': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
       }
     };
 
@@ -158,13 +224,19 @@ const AIRecommendationEngine: React.FC<AIRecommendationEngineProps> = ({
         {title}
       </h2>
 
-      {isLoading ? (
+      {error ? (
+        <div className="text-center py-10 text-red-500 dark:text-red-400">
+          <AlertCircleIcon className="mx-auto h-12 w-12 text-red-400 dark:text-red-500" />
+          <h3 className="mt-2 text-lg font-medium">Error loading recommendations</h3>
+          <p className="mt-1 text-sm">{error}</p>
+        </div>
+      ) : isLoading ? (
         renderSkeletonLoader()
       ) : recommendations.length === 0 ? (
         <div className="text-center py-10 text-gray-500 dark:text-gray-400">
           <LightbulbIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-lg font-medium">{emptyStateMessage}</h3>
-          <p className="mt-1 text-sm">Our AI is constantly learning and will provide new insights soon.</p>
+          {/* Removed redundant message as it's now part of emptyStateMessage prop default */}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
