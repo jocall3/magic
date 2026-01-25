@@ -398,7 +398,7 @@ export default function CommoditiesExchange() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                   <span style={{ color: '#94a3b8' }}>{c.name}</span>
                   <span style={isGain ? styles.priceUp : styles.priceDown}>
-                    {isGain ? '+' : ''}{pct.toFixed(2)}%
+                    {isGain ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
                   </span>
                 </div>
               </div>
@@ -422,7 +422,7 @@ export default function CommoditiesExchange() {
                 ${selectedPrice.toFixed(2)}
               </div>
               <div style={{ color: isUp ? '#10b981' : '#ef4444' }}>
-                {isUp ? 'â–²' : 'â–¼'} {Math.abs(selectedPrice - previousPrice).toFixed(2)} ({percentChange.toFixed(2)}%)
+                {isUp ? '▲' : '▼'} {Math.abs(selectedPrice - previousPrice).toFixed(2)} ({Math.abs(percentChange).toFixed(2)}%)
               </div>
             </div>
           </div>
@@ -517,7 +517,7 @@ export default function CommoditiesExchange() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1rem' }}>
                <span>Est. Total</span>
-               <span>${((parseFloat(orderAmount) || 0) * selectedPrice).toLocaleString()}</span>
+               <span>${((parseFloat(orderAmount) || 0) * selectedPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
 
             <button 
