@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Plan {
   id?: string;
@@ -23,6 +24,22 @@ interface PlanFormProps {
   isSubmitting: boolean;
 }
 
+const AVAILABLE_FEATURES = [
+  'User & Account Management',
+  'Transaction Insights',
+  'Budgeting Tools',
+  'Financial Goals',
+  'Investment Portfolio Management',
+  'AI Financial Advisor',
+  'AI Financial Oracle (Simulations)',
+  'AI Business Incubator',
+  'Corporate Finance Suite',
+  'Web3 & Crypto Integration',
+  'Sustainability & ESG Tracking',
+  'Lending & Credit Services',
+  'Developer API Access',
+];
+
 const PlanForm: React.FC<PlanFormProps> = ({ initialPlan, onSubmit, isSubmitting }) => {
   const [plan, setPlan] = useState<Plan>({
     name: '',
@@ -30,7 +47,7 @@ const PlanForm: React.FC<PlanFormProps> = ({ initialPlan, onSubmit, isSubmitting
     price: 0,
     currency: 'USD',
     billingPeriod: 'monthly',
-    features: [''],
+    features: [],
   });
 
   useEffect(() => {
@@ -47,25 +64,13 @@ const PlanForm: React.FC<PlanFormProps> = ({ initialPlan, onSubmit, isSubmitting
     }));
   };
 
-  const handleFeatureChange = (index: number, value: string) => {
+  const handleFeatureChange = (feature: string, checked: boolean) => {
     setPlan((prevPlan) => {
-      const newFeatures = [...prevPlan.features];
-      newFeatures[index] = value;
-      return { ...prevPlan, features: newFeatures };
-    });
-  };
-
-  const addFeature = () => {
-    setPlan((prevPlan) => ({
-      ...prevPlan,
-      features: [...prevPlan.features, ''],
-    }));
-  };
-
-  const removeFeature = (index: number) => {
-    setPlan((prevPlan) => {
-      const newFeatures = prevPlan.features.filter((_, i) => i !== index);
-      return { ...prevPlan, features: newFeatures };
+      const newFeatures = checked
+        ? [...prevPlan.features, feature]
+        : prevPlan.features.filter((f) => f !== feature);
+      // Keep features sorted in the order they appear in the UI
+      return { ...prevPlan, features: newFeatures.sort((a, b) => AVAILABLE_FEATURES.indexOf(a) - AVAILABLE_FEATURES.indexOf(b)) };
     });
   };
 
@@ -76,8 +81,8 @@ const PlanForm: React.FC<PlanFormProps> = ({ initialPlan, onSubmit, isSubmitting
       toast.error('Please fill in all required fields.');
       return;
     }
-    if (plan.features.some(feature => !feature)) {
-      toast.error('Please ensure all features are described.');
+    if (plan.features.length === 0) {
+      toast.error('Please select at least one feature for the plan.');
       return;
     }
 
@@ -165,24 +170,20 @@ const PlanForm: React.FC<PlanFormProps> = ({ initialPlan, onSubmit, isSubmitting
           </div>
           <div>
             <Label>Features</Label>
-            {plan.features.map((feature, index) => (
-              <div key={index} className="flex items-center space-x-2 mb-2">
-                <Input
-                  value={feature}
-                  onChange={(e) => handleFeatureChange(index, e.target.value)}
-                  placeholder={`Feature ${index + 1}`}
-                  required
-                />
-                {plan.features.length > 1 && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => removeFeature(index)}>
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button type="button" variant="secondary" onClick={addFeature} className="mt-2">
-              Add Feature
-            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {AVAILABLE_FEATURES.map((feature) => (
+                <div key={feature} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={feature}
+                    checked={plan.features.includes(feature)}
+                    onCheckedChange={(checked) => handleFeatureChange(feature, !!checked)}
+                  />
+                  <Label htmlFor={feature} className="font-normal cursor-pointer">
+                    {feature}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
         </form>
       </CardContent>
