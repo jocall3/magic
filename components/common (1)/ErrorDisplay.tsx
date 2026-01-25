@@ -1,8 +1,27 @@
 import React from 'react';
 
+// Define the structure of the API error object based on the OpenAPI spec
+interface StructuredApiError {
+  code?: string;
+  message: string;
+  timestamp?: string;
+  [key: string]: any; // Allow other properties
+}
+
+// Define a common structure for network errors that wrap the API response (e.g., Axios)
+interface NetworkErrorWrapper {
+  response?: {
+    data?: StructuredApiError;
+    status?: number;
+    [key: string]: any;
+  };
+  message?: string;
+  [key: string]: any;
+}
+
 interface ErrorDisplayProps {
-  /** The error message string or an Error object to display. If null or undefined, the component will not render. */
-  error: string | Error | null | undefined;
+  /** The error message string, an Error object, or a structured API error object to display. If null or undefined, the component will not render. */
+  error: string | Error | StructuredApiError | NetworkErrorWrapper | null | undefined;
   /** An optional prefix to add before the error message (e.g., "Error loading data: "). */
   messagePrefix?: string;
   /** An optional callback function to execute when the retry button is clicked. If not provided, no retry button will be displayed. */
@@ -34,12 +53,29 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   }
 
   let errorMessage: string;
+  
   if (typeof error === 'string') {
     errorMessage = error;
   } else if (error instanceof Error) {
     errorMessage = error.message;
+  } else if (typeof error === 'object' && error !== null) {
+    // Try to extract message from common structured API error patterns
+    const errObj = error as NetworkErrorWrapper;
+
+    // 1. Check for nested API error structure (e.g., Axios/fetch wrapper: error.response.data.message)
+    if (errObj.response?.data?.message) {
+      errorMessage = errObj.response.data.message;
+    } 
+    // 2. Check for direct API error object { message: string }
+    else if ('message' in error && typeof (error as StructuredApiError).message === 'string') {
+      errorMessage = (error as StructuredApiError).message;
+    } 
+    // 3. Fallback to generic message if object structure is unknown but present
+    else {
+      errorMessage = errObj.message || 'An unknown API error occurred.';
+    }
   } else {
-    // Fallback for unexpected error types, though `error` prop type should prevent this
+    // Fallback for unexpected error types
     errorMessage = 'An unknown error occurred.';
   }
 
