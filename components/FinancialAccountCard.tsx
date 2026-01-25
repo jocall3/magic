@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type Stripe from 'stripe';
 
@@ -7,12 +6,13 @@ const formatCurrency = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency.toUpperCase(),
-  }).format(amount / 100); // Assuming amount is in cents
+  }).format(amount); // Assuming amount is already in the correct unit
 };
 
 const statusColors: { [key: string]: string } = {
-  open: 'bg-green-100 text-green-800',
-  closed: 'bg-red-100 text-red-800',
+  active: 'bg-green-100 text-green-800',
+  suspended: 'bg-yellow-100 text-yellow-800',
+  frozen: 'bg-red-100 text-red-800',
 };
 
 const FeatureList: React.FC<{ title: string; features: readonly string[] | null | undefined }> = ({ title, features }) => {
@@ -54,34 +54,71 @@ const BalanceDisplay: React.FC<{ title: string; balance: { [key: string]: number
   );
 };
 
-const FinancialAddressDisplay: React.FC<{ address: Stripe.Treasury.FinancialAccount.FinancialAddress }> = ({ address }) => {
-    if (address.type !== 'aba' || !address.aba) {
-        return <p className="text-sm text-gray-500">Unsupported address type: {address.type}</p>;
+const FinancialAddressDisplay: React.FC<{ address: any }> = ({ address }) => {
+    // This component needs to be adapted based on the actual structure of financial_addresses
+    // For now, we'll assume a generic display or handle specific known types like ABA.
+    if (address.type === 'aba' && address.aba) {
+        const abaDetails = address.aba;
+        return (
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <h5 className="font-semibold text-gray-700">ABA Address</h5>
+                <div className="mt-1 text-sm text-gray-600 space-y-0.5">
+                    <p><span className="font-medium">Holder:</span> {abaDetails.account_holder_name}</p>
+                    <p><span className="font-medium">Bank:</span> {abaDetails.bank_name}</p>
+                    <p><span className="font-medium">Routing:</span> {abaDetails.routing_number}</p>
+                    <p><span className="font-medium">Account (Last 4):</span> {abaDetails.account_number_last4}</p>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1 items-center">
+                    <span className="text-xs font-medium text-gray-500 mr-2">Supported Networks:</span>
+                    {abaDetails.supported_networks?.map((network: string) => (
+                        <span key={network} className="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">{network}</span>
+                    ))}
+                </div>
+            </div>
+        );
+    } else if (address.type === 'iban' && address.iban) {
+        return (
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <h5 className="font-semibold text-gray-700">IBAN Address</h5>
+                <div className="mt-1 text-sm text-gray-600 space-y-0.5">
+                    <p><span className="font-medium">Holder:</span> {address.iban.account_holder_name}</p>
+                    <p><span className="font-medium">IBAN:</span> {address.iban.iban}</p>
+                    <p><span className="font-medium">Bank:</span> {address.iban.bank_name}</p>
+                </div>
+            </div>
+        );
     }
-    const abaDetails = address.aba;
-
+    // Fallback for other types or if data is missing
     return (
         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <h5 className="font-semibold text-gray-700">ABA Address</h5>
-            <div className="mt-1 text-sm text-gray-600 space-y-0.5">
-                <p><span className="font-medium">Holder:</span> {abaDetails.account_holder_name}</p>
-                <p><span className="font-medium">Bank:</span> {abaDetails.bank_name}</p>
-                <p><span className="font-medium">Routing:</span> {abaDetails.routing_number}</p>
-                <p><span className="font-medium">Account (Last 4):</span> {abaDetails.account_number_last4}</p>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1 items-center">
-                <span className="text-xs font-medium text-gray-500 mr-2">Supported Networks:</span>
-                {abaDetails.supported_networks?.map(network => (
-                    <span key={network} className="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">{network}</span>
-                ))}
-            </div>
+            <h5 className="font-semibold text-gray-700">Address ({address.type || 'Unknown'})</h5>
+            <p className="text-sm text-gray-500">Details not fully parsed or unsupported type.</p>
         </div>
     );
 };
 
 
 interface FinancialAccountCardProps {
-  financialAccount: Stripe.Treasury.FinancialAccount;
+  financialAccount: {
+    id: string;
+    status: string;
+    country: string;
+    supported_currencies: string[];
+    balance: {
+      cash?: { [key: string]: number };
+      inbound_pending?: { [key: string]: number };
+      outbound_pending?: { [key: string]: number };
+    };
+    financial_addresses?: any[]; // Use 'any' for now, refine if structure is known
+    active_features?: string[] | null;
+    pending_features?: string[] | null;
+    restricted_features?: string[] | null;
+    status_details?: {
+        closed?: {
+            reasons: string[];
+        };
+    };
+  };
 }
 
 export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({ financialAccount }) => {
@@ -141,7 +178,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({ fina
         </div>
         
         {/* Status Details */}
-        {financialAccount.status_details.closed && (
+        {financialAccount.status_details?.closed && financialAccount.status_details.closed.reasons && (
             <div>
                 <h3 className="text-base font-semibold text-gray-800 mb-2">Status Details</h3>
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
