@@ -28,16 +28,16 @@ interface SystemMetricsData {
 
 const generateInitialServices = (): ServiceStatus[] => {
   const serviceNames = [
-    'OpenBanking Core API',
-    'Risk-Weighted Asset Calculator',
-    'Liquidity Simulation Engine',
-    'Compliance Automation Service',
-    'Investor Deck Generator',
-    'Capital Planning Engine',
-    'Stress Scenario Modeler',
-    'Cross-Branch Orchestrator',
-    'Shared Identity Layer',
-    'Automated Audit Validator',
+    'User & Identity Service',
+    'Accounts & Transactions API',
+    'AI Advisor Service',
+    'AI Oracle Simulation Engine',
+    'Corporate Treasury API',
+    'Investment Management API',
+    'Web3 Gateway',
+    'Payments & FX Service',
+    'Lending & CreditFlow Engine',
+    'Developer Platform & Webhooks',
   ];
 
   return serviceNames.map(name => ({
@@ -153,7 +153,7 @@ const SystemMetrics: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 bg-white rounded-lg shadow-md animate-pulse">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Citibankdemobusinessinc System Metrics</h2>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Quantum Core 3.0 System Metrics</h2>
         <p className="text-gray-600">Loading real-time system metrics...</p>
       </div>
     );
@@ -161,7 +161,7 @@ const SystemMetrics: React.FC = () => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Citibankdemobusinessinc System Metrics</h2>
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Quantum Core 3.0 System Metrics</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* CPU Usage */}
