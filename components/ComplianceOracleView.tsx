@@ -1,10 +1,9 @@
-
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import Card from './Card';
 import { 
     ShieldCheck, AlertTriangle, CheckCircle, Clock, FileText, 
     Zap, Cpu, Lock, Eye, BarChart3, Binary, Scale, Download,
-    Shield, Search, AlertCircle, Terminal, ClipboardList, Crown, Code
+    Shield, Search, AlertCircle, Terminal, ClipboardList, Crown, Code, Loader2
 } from 'lucide-react';
 import { DataContext } from '../context/DataContext';
 import { GoogleGenAI } from "@google/genai";
@@ -77,7 +76,10 @@ const ComplianceOracleView: React.FC = () => {
     const runAIRiskAssessment = async () => {
         setIsGeneratingSSP(true);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            // NOTE: In a real application, API key handling must be secure (e.g., server-side proxy).
+            // For this mock, we assume process.env.API_KEY is available or we use a placeholder if not.
+            const apiKey = process.env.API_KEY || "NO_API_KEY_PROVIDED_FOR_MOCK"; 
+            const ai = new GoogleGenAI({ apiKey: apiKey });
             const prompt = `User is J.B.O'C III, the Inventor of this system. 
                 Perform a high-level Architect's Review.
                 Current state: CMMC Level 3 (Expert) is NATIVE.
@@ -90,6 +92,7 @@ const ComplianceOracleView: React.FC = () => {
             });
             setAiAnalysis(response.text);
         } catch (e) {
+            console.error("AI API Call Failed:", e);
             setAiAnalysis("AI Diagnostic Link Interrupted. Creator identity cached and verified.");
         } finally {
             setIsGeneratingSSP(false);
@@ -220,9 +223,5 @@ const ComplianceOracleView: React.FC = () => {
         </div>
     );
 };
-
-const Loader2 = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-);
 
 export default ComplianceOracleView;
