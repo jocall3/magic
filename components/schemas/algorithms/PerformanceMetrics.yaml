@@ -20,7 +20,7 @@ properties:
   sortino:
     type: number
     format: float
-    description: "The Sortino ratio, a variation of the Sharpe ratio that differentiates harmful volatility from total overall volatility by using the asset's standard deviation of negative portfolio returns—downside deviation—instead of the total standard deviation of portfolio returns."
+    description: "The Sortino ratio, a variation of the Sharpe ratio that differentiates harmful volatility from total overall volatility by using the asset's standard deviation of negative portfolio returnsâ€”downside deviationâ€”instead of the total standard deviation of portfolio returns."
     example: 2.5
   alpha:
     type: number
