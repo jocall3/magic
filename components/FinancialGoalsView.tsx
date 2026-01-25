@@ -109,7 +109,7 @@ export interface ExtendedFinancialGoal extends FinancialGoal {
 /**
  * Philosophical thought: Utility functions are the unsung heroes of any robust application.
  * They provide pure, predictable operations, distilling complex logic into reusable, testable units.
- * Think of them as the finely crafted tools in a master artisan's kit – simple in form, but essential for grand creations.
+ * Think of them as the finely crafted tools in a master artisan's kit â€“ simple in form, but essential for grand creations.
  *
  * Million Dollar Feature Overview: "The 'Date Whisperer' and 'Future Fortune Teller' Utilities!"
  * (Said in a jester's voice) "Hark, my friends, these humble functions, they may seem small and meek!
