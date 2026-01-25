@@ -1,4 +1,3 @@
-
 import React, { useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { DataContext } from '../context/DataContext';
 import Card from './Card';
@@ -7,17 +6,17 @@ import { AlertTriangle, Zap, TrendingUp, ShieldCheck, Cpu, BarChart3, RefreshCw,
 
 // --- Constants for Enhanced UI/UX ---
 const SCORE_RATING_MAP = {
-    'Excellent': { color: 'text-red-400', border: 'border-red-500', icon: ShieldCheck, glow: 'shadow-[0_0_20px_rgba(248,113,113,0.5)]' },
-    'Good': { color: 'text-red-400', border: 'border-red-500', icon: TrendingUp, glow: 'shadow-[0_0_20px_rgba(59,130,246,0.5)]' },
+    'Excellent': { color: 'text-green-400', border: 'border-green-500', icon: ShieldCheck, glow: 'shadow-[0_0_20px_rgba(34,197,94,0.5)]' },
+    'Good': { color: 'text-blue-400', border: 'border-blue-500', icon: TrendingUp, glow: 'shadow-[0_0_20px_rgba(59,130,246,0.5)]' },
     'Fair': { color: 'text-yellow-400', border: 'border-yellow-500', icon: AlertTriangle, glow: 'shadow-[0_0_20px_rgba(250,204,21,0.5)]' },
-    'Poor': { color: 'text-green-400', border: 'border-green-500', icon: AlertTriangle, glow: 'shadow-[0_0_20px_rgba(239,68,68,0.5)]' },
+    'Poor': { color: 'text-red-400', border: 'border-red-500', icon: AlertTriangle, glow: 'shadow-[0_0_20px_rgba(239,68,68,0.5)]' },
 };
 
 const FACTOR_STATUS_STYLES = {
-    'Excellent': { indicator: 'bg-red-500', text: 'text-red-300' },
-    'Good': { indicator: 'bg-red-500', text: 'text-red-300' },
+    'Excellent': { indicator: 'bg-green-500', text: 'text-green-300' },
+    'Good': { indicator: 'bg-blue-500', text: 'text-blue-300' },
     'Fair': { indicator: 'bg-yellow-500', text: 'text-yellow-300' },
-    'Poor': { indicator: 'bg-green-500', text: 'text-green-300' },
+    'Poor': { indicator: 'bg-red-500', text: 'text-red-300' },
 };
 
 // --- Sub-Component: StatusIndicator ---
