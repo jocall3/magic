@@ -1,7 +1,6 @@
 // components/views/megadashboard/digitalassets/DaoGovernanceView.tsx
 import React, { useState } from 'react';
 import Card from '../../../Card';
-import { GoogleGenAI } from "@google/genai";
 
 const DaoGovernanceView: React.FC = () => {
     const [isSummarizerOpen, setSummarizerOpen] = useState(false);
@@ -13,10 +12,17 @@ const DaoGovernanceView: React.FC = () => {
         setIsLoading(true);
         setSummary('');
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            const prompt = `Summarize the key points of the following DAO governance proposal into 3 simple bullet points. Proposal: "${proposalText}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            setSummary(response.text);
+            const response = await fetch('https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/advisor/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: `Summarize the key points of the following DAO governance proposal into 3 simple bullet points. Proposal: "${proposalText}"`,
+                }),
+            });
+            const data = await response.json();
+            setSummary(data.text);
         } catch (err) {
             setSummary("Error generating summary.");
         } finally {
