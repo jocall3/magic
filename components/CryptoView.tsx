@@ -69,7 +69,7 @@ const CryptoView: React.FC = () => {
   const context = useContext(DataContext);
   if (!context) throw new Error('CryptoView must be within DataProvider');
 
-  /* ✅ SAFE DEFAULTS (THIS FIXES THE CRASH) */
+  /* âœ… SAFE DEFAULTS (THIS FIXES THE CRASH) */
   const {
     cryptoAssets = [],
     nftAssets = [],
@@ -160,7 +160,7 @@ const CryptoView: React.FC = () => {
               </Card>
             </div>
 
-            {/* ✅ FIXED RECHARTS HEIGHT */}
+            {/* âœ… FIXED RECHARTS HEIGHT */}
             <Card title="Asset Allocation">
               <div style={{ height: 320 }}>
                 <ResponsiveContainer width="100%" height={320}>
