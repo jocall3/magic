@@ -266,8 +266,6 @@ const CardFooter: React.FC<{ children?: ReactNode }> = ({ children }) => {
 // MAIN CARD COMPONENT
 // ================================================================================================
 
-// FIX: This file was truncated. The component implementation has been completed,
-// including state management, prop handling, and the final export statement.
 const Card: React.FC<CardProps> = ({
   title,
   titleTooltip,
