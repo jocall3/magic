@@ -85,7 +85,7 @@ const AIAdvisorView: React.FC<{ previousView: View | null }> = ({ previousView }
     const logAction = useCallback((action: string, actor: 'user' | 'ai' | 'system', details: string, level: AuditEntry['securityLevel'] = 'standard') => {
         const entry: AuditEntry = { timestamp: new Date(), action, actor, details, securityLevel: level };
         setAuditTrail(prev => [...prev, entry]);
-        console.log(`[AUDIT LOG]: ${entry.timestamp.toISOString()} | ${actor.toUpperCase()} | ${action} | ${details}`);
+        console.log(`[AUDIT LOG]: ${entry.timestamp.toISOString()} | ${entry.actor.toUpperCase()} | ${entry.action} | ${entry.details}`);
     }, []);
 
     useEffect(() => {
@@ -213,7 +213,7 @@ const AIAdvisorView: React.FC<{ previousView: View | null }> = ({ previousView }
                                     {prompts.map((p, i) => (
                                         <button key={i} onClick={() => handleSendMessage(p)} className="p-4 bg-slate-800/50 hover:bg-cyan-900/20 hover:border-cyan-500/50 rounded-xl text-cyan-200 text-xs font-bold transition-all border border-slate-700 text-left flex flex-col justify-between group">
                                             <span>"{p}"</span>
-                                            <span className="text-[10px] text-slate-500 mt-2 group-hover:text-cyan-400">Execute Command →</span>
+                                            <span className="text-[10px] text-slate-500 mt-2 group-hover:text-cyan-400">Execute Command â†’</span>
                                         </button>
                                     ))}
                                 </div>
