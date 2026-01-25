@@ -107,7 +107,7 @@ const UserInsightsView: React.FC = () => {
                         <LineChart data={churnPredictionData}>
                              <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
                             <XAxis dataKey="month" stroke="#9ca3af" />
-                            <YAxis stroke="#9ca3af" domain={[2, 3]} unit="%" />
+                            <YAxis stroke="#9ca3af" unit="%" />
                             <Tooltip contentStyle={{ backgroundColor: 'rgba(31, 41, 55, 0.8)', borderColor: '#4b5563' }}/>
                             <Legend />
                             <Line type="monotone" dataKey="actual" stroke="#10b981" name="Actual Churn" strokeWidth={2} />
@@ -129,7 +129,6 @@ const UserInsightsView: React.FC = () => {
                         <RadialBar 
                             minAngle={15} 
                             background 
-                            // FIX: Corrected typo from clockWise to clockwise to match the recharts API.
                             clockwise
                             dataKey="value" 
                         />
