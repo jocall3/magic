@@ -13,12 +13,22 @@ const MultiCurrencyView: React.FC = () => {
         setIsLoading(true);
         setForecast('');
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            // NOTE: The API key is not needed for this specific endpoint as per the OpenAPI spec.
+            // However, the GoogleGenAI library requires an API key for initialization.
+            // For this example, we'll use a placeholder. In a real application,
+            // you would fetch this securely or use a different method if the library allowed.
+            const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || "YOUR_PLACEHOLDER_API_KEY"; // Replace with your actual key or fetch securely
+            const genAI = new GoogleGenAI({ apiKey: API_KEY });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
             const prompt = `Provide a brief, high-level FX volatility forecast for the currency pair "${currencyPair}" for the next 30 days.`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            setForecast(response.text);
+            const result = await model.generateContent(prompt);
+            const response = result.response;
+            const text = response.text();
+            setForecast(text);
         } catch (err) {
-            setForecast("Error generating forecast.");
+            console.error("Error generating forecast:", err);
+            setForecast("Error generating forecast. Please check console for details.");
         } finally {
             setIsLoading(false);
         }
