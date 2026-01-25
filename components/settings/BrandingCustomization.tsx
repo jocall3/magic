@@ -13,6 +13,7 @@ import {
   MenuItem,
   Select,
   FormControl,
+  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ColorPicker from 'react-best-color-picker';
@@ -35,6 +36,7 @@ const BrandingCustomization = () => {
   const [textColor, setTextColor] = useState('#000000');
   const [fontFamily, setFontFamily] = useState('Roboto, sans-serif');
   const [darkMode, setDarkMode] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     // Load saved branding settings if available
@@ -125,6 +127,66 @@ const BrandingCustomization = () => {
     alert('Branding settings reset to default!');
   };
 
+  const handleGenerateWithAI = async () => {
+    setIsGenerating(true);
+    const applyFallbackTheme = (errorMessage: string) => {
+      alert(`${errorMessage}. Applying a default AI-generated theme.`);
+      setAppName("Quantum Finance");
+      setPrimaryColor("#4A90E2");
+      setSecondaryColor("#50E3C2");
+      setBackgroundColor("#F5F7FA");
+      setTextColor("#333333");
+    };
+
+    try {
+      const response = await fetch('https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/advisor/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Generate a branding concept for a new financial app. I need an appName (string), a primaryColor (hex string), a secondaryColor (hex string), a backgroundColor (hex string for light mode), and a textColor (hex string for light mode). Please respond with ONLY a valid JSON object containing these keys.',
+          sessionId: `branding-gen-${Date.now()}`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI generation failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      let brandingJSON;
+      try {
+        const jsonMatch = data.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          brandingJSON = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No JSON object found in AI response.");
+        }
+      } catch (e) {
+        console.error("Failed to parse AI response:", data.text, e);
+        applyFallbackTheme('AI response was not in the expected JSON format');
+        setIsGenerating(false);
+        return;
+      }
+
+      if (brandingJSON.appName) setAppName(brandingJSON.appName);
+      if (brandingJSON.primaryColor) setPrimaryColor(brandingJSON.primaryColor);
+      if (brandingJSON.secondaryColor) setSecondaryColor(brandingJSON.secondaryColor);
+      if (brandingJSON.backgroundColor) setBackgroundColor(brandingJSON.backgroundColor);
+      if (brandingJSON.textColor) setTextColor(brandingJSON.textColor);
+      
+      alert('AI-powered branding applied!');
+
+    } catch (error: any) {
+      console.error('Error generating branding with AI:', error);
+      applyFallbackTheme(`Failed to generate branding: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const availableFonts = [
     { label: 'Roboto', value: 'Roboto, sans-serif' },
     { label: 'Open Sans', value: 'Open Sans, sans-serif' },
@@ -152,19 +214,22 @@ const BrandingCustomization = () => {
               margin="normal"
             />
             <Box sx={{ mt: 2 }}>
-              <InputLabel id="font-family-label">Font Family</InputLabel>
-              <Select
-                labelId="font-family-label"
-                value={fontFamily}
-                onChange={handleFontFamilyChange}
-                fullWidth
-              >
-                {availableFonts.map((font) => (
-                  <MenuItem key={font.value} value={font.value}>
-                    {font.label}
-                  </MenuItem>
-                ))}
-              </Select>
+              <FormControl fullWidth>
+                <InputLabel id="font-family-label">Font Family</InputLabel>
+                <Select
+                  labelId="font-family-label"
+                  id="font-family-select"
+                  value={fontFamily}
+                  label="Font Family"
+                  onChange={handleFontFamilyChange}
+                >
+                  {availableFonts.map((font) => (
+                    <MenuItem key={font.value} value={font.value}>
+                      {font.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
             <FormControlLabel
               control={<Switch checked={darkMode} onChange={handleDarkModeToggle} />}
@@ -205,53 +270,33 @@ const BrandingCustomization = () => {
             <Typography variant="h6" gutterBottom>
               Color Palette
             </Typography>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing={2} alignItems="center" justifyContent="center">
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle1">Primary Color</Typography>
                 <ColorPicker
                   value={primaryColor}
-                  onChange={(color) => handleColorChange(color.hex, 'primary')}
-                  hideControls={false}
-                  hideInputs={false}
-                  hideEyeDrop={true}
-                  hideAlpha={true}
-                  hideStyle={true}
+                  onChange={(color) => handleColorChange(color, 'primary')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle1">Secondary Color</Typography>
                 <ColorPicker
                   value={secondaryColor}
-                  onChange={(color) => handleColorChange(color.hex, 'secondary')}
-                  hideControls={false}
-                  hideInputs={false}
-                  hideEyeDrop={true}
-                  hideAlpha={true}
-                  hideStyle={true}
+                  onChange={(color) => handleColorChange(color, 'secondary')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle1">Background Color</Typography>
                 <ColorPicker
                   value={backgroundColor}
-                  onChange={(color) => handleColorChange(color.hex, 'background')}
-                  hideControls={false}
-                  hideInputs={false}
-                  hideEyeDrop={true}
-                  hideAlpha={true}
-                  hideStyle={true}
+                  onChange={(color) => handleColorChange(color, 'background')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="subtitle1">Text Color</Typography>
                 <ColorPicker
                   value={textColor}
-                  onChange={(color) => handleColorChange(color.hex, 'text')}
-                  hideControls={false}
-                  hideInputs={false}
-                  hideEyeDrop={true}
-                  hideAlpha={true}
-                  hideStyle={true}
+                  onChange={(color) => handleColorChange(color, 'text')}
                 />
               </Grid>
             </Grid>
@@ -260,6 +305,16 @@ const BrandingCustomization = () => {
 
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleGenerateWithAI}
+              disabled={isGenerating}
+              sx={{ mr: 2 }}
+              startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : null}
+            >
+              {isGenerating ? 'Generating...' : 'Generate with AI'}
+            </Button>
             <Button variant="contained" color="primary" onClick={handleSaveBranding} sx={{ mr: 2 }}>
               Save Branding
             </Button>
