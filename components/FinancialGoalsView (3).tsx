@@ -111,7 +111,7 @@ export interface ExtendedFinancialGoal extends FinancialGoal {
 /**
  * Philosophical thought: Utility functions are the unsung heroes of any robust application.
  * They provide pure, predictable operations, distilling complex logic into reusable, testable units.
- * Think of them as the finely crafted tools in a master artisan's kit â€“ simple in form, but essential for grand creations.
+ * Think of them as the finely crafted tools in a master artisan's kit Ã¢â‚¬â€œ simple in form, but essential for grand creations.
  *
  * Million Dollar Feature Overview: "The 'Date Whisperer' and 'Future Fortune Teller' Utilities!"
  * (Said in a jester's voice) "Hark, my friends, these humble functions, they may seem small and meek!
@@ -778,7 +778,7 @@ export const ProjectionSimulator: React.FC<{ goal: ExtendedFinancialGoal }> = ({
                 <ResponsiveContainer>
                     <LineChart data={projectionData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                        <XAxis dataKey="month" label={{ value: 'Months from now', position: 'insideBottom', offset: -10 }} stroke="#A0AEC0" />
+                        <XAxis label={{ value: 'Months from now', position: 'insideBottom', offset: -10 }} stroke="#A0AEC0" />
                         <YAxis tickFormatter={(tick) => `$${(tick / 1000).toLocaleString()}k`} stroke="#A0AEC0"/>
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
@@ -789,7 +789,7 @@ export const ProjectionSimulator: React.FC<{ goal: ExtendedFinancialGoal }> = ({
                 </ResponsiveContainer>
             </div>
             <div className={`p-4 rounded-lg ${isOnTrackInflationAdjusted ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                <h5 className="font-bold text-white">Simulation Result</h5>
+                <h5 className="font-bold text-white mb-2">Simulation Result</h5>
                 <p className={`text-sm ${isOnTrackInflationAdjusted ? 'text-green-300' : 'text-red-300'}`}>
                     With these settings, your projected balance in {monthsRemaining} months will be
                     <span className="font-bold text-white"> ${finalProjectedValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>.
@@ -955,17 +955,7 @@ export const MonteCarloAnalysis: React.FC<{goal: ExtendedFinancialGoal}> = ({ go
                                         <XAxis dataKey="month" stroke="#A0AEC0" />
                                         <YAxis tickFormatter={(tick) => `$${(tick / 1000).toLocaleString()}k`} stroke="#A0AEC0"/>
                                         <Tooltip content={<CustomTooltip />} />
-                                        <defs>
-                                            <linearGradient id="colorRangeUpper" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#38B2AC" stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor="#38B2AC" stopOpacity={0}/>
-                                            </linearGradient>
-                                            <linearGradient id="colorRangeLower" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#E53E3E" stopOpacity={0.4}/>
-                                            <stop offset="95%" stopColor="#E53E3E" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <Area type="monotone" dataKey="p90" fill="transparent" name="90th Percentile" strokeWidth={1} stroke="#82ca9d"/>
+                                        <Legend />
                                         <Line type="monotone" dataKey="median" stroke="#F6E05E" strokeWidth={2} dot={false} name="Median Outcome" />
                                         <Area type="monotone" dataKey="p90" strokeWidth={0} fillOpacity={0.2} fill="url(#colorRangeUpper)" name="Optimistic Range" />
                                         <Area type="monotone" dataKey="p10" fillOpacity={0} name="Pessimistic Range (Base for upper fill)" />
@@ -1560,7 +1550,7 @@ export const CreateGoalView: React.FC<{
  * (Jester voice) "Step right up, noble saver, and behold your goal's full glory!
  * No mere overview, but a 'Gallereia' of its complete story!
  * From humble pennies to soaring projections, a truly epic allegory!
- * Contributions, plans, risks, and AI wisdom â€“ all in one inventory!
+ * Contributions, plans, risks, and AI wisdom Ã¢â‚¬â€œ all in one inventory!
  * Tweak, adjust, observe, and conquer, your financial victory!"
  */
 export const GoalDetailView: React.FC<{
