@@ -12,34 +12,49 @@ const DemoBankGISView: React.FC = () => {
         setIsLoading(true);
         setGeneratedGeoJson(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            const schema = {
-                type: Type.OBJECT,
-                properties: {
-                    type: { type: Type.STRING },
-                    features: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                type: { type: Type.STRING },
-                                properties: { type: Type.OBJECT, properties: { name: { type: Type.STRING } } },
-                                geometry: {
-                                    type: Type.OBJECT,
-                                    properties: {
-                                        type: { type: Type.STRING },
-                                        coordinates: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.NUMBER } } } } }
-                                }
-                            }
+            // Using the provided API endpoint directly without an API key
+            const response = await fetch("https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/oracle/simulate/advanced", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    prompt: `Generate a simple GeoJSON object for the following location: "${prompt}". Provide a few coordinate points to define the shape.`,
+                    scenarios: [
+                        {
+                            name: "GeoJSON Generation",
+                            events: [],
+                            sensitivityAnalysisParams: []
                         }
-                    }
-                }
-            };
-            const fullPrompt = `Generate a simple GeoJSON object for the following location: "${prompt}". Provide a few coordinate points to define the shape.`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fullPrompt, config: { responseMimeType: "application/json", responseSchema: schema } });
-            setGeneratedGeoJson(JSON.parse(response.text));
+                    ],
+                    // The API schema implies these might be expected, even if not used for this specific generation
+                    globalEconomicFactors: {},
+                    personalAssumptions: {}
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            // Assuming the API returns GeoJSON directly or within a specific field
+            // Adjust 'data.scenarioResults[0].geojson' based on the actual API response structure
+            // For this mock, we'll assume the response contains a 'geojson' field directly
+            if (data.scenarioResults && data.scenarioResults.length > 0 && data.scenarioResults[0].geojson) {
+                setGeneratedGeoJson(data.scenarioResults[0].geojson);
+            } else if (data.geojson) { // Fallback if geojson is at the root
+                setGeneratedGeoJson(data.geojson);
+            } else {
+                // If the API doesn't return GeoJSON directly, we might need to parse a narrative
+                // and extract coordinates. For this example, we'll assume a direct GeoJSON response.
+                console.error("Unexpected API response format:", data);
+                setGeneratedGeoJson({ error: "Could not parse GeoJSON from response." });
+            }
+
         } catch (error) {
-            console.error(error);
+            console.error("Error generating GeoJSON:", error);
+            setGeneratedGeoJson({ error: `Failed to generate GeoJSON: ${error.message}` });
         } finally {
             setIsLoading(false);
         }
