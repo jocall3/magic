@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 // Styles loaded via index.html
@@ -20,10 +19,13 @@ const DisruptionIndexMeter: React.FC<DisruptionIndexMeterProps> = ({
   const percentage = (normalizedIndex / maxValue) * 100;
 
   // Define color stops for the meter's color gradient
+  // NOTE: The original logic seems to map 0% (low value) to RED and 100% (high value) to GREEN.
+  // For a "Disruption Index", RED usually means HIGH disruption, GREEN means LOW disruption.
+  // Reversing colors to match standard interpretation where higher index = higher disruption = redder color.
   const colorStops = [
-    { stop: 0, color: '#E53935' },   // Red (Low disruption)
+    { stop: 0, color: '#43A047' },   // Green (Low disruption)
     { stop: 50, color: '#FB8C00' },  // Orange (Medium disruption)
-    { stop: 100, color: '#43A047' }, // Green (High disruption)
+    { stop: 100, color: '#E53935' }, // Red (High disruption)
   ];
 
   // Function to interpolate color based on percentage
