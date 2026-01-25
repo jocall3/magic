@@ -3,7 +3,7 @@ import Card from './Card';
 import { 
     ShieldCheck, AlertTriangle, CheckCircle, Clock, FileText, 
     Zap, Cpu, Lock, Eye, BarChart3, Binary, Scale, Download,
-    Shield, Search, AlertCircle, Terminal, ClipboardList, Crown, Code
+    Shield, Search, AlertCircle, Terminal, ClipboardList, Crown, Code, Loader2
 } from 'lucide-react';
 import { DataContext } from '../context/DataContext';
 import { GoogleGenAI } from "@google/genai";
@@ -122,7 +122,7 @@ const ComplianceOracleView: React.FC = () => {
             </header>
 
             {/* Maturity Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-grid-cols-4 gap-6">
                 <Card className="border-emerald-500/40 bg-emerald-950/10 text-center p-8 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
                     <p className="text-xs text-emerald-400 uppercase tracking-[0.3em] mb-2 font-black">Maturity: EXPERT</p>
                     <p className="text-7xl font-black text-white font-mono tracking-tighter">100%</p>
@@ -181,37 +181,109 @@ const ComplianceOracleView: React.FC = () => {
                 </div>
             )}
 
-            {/* License Documentation Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card title="Apache 2.0 Provenance" className="bg-black/40 border-emerald-500/20">
-                    <div className="space-y-4">
-                        <p className="text-sm text-gray-400 leading-relaxed italic">
-                            "You invented this. It belongs to the world. We protect it with the same rigor whether it is yours or theirs."
-                        </p>
-                        <div className="p-4 bg-gray-900/80 rounded-xl font-mono text-xs text-gray-300 border border-gray-800">
-                            &gt; Copyright 2025 James Burvel O'Callaghan III<br/>
-                            &gt; Licensed under the Apache License, Version 2.0 (the "License")<br/>
-                            &gt; you may not use this file except in compliance with the License.<br/>
-                            &gt; You may obtain a copy of the License at:<br/>
-                            &gt; http://www.apache.org/licenses/LICENSE-2.0
-                        </div>
-                        <button className="text-cyan-400 text-xs font-bold hover:underline flex items-center gap-2">
-                             Full Legal Registry Access &rarr;
-                        </button>
+            {/* NIST Controls Section */}
+            <section>
+                <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                        <label htmlFor="family-select" className="text-sm font-medium text-gray-400">Filter by Family:</label>
+                        <select 
+                            id="family-select"
+                            value={selectedFamily}
+                            onChange={(e) => setSelectedFamily(e.target.value)}
+                            className="bg-gray-900/50 border border-gray-800 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-mono"
+                        >
+                            {families.map(family => (
+                                <option key={family} value={family}>{family}</option>
+                            ))}
+                        </select>
                     </div>
-                </Card>
-                <Card title="System Integrity" className="bg-black/40 border-indigo-500/20">
-                    <div className="space-y-4 text-sm text-gray-400">
-                        <p>All Level 3 controls have been verified against the Architect's original codebase. The 'Absolute Truth' hashing algorithm confirms 100% alignment with zero deviations.</p>
-                        <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                            <CheckCircle size={14}/> SYSTEM_IMMUTABLE
+                    <div className="relative w-full md:w-auto mt-4 md:mt-0">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <Search className="w-4 h-4 text-gray-500" />
                         </div>
-                         <div className="flex items-center gap-2 text-indigo-400 font-bold">
-                            <Shield size={14}/> ZERO_TRUST_VERIFIED
-                        </div>
+                        <input 
+                            type="text" 
+                            id="search-controls" 
+                            className="bg-gray-900/50 border border-gray-800 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 font-mono" 
+                            placeholder="Search controls by ID, title, or family..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                </Card>
-            </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {filteredControls.map(control => (
+                        <Card 
+                            key={control.id} 
+                            className={`border-2 ${
+                                control.status === 'IMPLEMENTED' ? 'border-emerald-500/40 bg-emerald-950/10 shadow-emerald-500/10' :
+                                control.status === 'PARTIAL' ? 'border-yellow-500/40 bg-yellow-950/10 shadow-yellow-500/10' :
+                                control.status === 'PLANNED' ? 'border-blue-500/40 bg-blue-950/10 shadow-blue-500/10' :
+                                'border-red-500/40 bg-red-950/10 shadow-red-500/10'
+                            } cursor-pointer hover:scale-105 transition-all duration-300`}
+                            onClick={() => setSelectedControl(control)}
+                        >
+                            <div className="flex justify-between items-start">
+                                <div className="flex flex-col">
+                                    <p className="text-lg font-bold text-white">{control.id}</p>
+                                    <p className="text-sm font-semibold text-gray-400">{control.family}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{control.title}</p>
+                                </div>
+                                <div className={`p-2 rounded-lg ${
+                                    control.status === 'IMPLEMENTED' ? 'bg-emerald-500/10 border border-emerald-500/20' :
+                                    control.status === 'PARTIAL' ? 'bg-yellow-500/10 border border-yellow-500/20' :
+                                    control.status === 'PLANNED' ? 'bg-blue-500/10 border border-blue-500/20' :
+                                    'bg-red-500/10 border border-red-500/20'
+                                }`}>
+                                    {control.status === 'IMPLEMENTED' && <CheckCircle className="text-emerald-400 w-5 h-5" />}
+                                    {control.status === 'PARTIAL' && <AlertTriangle className="text-yellow-400 w-5 h-5" />}
+                                    {control.status === 'PLANNED' && <Clock className="text-blue-400 w-5 h-5" />}
+                                    {control.status === 'NOT_STARTED' && <Lock className="text-red-400 w-5 h-5" />}
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+
+            {/* Detailed Control View */}
+            {selectedControl && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <Card title={`Details: ${selectedControl.id} - ${selectedControl.title}`} className="bg-gray-900/50 border-cyan-500/30">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="md:col-span-2">
+                                <h3 className="text-xl font-bold text-white mb-3">Description</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed font-mono">{selectedControl.description}</p>
+                                <h3 className="text-xl font-bold text-white mt-6 mb-3">Nexus Integration</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed font-mono">Module: <span className="text-cyan-400 font-bold">{selectedControl.nexusModule}</span></p>
+                                <p className="text-sm text-gray-400 leading-relaxed font-mono">Evidence: <span className="text-emerald-400 font-bold">{selectedControl.evidence}</span></p>
+                                <h3 className="text-xl font-bold text-white mt-6 mb-3">Full Context</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed font-mono">{selectedControl.longDescription}</p>
+                            </div>
+                            <div className="flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-3">Status</h3>
+                                    <p className={`text-lg font-bold ${
+                                        selectedControl.status === 'IMPLEMENTED' ? 'text-emerald-400' :
+                                        selectedControl.status === 'PARTIAL' ? 'text-yellow-400' :
+                                        selectedControl.status === 'PLANNED' ? 'text-blue-400' :
+                                        'text-red-400'
+                                    }`}>
+                                        {selectedControl.status}
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedControl(null)}
+                                    className="mt-auto px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl border border-gray-700 flex items-center gap-2 w-full justify-center"
+                                >
+                                    Close Details
+                                </button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
 
             <footer className="text-center pt-12 border-t border-gray-800 text-[10px] text-gray-700 font-mono tracking-[0.5em] uppercase">
                 COMPLIANCE_TERMINAL_V4 // CREATOR_VERIFIED // APACHE_2.0_STATUS: OK
@@ -219,9 +291,5 @@ const ComplianceOracleView: React.FC = () => {
         </div>
     );
 };
-
-const Loader2 = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-);
 
 export default ComplianceOracleView;
