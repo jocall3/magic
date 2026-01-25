@@ -3,7 +3,6 @@ import React, { useContext, useMemo, useState } from 'react';
 import Card from '../../../Card';
 import { DataContext } from '../../../../context/DataContext';
 import { FunnelChart, Funnel, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
-import { GoogleGenAI } from "@google/genai";
 import type { SalesDeal } from '../../../../types';
 
 const SalesPipelineView: React.FC = () => {
@@ -39,10 +38,16 @@ const SalesPipelineView: React.FC = () => {
         setIsLoading(true);
         setAiProbability(null);
         try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
-            const prompt = `Based on this deal (Value: $${deal.value}, Stage: ${deal.stage}), estimate the probability to close as a percentage. Respond with only the number.`;
-            const response = await ai.models.generateContent({model: 'gemini-2.5-flash', contents: prompt});
-            setAiProbability(parseFloat(response.text));
+            const response = await fetch('https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/ai/advisor/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: `Based on this deal (Value: $${deal.value}, Stage: ${deal.stage}), estimate the probability to close as a percentage. Respond with only the number.`,
+                    sessionId: 'session-sales-pipeline-123'
+                })
+            });
+            const data = await response.json();
+            setAiProbability(parseFloat(data.text));
         } catch (err) { console.error(err); } finally { setIsLoading(false); }
     };
 
