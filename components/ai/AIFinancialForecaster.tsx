@@ -1,49 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 /**
- * CITIBANK DEMO BUSINESS INC.
- * Branch: Citibankdemobusinessinc.finance.forecaster
+ * QUANTUM CORE 3.0
+ * Branch: ai.oracle.simulation_interface
  * 
  * A self-contained, zero-dependency financial forecasting application.
- * Part of the unified Citibankdemobusinessinc ecosystem.
+ * Powered by the Quantum Core 3.0 API.
  * 
  * Features:
- * - Generative Data Modeling (Stochastic Revenue Projection)
- * - Internal Risk & Compliance Simulation
- * - Zero External Dependencies (Custom UI & Charting)
- * - Auto-Scaling Architecture Simulation
+ * - AI-driven "What-If" Scenario Simulation
+ * - Narrative Summaries & Key Impact Analysis
+ * - Actionable Recommendations & Risk Assessment
+ * - Zero External Dependencies (Custom UI)
  */
+
+const API_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
 
 // --- 1. CORE KERNEL & GENERATORS ---
 
 const ID = () => Math.random().toString(36).substring(2, 9);
-
-const GenerateMission = () => {
-  const verbs = ["Empowering", "Revolutionizing", "Securing", "Accelerating", "Optimizing"];
-  const nouns = ["Global Finance", "Open Banking", "Asset Liquidity", "Future Wealth", "Capital Efficiency"];
-  return `${verbs[Math.floor(Math.random() * verbs.length)]} ${nouns[Math.floor(Math.random() * nouns.length)]} through AI-driven foresight.`;
-};
-
-const GenerateTimeSeries = (start: number, years: number, growth: number, vol: number) => {
-  let current = start;
-  return Array.from({ length: years }).map((_, i) => {
-    // Randomized growth factor based on volatility
-    const noise = (Math.random() - 0.5) * (vol / 50); 
-    const growthFactor = (growth / 100);
-    const change = growthFactor + noise;
-    current = current * (1 + change);
-    
-    // Calculate confidence intervals
-    const confidence = current * (vol / 200);
-    
-    return { 
-      year: new Date().getFullYear() + i, 
-      value: Math.max(0, Math.round(current)),
-      min: Math.max(0, Math.round(current - confidence)),
-      max: Math.round(current + confidence)
-    };
-  });
-};
 
 // --- 2. ZERO-DEPENDENCY UI SYSTEM ---
 
@@ -120,90 +95,8 @@ const Badge = ({ children, color = "slate" }: any) => {
   return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${colors[color]}`}>{children}</span>;
 };
 
-// --- 3. CUSTOM SVG CHARTING ENGINE ---
 
-const ForecastChart = ({ data, height = 320 }: any) => {
-  if (!data || !data.length) return null;
-  
-  const maxVal = Math.max(...data.map((d: any) => d.max)) * 1.1;
-  const minVal = 0;
-  const range = maxVal - minVal;
-  
-  // Dimensions
-  const padding = { top: 20, right: 20, bottom: 30, left: 40 };
-  
-  return (
-    <div className="w-full relative select-none" style={{ height: `${height}px` }}>
-      <svg width="100%" height="100%" className="overflow-visible">
-        {/* Grid Lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((tick) => (
-          <line 
-            key={tick}
-            x1="0%" 
-            y1={`${100 - (tick * 100)}%`} 
-            x2="100%" 
-            y2={`${100 - (tick * 100)}%`} 
-            stroke="#f1f5f9" 
-            strokeWidth="1" 
-          />
-        ))}
-
-        {/* Data Bars & Points */}
-        <g className="transform transition-all duration-500">
-          {data.map((d: any, i: number) => {
-            const x = `${(i / (data.length - 1)) * 100}%`;
-            const y = `${100 - ((d.value / maxVal) * 100)}%`;
-            const yMin = `${100 - ((d.min / maxVal) * 100)}%`;
-            const yMax = `${100 - ((d.max / maxVal) * 100)}%`;
-            
-            return (
-              <g key={i} className="group">
-                {/* Confidence Interval Line */}
-                <line x1={x} y1={yMin} x2={x} y2={yMax} stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
-                
-                {/* Main Value Point */}
-                <circle cx={x} cy={y} r="4" fill="#0f172a" className="transition-all group-hover:r-6" />
-                <circle cx={x} cy={y} r="12" fill="transparent" className="cursor-pointer" />
-                
-                {/* Tooltip (CSS-only) */}
-                <foreignObject x={x} y="0" width="100" height="100%" className="overflow-visible pointer-events-none">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10 shadow-lg">
-                    <div className="font-bold">{d.year}</div>
-                    <div>Proj: ${d.value}M</div>
-                    <div className="text-slate-400 text-[10px]">${d.min}M - ${d.max}M</div>
-                  </div>
-                </foreignObject>
-              </g>
-            );
-          })}
-        </g>
-        
-        {/* Connecting Line */}
-        <path
-          d={`M ${data.map((d: any, i: number) => {
-            const x = (i / (data.length - 1)) * 100;
-            const y = 100 - ((d.value / maxVal) * 100);
-            return `${x === 0 ? 'M' : 'L'} ${x * (1000/100)} ${y * (320/100)}`; // Approximate scaling for path
-          }).join(' ')}`}
-          fill="none"
-          stroke="#0f172a"
-          strokeWidth="2"
-          strokeOpacity="0.1"
-          vectorEffect="non-scaling-stroke"
-          transform="scale(0.1, 0.31) translate(0,0)" // Hacky scaling for SVG path in responsive container
-          style={{ display: 'none' }} // Hidden for now, using points
-        />
-      </svg>
-      
-      {/* X-Axis Labels */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-slate-400 pt-2">
-        {data.map((d: any) => <span key={d.year}>{d.year}</span>)}
-      </div>
-    </div>
-  );
-};
-
-// --- 4. MAIN APPLICATION LOGIC ---
+// --- 3. MAIN APPLICATION LOGIC ---
 
 export default function AIFinancialForecaster() {
   // --- STATE ---
@@ -211,7 +104,7 @@ export default function AIFinancialForecaster() {
     { id: '1', name: 'Base Case', growth: 12, volatility: 15, baseValue: 100 }
   ]);
   const [activeScenarioId, setActiveScenarioId] = useState('1');
-  const [forecasts, setForecasts] = useState<any[]>([]);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState({
     riskScore: 12,
@@ -221,30 +114,50 @@ export default function AIFinancialForecaster() {
 
   // --- DERIVED STATE ---
   const activeScenario = scenarios.find(s => s.id === activeScenarioId) || scenarios[0];
-  const activeForecast = forecasts.find(f => f.scenarioId === activeScenarioId)?.data || [];
 
   // --- ACTIONS ---
-  const runSimulation = useCallback(() => {
+  const runSimulation = useCallback(async () => {
+    if (!activeScenario) return;
     setIsSimulating(true);
-    // Simulate AI processing time
-    setTimeout(() => {
-      const newForecasts = scenarios.map(s => ({
-        scenarioId: s.id,
-        data: GenerateTimeSeries(s.baseValue, 6, s.growth, s.volatility)
-      }));
-      
-      setForecasts(newForecasts);
-      
-      // Update system metrics based on simulation
-      setSystemMetrics({
-        riskScore: Math.floor(Math.random() * 20) + (activeScenario.volatility / 2),
-        compliance: Math.random() > 0.1 ? 'AUDITED' : 'REVIEWING',
-        liquidity: activeScenario.growth > 20 ? 'STRAINED' : 'OPTIMAL'
-      });
-      
-      setIsSimulating(false);
-    }, 800);
-  }, [scenarios, activeScenario]);
+    setSimulationResult(null);
+
+    const prompt = `What if my company's revenue, starting at $${activeScenario.baseValue}M, grows at an average of ${activeScenario.growth}% annually for the next 5 years, with a market volatility of ${activeScenario.volatility}%?`;
+
+    try {
+        const response = await fetch(`${API_URL}/ai/oracle/simulate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                parameters: {
+                    durationYears: 5,
+                    initialValue: activeScenario.baseValue,
+                    growthRate: activeScenario.growth,
+                    volatility: activeScenario.volatility,
+                    riskTolerance: activeScenario.growth > 15 ? 'aggressive' : (activeScenario.growth > 5 ? 'medium' : 'low')
+                }
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText}`);
+        }
+        const result = await response.json();
+        setSimulationResult(result);
+
+        // Update system metrics based on simulation result
+        setSystemMetrics({
+            riskScore: result.riskAnalysis?.volatilityIndex ? result.riskAnalysis.volatilityIndex * 100 : Math.floor(Math.random() * 20),
+            compliance: 'AUDITED', // Mocked
+            liquidity: result.keyImpacts?.some((i: any) => i.metric.toLowerCase().includes('cash')) ? 'ANALYZED' : 'OPTIMAL'
+        });
+
+    } catch (error) {
+        console.error("Simulation failed:", error);
+        // TODO: Set an error state to display in UI
+    } finally {
+        setIsSimulating(false);
+    }
+  }, [activeScenario]);
 
   // Initial load
   useEffect(() => {
@@ -284,10 +197,10 @@ export default function AIFinancialForecaster() {
           <div>
             <div className="flex items-center gap-2 text-slate-400 text-xs font-mono uppercase tracking-widest mb-1">
               <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-              Citibankdemobusinessinc.finance.forecaster
+              Quantum Core 3.0 // Oracle Simulation Interface
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">AI Financial Forecaster</h1>
-            <p className="text-slate-500 mt-1 max-w-2xl">{GenerateMission()}</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Quantum Oracle</h1>
+            <p className="text-slate-500 mt-1 max-w-2xl">Engage the Quantum Oracle for financial impact analysis. Submit hypothetical scenarios to simulate effects on your financial state and receive AI-driven summaries.</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -367,8 +280,8 @@ export default function AIFinancialForecaster() {
                 </div>
 
                 <Button className="w-full mt-4" onClick={runSimulation} disabled={isSimulating}>
-                  {isSimulating ? <Icon name="refresh" className="w-4 h-4 animate-spin mr-2" /> : <Icon name="trending" className="w-4 h-4 mr-2" />}
-                  Generate Forecast
+                  {isSimulating ? <Icon name="refresh" className="w-4 h-4 animate-spin mr-2" /> : <Icon name="brain" className="w-4 h-4 mr-2" />}
+                  Engage Quantum Oracle
                 </Button>
               </div>
             </Card>
@@ -376,38 +289,85 @@ export default function AIFinancialForecaster() {
 
           {/* RIGHT COLUMN: VISUALIZATION (8 cols) */}
           <div className="lg:col-span-8 space-y-6">
-            
-            {/* Chart Card */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-lg font-semibold">Revenue Projection (5-Year)</h2>
-                  <p className="text-sm text-slate-500">Stochastic modeling based on current parameters.</p>
+            <Card className="p-6 relative min-h-[400px]">
+              <h2 className="text-lg font-semibold mb-2">Oracle Analysis</h2>
+              <p className="text-sm text-slate-500 mb-6">AI-generated summary and key metrics based on your scenario.</p>
+              
+              {isSimulating && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white/80 backdrop-blur-sm z-10 rounded-xl">
+                  <Icon name="brain" className="w-12 h-12 animate-pulse text-blue-500 mb-4" />
+                  <span className="text-sm font-medium">AI Model Processing...</span>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-slate-900 tracking-tight">
-                    ${activeForecast.length ? activeForecast[activeForecast.length - 1].value : 0}M
-                  </div>
-                  <div className="text-xs font-medium text-green-600 flex items-center justify-end gap-1">
-                    <Icon name="trending" className="w-3 h-3" />
-                    CAGR: {((Math.pow((activeForecast[activeForecast.length - 1]?.value || 100) / (activeScenario.baseValue || 100), 1/5) - 1) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
+              )}
 
-              <div className="bg-slate-50/50 rounded-xl border border-slate-100 p-6 relative min-h-[350px]">
-                {isSimulating ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white/80 backdrop-blur-sm z-10">
-                    <Icon name="brain" className="w-12 h-12 animate-pulse text-blue-500 mb-4" />
-                    <span className="text-sm font-medium">AI Model Processing...</span>
+              {simulationResult ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-slate-800 mb-2">Narrative Summary</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-200">
+                      {simulationResult.narrativeSummary}
+                    </p>
                   </div>
-                ) : null}
-                <ForecastChart data={activeForecast} />
-              </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-slate-800 mb-3">Key Impacts</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {simulationResult.keyImpacts?.map((impact: any, index: number) => (
+                        <div key={index} className="bg-white border border-slate-200 rounded-lg p-4">
+                          <p className="text-sm text-slate-500">{impact.metric}</p>
+                          <p className="text-2xl font-bold text-slate-900">{impact.value}</p>
+                          <Badge color={impact.severity === 'high' ? 'red' : impact.severity === 'medium' ? 'amber' : 'green'}>
+                            Severity: {impact.severity}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {simulationResult.recommendations?.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-slate-800 mb-3">AI Recommendations</h3>
+                      <div className="space-y-3">
+                        {simulationResult.recommendations.map((rec: any, index: number) => (
+                          <div key={index} className="flex items-start gap-3 text-sm p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <Icon name="check" className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-slate-800">{rec.title}</p>
+                              <p className="text-slate-600">{rec.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                !isSimulating && <div className="min-h-[350px] flex items-center justify-center text-slate-400">
+                  <p>Run a simulation to see results.</p>
+                </div>
+              )}
             </Card>
 
-            {/* Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-5">
+                <h3 className="font-semibold mb-4 flex items-center gap-2 text-slate-800">
+                  <Icon name="alert" className="text-amber-600" /> Risk Analysis
+                </h3>
+                {simulationResult?.riskAnalysis ? (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded">
+                      <span className="text-slate-600">Max Drawdown</span>
+                      <span className="font-mono font-bold text-slate-800">{(simulationResult.riskAnalysis.maxDrawdown * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded">
+                      <span className="text-slate-600">Volatility Index</span>
+                      <span className="font-mono font-bold text-slate-800">{simulationResult.riskAnalysis.volatilityIndex}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">No risk analysis data available.</p>
+                )}
+              </Card>
               <Card className="p-5">
                 <h3 className="font-semibold mb-4 flex items-center gap-2 text-slate-800">
                   <Icon name="shield" className="text-blue-600" /> Regulatory Compliance
@@ -427,36 +387,19 @@ export default function AIFinancialForecaster() {
                   </div>
                 </div>
               </Card>
-
-              <Card className="p-5">
-                <h3 className="font-semibold mb-4 flex items-center gap-2 text-slate-800">
-                  <Icon name="brain" className="text-purple-600" /> AI Strategic Insights
-                </h3>
-                <div className="text-sm text-slate-600 space-y-3">
-                  <p>
-                    Based on a volatility index of <span className="font-bold text-slate-900">{activeScenario.volatility}</span>, 
-                    the model suggests a <span className="font-bold text-slate-900">{activeScenario.growth > 15 ? 'Aggressive' : 'Conservative'}</span> capital allocation strategy.
-                  </p>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(100, activeScenario.growth * 2)}%` }}></div>
-                  </div>
-                  <p className="text-xs text-slate-400 text-right">Growth Confidence Interval</p>
-                </div>
-              </Card>
             </div>
-
           </div>
         </div>
 
         {/* FOOTER */}
         <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
           <div>
-            &copy; 2024 Citibank Demo Business Inc. All Rights Reserved.
+            &copy; 2024 Quantum Core Financial Systems. All Rights Reserved.
           </div>
           <div className="flex gap-4 mt-4 md:mt-0">
             <span>System Status: <span className="text-green-500">Operational</span></span>
             <span>Encrypted: <span className="text-green-500">AES-256</span></span>
-            <span>Version: 1.0.4-alpha</span>
+            <span>Version: 2.0.0-quantum</span>
           </div>
         </div>
 
