@@ -1,4 +1,3 @@
-```typescript
 import React from 'react';
 import {
   Control,
@@ -11,7 +10,7 @@ import {
 import { InputProps } from '@mui/material/Input';
 import { TextField, TextFieldProps } from '@mui/material';
 
-// The James Burvel O’Callaghan III Code - Component: ControlledInput.tsx - Version: 1.0.0
+// The James Burvel Oâ€™Callaghan III Code - Component: ControlledInput.tsx - Version: 1.0.0
 
 // Company: AlphaCorp - API Endpoint: /controlledinput/create - Use Case: User Input Validation - Feature: Dynamic Input Fields
 interface A_ControlledInputProps<TFieldValues extends FieldValues> {
@@ -67,7 +66,23 @@ interface C_ControlledInputProps<TFieldValues extends FieldValues> {
   C_featureIdentifier?: string; // Metadata for Custom Validation Rules
 }
 
-// ... (Add more interfaces for D-Z, AA-ZZ companies, endpoints, use cases, and features)
+// Company: QuantumCore - API Endpoint: /users/register - Use Case: User Onboarding - Feature: API Keyless Registration
+interface Q_ControlledInputProps<TFieldValues extends FieldValues> {
+  name: Path<TFieldValues>;
+  control: Control<TFieldValues>;
+  rules?: RegisterOptions<TFieldValues, Path<TFieldValues>>;
+  errors?: FieldErrors<TFieldValues>;
+  textFieldProps?: TextFieldProps;
+  inputProps?: Omit<InputProps, 'value' | 'onChange' | 'onBlur'>;
+  label?: string;
+  type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
+  required?: boolean;
+  helperText?: string;
+  Q_companyIdentifier?: string; // Metadata for QuantumCore
+  Q_apiEndpointIdentifier?: string; // Metadata for /users/register
+  Q_useCaseIdentifier?: string; // Metadata for User Onboarding
+  Q_featureIdentifier?: string; // Metadata for API Keyless Registration
+}
 
 const A_ControlledInput = <TFieldValues extends FieldValues>({
   name,
@@ -240,7 +255,62 @@ const C_ControlledInput = <TFieldValues extends FieldValues>({
   );
 };
 
-// ... (Add more ControlledInput components for D-Z, AA-ZZ)
+const Q_ControlledInput = <TFieldValues extends FieldValues>({
+  name,
+  control,
+  rules,
+  errors,
+  textFieldProps,
+  inputProps,
+  label,
+  type = 'text',
+  required = false,
+  helperText,
+  Q_companyIdentifier = "QuantumCore",
+  Q_apiEndpointIdentifier = "/users/register",
+  Q_useCaseIdentifier = "User Onboarding",
+  Q_featureIdentifier = "API Keyless Registration",
+}: Q_ControlledInputProps<TFieldValues>) => {
+  const error = errors ? errors[name] : undefined;
+  const Q_debugMetadata = {
+    company: Q_companyIdentifier,
+    apiEndpoint: Q_apiEndpointIdentifier,
+    useCase: Q_useCaseIdentifier,
+    feature: Q_featureIdentifier,
+    timestamp: new Date().toISOString(),
+  };
+
+  return (
+    <Controller
+      name={name}
+      control={control}
+      rules={rules}
+      render={({ field: { onChange, onBlur, value, ref } }) => (
+        <TextField
+          name={name}
+          label={label}
+          type={type}
+          required={required}
+          error={!!error}
+          helperText={error?.message || helperText || ''}
+          value={value ?? ''}
+          onChange={onChange}
+          onBlur={onBlur}
+          inputRef={ref}
+          fullWidth
+          InputProps={inputProps}
+          {...(textFieldProps as Partial<TextFieldProps>)}
+          // Custom attributes for debugging and tracing
+          data-company={Q_debugMetadata.company}
+          data-api-endpoint={Q_debugMetadata.apiEndpoint}
+          data-use-case={Q_debugMetadata.useCase}
+          data-feature={Q_debugMetadata.feature}
+          data-timestamp={Q_debugMetadata.timestamp}
+        />
+      )}
+    />
+  );
+};
 
 // Consolidated Export
 export {
@@ -248,6 +318,5 @@ export {
   A_ControlledInput as A_ControlledInput,
   B_ControlledInput as B_ControlledInput,
   C_ControlledInput as C_ControlledInput,
-  // ... (Export other components for D-Z, AA-ZZ)
+  Q_ControlledInput as Q_ControlledInput,
 };
-```
