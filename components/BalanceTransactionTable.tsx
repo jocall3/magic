@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { Stripe } from 'stripe';
-import apiClient from '@/lib/apiClient';
-import { Badge } from '@/components/ui/badge';
+import { apiClient } from '../lib/apiClient';
+import { Badge } from './ui/badge';
 
 /**
  * Formats a currency amount from cents into a localized string.
@@ -56,7 +56,7 @@ const BalanceTransactionTable: React.FC = () => {
         setError('Failed to load balance transactions.');
       } finally {
         setIsLoading(false);
-      }
+      }f
     };
 
     fetchTransactions();
@@ -98,48 +98,33 @@ const BalanceTransactionTable: React.FC = () => {
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {balanceTransactions.map((txn) => {
-              const typeLabel = String((txn as any).reporting_category || txn.type || '').replace(/_/g, ' ');
-              const sourceId = typeof txn.source === 'string' ? txn.source : (txn.source as any)?.id || '';
-              
-              return (
-                <tr key={txn.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatDate(txn.created)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                    {typeLabel}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 max-w-sm truncate" title={txn.description ?? ''}>
-                    {txn.description || <span className="text-gray-400">N/A</span>}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
-                    {formatCurrency(txn.amount, txn.currency)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right font-mono">
-                    {formatCurrency(txn.fee, txn.currency)}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-mono ${
-                    txn.net > 0 ? 'text-green-600' : txn.net < 0 ? 'text-red-600' : 'text-gray-900'
-                  }`}>
-                    {formatCurrency(txn.net, txn.currency)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <Badge variant={txn.status === 'available' ? 'default' : txn.status === 'pending' ? 'secondary' : 'outline'} className="capitalize">
-                      {txn.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={sourceId}>
-                    {sourceId || 'N/A'}
-                  </td>
-                </tr>
-              );
-            })}
+            {balanceTransactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formatDate(transaction.created)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                  <Badge variant="outline" className={`text-xs font-semibold ${transaction.type === 'charge' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                    {transaction.type.replace(/_/g, ' ')}
+                  </Badge>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
+                  {transaction.description || `Transaction ${transaction.type}`}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                  {formatCurrency(transaction.amount, transaction.currency)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-red-600">
+                  {formatCurrency(transaction.fee, transaction.currency)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                  {formatCurrency(transaction.net, transaction.currency)}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
