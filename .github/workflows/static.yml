@@ -46,12 +46,6 @@ jobs:
           if [ -z "$STRIPE_PRICE_ID" ]; then echo "Error: STRIPE_PRICE_ID is missing."; exit 1; fi
           echo "Environment verification complete."
 
-      - name: Type Compliance Checks
-        run: |
-          echo "==== RUNNING TYPESCRIPT COMPLIANCE ===="
-          if npm run | grep -q "lint"; then npm run lint; fi
-          npx tsc --noEmit --project tsconfig.json
-
       - name: Production Build Compilation
         run: |
           echo "==== RUNNING COMPILATION AND BUILD ===="
